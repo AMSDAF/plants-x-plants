@@ -1,0 +1,50 @@
+# CMake build directories
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+
+# CMake files generated in the repository root
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/CTestTestfile.cmake
+/Testing/
+/_deps/
+/install_manifest.txt
+/compile_commands.json
+
+# Personal CMake configuration
+CMakeUserPresets.json
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.so.*
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+*.exp
+*.pch
+
+# Visual Studio local files
+.vs/
+*.vcxproj.user
+*.suo
+*.user
+*.sln.docstates
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
