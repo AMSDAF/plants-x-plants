@@ -1,4 +1,4 @@
-# Arquitetura — Plantas vs Plantas
+# Arquitetura — Plants x Plants
 
 Este documento explica a organização do projeto e a responsabilidade de cada arquivo.
 

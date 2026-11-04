@@ -1,4 +1,4 @@
-# Plantas vs Plantas 🌱⚔️
+# Plants x Plants 🌱⚔️
 
 Jogo de batalhas por turnos entre plantas, inspirado no sistema de combate de Pokémon e desenvolvido como projeto acadêmico em **C com raylib**, para **Windows**.
 
