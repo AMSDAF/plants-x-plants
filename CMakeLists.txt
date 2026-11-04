@@ -33,6 +33,7 @@ add_executable(plants_x_plants
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/menu_screen.c
 )
 
 target_include_directories(plants_x_plants PRIVATE
