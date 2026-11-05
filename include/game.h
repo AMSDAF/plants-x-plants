@@ -8,6 +8,7 @@
 #define GAME_H
 
 #include <stdbool.h>
+#include "menu_screen.h"
 
 #define GAME_SCREEN_WIDTH 1280
 #define GAME_SCREEN_HEIGHT 720
@@ -17,6 +18,7 @@
 /* Estado geral que será expandido nas próximas tarefas. */
 typedef struct {
     bool exit_requested;
+    MenuScreen menu;
 } Game;
 
 void game_init(Game *game);

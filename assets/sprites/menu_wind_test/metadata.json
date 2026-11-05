@@ -1,0 +1,642 @@
+{
+  "source_size": [
+    1672,
+    941
+  ],
+  "source_sha256": "74fec1b3b6f86f1958297b71eecb8e5e1716cde50874cc8fd5fc5a8a018aa3ec",
+  "frame_count": 64,
+  "frame_columns": 8,
+  "playback_fps": 12,
+  "atlas_size": [
+    2048,
+    1792
+  ],
+  "experimental_texture_bytes": 19400120,
+  "regions": [
+    {
+      "name": "left_fern",
+      "selection": [
+        459,
+        274,
+        516,
+        296
+      ],
+      "origin": [
+        447,
+        262
+      ],
+      "size": [
+        88,
+        48
+      ],
+      "anchor": [
+        460,
+        291
+      ],
+      "tip": [
+        511,
+        284
+      ],
+      "material": "fern",
+      "amplitude": 3.5,
+      "phase": 0.9,
+      "polygon": [
+        [
+          459,
+          289
+        ],
+        [
+          469,
+          275
+        ],
+        [
+          488,
+          276
+        ],
+        [
+          504,
+          278
+        ],
+        [
+          514,
+          282
+        ],
+        [
+          516,
+          288
+        ],
+        [
+          499,
+          290
+        ],
+        [
+          493,
+          296
+        ],
+        [
+          478,
+          290
+        ],
+        [
+          459,
+          296
+        ]
+      ],
+      "boundary_changed_pixels": 16,
+      "max_step_changed_pixels": 119,
+      "atlas_origin": [
+        896,
+        1344
+      ]
+    },
+    {
+      "name": "right_fern",
+      "selection": [
+        1287,
+        454,
+        1311,
+        485
+      ],
+      "origin": [
+        1275,
+        442
+      ],
+      "size": [
+        48,
+        56
+      ],
+      "anchor": [
+        1296,
+        483
+      ],
+      "tip": [
+        1301,
+        457
+      ],
+      "material": "fern",
+      "amplitude": 3.0,
+      "phase": 3.8,
+      "polygon": [
+        [
+          1287,
+          482
+        ],
+        [
+          1289,
+          468
+        ],
+        [
+          1292,
+          457
+        ],
+        [
+          1303,
+          454
+        ],
+        [
+          1311,
+          459
+        ],
+        [
+          1307,
+          472
+        ],
+        [
+          1305,
+          485
+        ]
+      ],
+      "boundary_changed_pixels": 0,
+      "max_step_changed_pixels": 53,
+      "atlas_origin": [
+        0,
+        1344
+      ]
+    },
+    {
+      "name": "left_canopy",
+      "selection": [
+        201,
+        23,
+        238,
+        60
+      ],
+      "origin": [
+        189,
+        11
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "anchor": [
+        218,
+        23
+      ],
+      "tip": [
+        215,
+        56
+      ],
+      "material": "leaf",
+      "amplitude": 5.0,
+      "phase": 0.0,
+      "polygon": [
+        [
+          201,
+          23
+        ],
+        [
+          238,
+          23
+        ],
+        [
+          237,
+          38
+        ],
+        [
+          228,
+          45
+        ],
+        [
+          224,
+          55
+        ],
+        [
+          215,
+          60
+        ],
+        [
+          207,
+          50
+        ],
+        [
+          203,
+          38
+        ]
+      ],
+      "boundary_changed_pixels": 106,
+      "max_step_changed_pixels": 181,
+      "atlas_origin": [
+        640,
+        704
+      ]
+    },
+    {
+      "name": "right_canopy",
+      "selection": [
+        1309,
+        43,
+        1354,
+        104
+      ],
+      "origin": [
+        1297,
+        31
+      ],
+      "size": [
+        72,
+        88
+      ],
+      "anchor": [
+        1340,
+        43
+      ],
+      "tip": [
+        1322,
+        100
+      ],
+      "material": "leaf",
+      "amplitude": 5.5,
+      "phase": 3.3,
+      "polygon": [
+        [
+          1320,
+          43
+        ],
+        [
+          1354,
+          43
+        ],
+        [
+          1354,
+          72
+        ],
+        [
+          1344,
+          83
+        ],
+        [
+          1336,
+          95
+        ],
+        [
+          1323,
+          104
+        ],
+        [
+          1315,
+          99
+        ],
+        [
+          1309,
+          68
+        ]
+      ],
+      "boundary_changed_pixels": 0,
+      "max_step_changed_pixels": 511,
+      "atlas_origin": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "left_moss",
+      "selection": [
+        261,
+        182,
+        282,
+        224
+      ],
+      "origin": [
+        249,
+        170
+      ],
+      "size": [
+        48,
+        72
+      ],
+      "anchor": [
+        273,
+        182
+      ],
+      "tip": [
+        274,
+        220
+      ],
+      "material": "moss",
+      "amplitude": 4.5,
+      "phase": 0.35,
+      "polygon": null,
+      "boundary_changed_pixels": 60,
+      "max_step_changed_pixels": 110,
+      "atlas_origin": [
+        1600,
+        0
+      ]
+    },
+    {
+      "name": "left",
+      "origin": [
+        282,
+        184
+      ],
+      "size": [
+        64,
+        80
+      ],
+      "selection": [
+        302,
+        198,
+        326,
+        252
+      ],
+      "anchor": [
+        314,
+        198
+      ],
+      "tip": [
+        315,
+        251
+      ],
+      "material": "approved_moss",
+      "amplitude": 4.5,
+      "phase": 0.0,
+      "polygon": null,
+      "boundary_changed_pixels": 110,
+      "max_step_changed_pixels": 155,
+      "atlas_origin": [
+        576,
+        0
+      ]
+    },
+    {
+      "name": "right",
+      "origin": [
+        1338,
+        112
+      ],
+      "size": [
+        64,
+        80
+      ],
+      "selection": [
+        1358,
+        128,
+        1382,
+        174
+      ],
+      "anchor": [
+        1370,
+        128
+      ],
+      "tip": [
+        1371,
+        173
+      ],
+      "material": "approved_moss",
+      "amplitude": 4.5,
+      "phase": 2.35,
+      "polygon": null,
+      "boundary_changed_pixels": 61,
+      "max_step_changed_pixels": 118,
+      "atlas_origin": [
+        1088,
+        0
+      ]
+    },
+    {
+      "name": "upper_twig",
+      "selection": [
+        698,
+        74,
+        738,
+        104
+      ],
+      "origin": [
+        686,
+        62
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "anchor": [
+        701,
+        78
+      ],
+      "tip": [
+        734,
+        99
+      ],
+      "material": "twig",
+      "amplitude": 5.5,
+      "phase": 1.4,
+      "polygon": [
+        [
+          698,
+          77
+        ],
+        [
+          705,
+          74
+        ],
+        [
+          716,
+          77
+        ],
+        [
+          722,
+          83
+        ],
+        [
+          728,
+          84
+        ],
+        [
+          728,
+          88
+        ],
+        [
+          731,
+          92
+        ],
+        [
+          735,
+          95
+        ],
+        [
+          736,
+          102
+        ],
+        [
+          730,
+          101
+        ],
+        [
+          724,
+          96
+        ],
+        [
+          717,
+          94
+        ],
+        [
+          712,
+          95
+        ],
+        [
+          707,
+          92
+        ],
+        [
+          701,
+          94
+        ],
+        [
+          700,
+          86
+        ],
+        [
+          698,
+          83
+        ]
+      ],
+      "boundary_changed_pixels": 58,
+      "max_step_changed_pixels": 130,
+      "atlas_origin": [
+        384,
+        1344
+      ]
+    },
+    {
+      "name": "left_twig",
+      "selection": [
+        311,
+        269,
+        378,
+        303
+      ],
+      "origin": [
+        299,
+        257
+      ],
+      "size": [
+        96,
+        64
+      ],
+      "anchor": [
+        313,
+        288
+      ],
+      "tip": [
+        374,
+        286
+      ],
+      "material": "twig",
+      "amplitude": 5.0,
+      "phase": 0.55,
+      "polygon": [
+        [
+          311,
+          282
+        ],
+        [
+          329,
+          273
+        ],
+        [
+          349,
+          269
+        ],
+        [
+          370,
+          277
+        ],
+        [
+          378,
+          289
+        ],
+        [
+          357,
+          293
+        ],
+        [
+          353,
+          303
+        ],
+        [
+          330,
+          297
+        ],
+        [
+          311,
+          292
+        ]
+      ],
+      "boundary_changed_pixels": 99,
+      "max_step_changed_pixels": 338,
+      "atlas_origin": [
+        1152,
+        704
+      ]
+    },
+    {
+      "name": "right_twig",
+      "selection": [
+        1413,
+        280,
+        1466,
+        331
+      ],
+      "origin": [
+        1401,
+        268
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "anchor": [
+        1460,
+        282
+      ],
+      "tip": [
+        1418,
+        326
+      ],
+      "material": "twig",
+      "amplitude": 5.5,
+      "phase": 3.9,
+      "polygon": [
+        [
+          1443,
+          280
+        ],
+        [
+          1466,
+          280
+        ],
+        [
+          1466,
+          302
+        ],
+        [
+          1444,
+          311
+        ],
+        [
+          1424,
+          331
+        ],
+        [
+          1413,
+          330
+        ],
+        [
+          1415,
+          302
+        ],
+        [
+          1428,
+          289
+        ]
+      ],
+      "boundary_changed_pixels": 74,
+      "max_step_changed_pixels": 307,
+      "atlas_origin": [
+        0,
+        704
+      ]
+    }
+  ]
+}
