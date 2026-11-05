@@ -187,6 +187,7 @@ static void check_wind(Game *game, RenderTexture2D target)
     UnloadImage(half);
     UnloadImage(fallback);
     game->menu = saved;
+    game->menu.ui_time = 0;
     game->menu.mascot_time = 0;
     game->menu.grass_time = 0;
     Image first = capture(game, target, NULL);
@@ -250,6 +251,7 @@ int main(void)
     assert(game.trainer_select_assets.buttons.id);
     assert(game.menu.logo_source.width == 1481 && game.menu.mascot_source.width == 968);
     RenderTexture2D target = LoadRenderTexture(1280, 720);
+    game.menu.ui_time = 0;
     game.menu.grass_time = 0; /* Isola o mascote nas comparações já existentes. */
     Image title = capture(&game, target, "build/menu_v2_preview/title.png");
     Texture2D idle = game.menu.mascot_idle;
@@ -259,6 +261,7 @@ int main(void)
     UnloadImage(static_mascot);
     game.menu.mascot_idle = idle;
     for (int i = 0; i < 30; i++) tick(&game);
+    game.menu.ui_time = 0;
     game.menu.grass_time = 0;
     Image still = capture(&game, target, NULL);
     check_mascot_only_change(title, still, true);
@@ -292,9 +295,11 @@ int main(void)
     input(5, 0, 0);
     tick(&game);
     assert(game.screen == GAME_MENU && game.menu.pressed_option == -1);
+    game.menu.ui_time = 0;
     game.menu.grass_time = 0;
     Image menu = capture(&game, target, "build/menu_v2_preview/menu.png");
     for (int i = 0; i < 30; i++) tick(&game);
+    game.menu.ui_time = 0;
     game.menu.grass_time = 0;
     still = capture(&game, target, NULL);
     check_mascot_only_change(menu, still, true);
@@ -353,6 +358,19 @@ int main(void)
         }
     }
     check_wind(&game, target);
+    /* Capturas de inspeção visual: mesmas fases nas duas telas, outros relógios fixos. */
+    assert(DirectoryExists("build/menu_ui_preview") || MakeDirectory("build/menu_ui_preview") == 0);
+    const float ui_phases[] = {0, 0.25f, 0.75f, 0.85f, 1.0f, 1.25f, 2.25f, 3.0f};
+    game.menu.mascot_time = 0;
+    game.menu.grass_time = 0;
+    for (int screen = 0; screen < 2; screen++) {
+        game.menu.menu_open = screen != 0;
+        for (int phase = 0; phase < 8; phase++) {
+            game.menu.ui_time = ui_phases[phase];
+            Image sample = capture(&game, target, TextFormat("build/menu_ui_preview/%s_%02d.png", screen ? "menu" : "title", phase));
+            UnloadImage(sample);
+        }
+    }
     UnloadRenderTexture(target);
     game_shutdown(&game);
     assert(!game.menu.logo.id && !game.menu.mascot.id && !game.menu.mascot_idle.id && !game.menu.background.id && !game.trainer_select_assets.buttons.id);

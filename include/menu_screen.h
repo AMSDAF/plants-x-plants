@@ -18,6 +18,7 @@ typedef struct {
     Texture2D mascot;
     Texture2D mascot_idle;
     float mascot_time;
+    float ui_time;
     Rectangle logo_source;
     Rectangle mascot_source;
     bool menu_open;

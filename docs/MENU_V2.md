@@ -2,7 +2,7 @@
 
 ## Composição e recursos
 
-O fluxo existente em `menu_screen` desenha uma composição fixa de 1280 × 720. O mascote agora possui repouso discreto, descrito em [MENU_MASCOT_IDLE.md](MENU_MASCOT_IDLE.md); logo, aviso e painel não oscilam. O vento localizado da grama e das copas é descrito em [MENU_GRASS_WIND.md](MENU_GRASS_WIND.md). Não há flutuação do logo, pulsação do aviso, transição animada ou folhas soltas. O painel usa primitivas de desenho: fundo creme, borda verde em degraus e cursor triangular. As opções continuam Campanha, Versus local desabilitado e Sair.
+O fluxo existente em `menu_screen` desenha uma composição fixa de 1280 × 720. O mascote agora possui repouso discreto, descrito em [MENU_MASCOT_IDLE.md](MENU_MASCOT_IDLE.md); o painel e os textos das opções mantêm posição e tamanho. O vento localizado da grama e das copas é descrito em [MENU_GRASS_WIND.md](MENU_GRASS_WIND.md). O logo flutua ±4 pixels em ciclo de três segundos; o aviso fica visível por 0,8 s e oculto por 0,4 s, sem mudar de posição. A seta pulsa entre aproximadamente 90–110% em um segundo, com centro fixo e dimensões arredondadas na grade de pixels. Um relógio visual com delta time mantém os ciclos contínuos entre título/menu, inclusive durante bloqueios de entrada. Essas animações não alteram hitboxes, seleção, disponibilidade ou ativação. O painel usa primitivas de desenho: fundo creme, borda verde em degraus e cursor triangular. As opções continuam Campanha, Versus local desabilitado e Sair.
 
 As fontes permanecem intactas:
 
@@ -14,7 +14,7 @@ As fontes permanecem intactas:
 
 O carregador prefere a grafia solicitada `menu_background_v2.png`, caso exista, e aceita `menu_backround_v2.png`, o nome efetivamente fornecido. Logo e mascote estático não exigem derivados ou limpeza de cores. O vento usa fundos derivados reconstruídos e atlas de grama/copas extraídos da fonte, carregados como pares indivisíveis; falha nas copas conserva árvores estáticas sobre o fundo da grama. O repouso usa um atlas separado, preparado somente a partir do mascote original. A carga calcula o recorte de alfa uma vez e descarta a imagem de CPU após criar a textura. Todos os recursos do menu usam `TEXTURE_FILTER_POINT`.
 
-Na tela inicial, o logo tem altura visível de 324 pixels, começa em y=28 e fica centralizado em x=640. O mascote tem altura de 240 pixels e vai de y=374 a y=614, sobre a clareira, com sombra pequena em degraus. O aviso é desenhado em código próximo à base. No menu, o logo passa instantaneamente para altura 244; o mascote conserva posição e escala. O painel fica à direita, separado do mascote. Escalas são uniformes; o fundo cobre a janela mantendo proporção.
+Na tela inicial, o logo tem altura visível de 324 pixels, tem posição central em y=28 e fica centralizado em x=640. O mascote tem altura de 240 pixels e vai de y=374 a y=614, sobre a clareira, com sombra pequena em degraus. O aviso é desenhado em código próximo à base. No menu, o logo passa instantaneamente para altura 244; o mascote conserva posição e escala. O painel fica à direita, separado do mascote. Escalas são uniformes; o fundo cobre a janela mantendo proporção.
 
 ## Entrada e integração
 
@@ -42,3 +42,5 @@ Validação da etapa inicial estática em 05/11/2026: compilação e eventos aut
 O menu mantém as fontes v2, a imagem aprovada do mascote, seu atlas de repouso e os derivados atuais da grama e das copas. A arte e o experimento de vento da apresentação anterior foram removidos após verificação de referências em código, CMake, ferramentas e documentação. Os recursos compartilhados usados pela seleção e pela exploração permanecem disponíveis.
 
 A preparação atual do mascote usa Pillow, NumPy e SciPy em `tools/trainer_requirements.txt`, também necessários aos outros preparadores ativos. Não há dependência de OpenCV. Contatos, máscaras, GIFs e fixtures de teste ficam exclusivamente em `build/`, ignorado pelo Git. O vento atual é independente do experimento removido: usa apenas vegetação extraída do fundo v2 e as mesmas dependências de preparação.
+
+As fases visuais da interface podem ser inspecionadas nas capturas OpenGL em `build/menu_ui_preview/`, geradas pelo mesmo verificador. As comparações isoladas de mascote/vento fixam o relógio da interface.

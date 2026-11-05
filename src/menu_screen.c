@@ -148,6 +148,8 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
     /* O relógio avança inclusive enquanto ENTER/ESC aguardam soltura. */
     screen->mascot_time = fmodf(screen->mascot_time + dt, MENU_MASCOT_FRAME_COUNT / MENU_MASCOT_FPS);
     screen->grass_time = fmodf(screen->grass_time + dt, MENU_GRASS_FRAME_COUNT / MENU_GRASS_FPS);
+    /* Seis segundos fecham os três ciclos visuais, sem reiniciar ao trocar título/menu. */
+    screen->ui_time = fmodf(screen->ui_time + dt, 6.0f);
     if (!accept_input) {
         clear_activation(screen);
         /* Sincroniza a soltura com o bloqueio de game.c ao voltar de outra tela. */
@@ -277,9 +279,17 @@ static void draw_panel(const MenuScreen *screen)
         if (selected) DrawRectangle(860, (int)bounds.y + 2, 300, 56,
                                     pressed ? (Color){212, 211, 155, 255} : (Color){232, 227, 176, 255});
         if (selected) {
-            /* Triângulo rasterizado para manter os mesmos degraus da interface. */
-            for (int step = 0; step < 5; step++)
-                DrawRectangle(877 + step * 3, (int)bounds.y + 17 + step * 3, 3, 27 - step * 6, INK);
+            /* Dimensões ímpares preservam o centro do cursor na grade de pixels. */
+            float pulse = 1.0f + 0.1f * sinf(2.0f * PI * screen->ui_time);
+            int width = 2 * (int)roundf(7.0f * pulse) + 1;
+            int left = 884 - width / 2;
+            int center_y = (int)bounds.y + 30;
+            for (int step = 0; step < 5; step++) {
+                int x0 = left + (int)roundf(step * width / 5.0f);
+                int x1 = left + (int)roundf((step + 1) * width / 5.0f);
+                int half_height = (int)roundf((13 - step * 3) * pulse);
+                DrawRectangle(x0, center_y - half_height, x1 - x0, 2 * half_height + 1, INK);
+            }
         }
         DrawText(OPTION_LABELS[i], 908, (int)bounds.y + 16, 30, option_is_enabled(i) ? INK : MUTED);
     }
@@ -307,8 +317,9 @@ void menu_screen_draw(const MenuScreen *screen)
 {
     ClearBackground((Color){118, 143, 67, 255});
     draw_background(screen);
-    if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28, screen->menu_open ? 244 : 324);
-    else centered_text("Plants x Plants", 640, 90, 50, INK);
+    int logo_offset = (int)roundf(4.0f * sinf(2.0f * PI * screen->ui_time / 3.0f));
+    if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28 + logo_offset, screen->menu_open ? 244 : 324);
+    else centered_text("Plants x Plants", 640, 90 + logo_offset, 50, INK);
     if (screen->mascot.id || screen->mascot_idle.id) {
         /* Sombra pequena em degraus, sem elipse suavizada nem halo. */
         DrawRectangle(583, 607, 114, 6, (Color){124, 110, 53, 255});
@@ -318,7 +329,7 @@ void menu_screen_draw(const MenuScreen *screen)
     if (screen->menu_open) {
         draw_panel(screen);
         centered_text("Setas: escolher   ENTER: confirmar   ESC: voltar", 640, 660, 20, INK);
-    } else {
+    } else if (fmodf(screen->ui_time, 1.2f) < 0.8f) {
         centered_text("Pressione ENTER", 642, 652, 30, (Color){242, 232, 188, 255});
         centered_text("Pressione ENTER", 640, 650, 30, INK);
     }
