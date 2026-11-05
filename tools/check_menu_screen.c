@@ -1,8 +1,11 @@
-/* Verifica composição, repouso do mascote e navegação com o jogo e OpenGL reais. */
+/* Verifica composição, grama, mascote e navegação com o jogo e OpenGL reais. */
 #include "game.h"
 #include "menu_mascot_data.h"
+#include "menu_grass_data.h"
+#include "menu_tree_data.h"
 #undef NDEBUG
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -83,9 +86,18 @@ static void check_atlas_loader_fallback(void)
     assert(SaveFileData("build/menu_mascot_preview/missing/assets/sprites/menu_mascot.png", data, size));
     assert(SaveFileData("build/menu_mascot_preview/invalid/assets/sprites/menu_mascot.png", data, size));
     UnloadFileData(data);
+    const char *background_path = FileExists("assets/sprites/menu_background_v2.png")
+        ? "assets/sprites/menu_background_v2.png" : "assets/sprites/menu_backround_v2.png";
+    data = LoadFileData(background_path, &size);
+    assert(data && size > 0);
+    assert(SaveFileData("build/menu_mascot_preview/missing/assets/sprites/menu_backround_v2.png", data, size));
+    assert(SaveFileData("build/menu_mascot_preview/invalid/assets/sprites/menu_backround_v2.png", data, size));
+    UnloadFileData(data);
     Image invalid = LoadImage("assets/sprites/menu_mascot.png");
     ImageCrop(&invalid, (Rectangle){0, 0, 16, 16});
     assert(ExportImage(invalid, "build/menu_mascot_preview/invalid/assets/sprites/menu_mascot_idle.png"));
+    assert(ExportImage(invalid, "build/menu_mascot_preview/invalid/assets/sprites/menu_grass_background.png"));
+    assert(ExportImage(invalid, "build/menu_mascot_preview/invalid/assets/sprites/menu_grass_atlas.png"));
     UnloadImage(invalid);
     const char *fixtures[] = {"missing", "invalid"};
     for (int i = 0; i < 2; i++) {
@@ -93,10 +105,131 @@ static void check_atlas_loader_fallback(void)
         MenuScreen partial;
         menu_screen_init(&partial);
         assert(partial.mascot.id && !partial.mascot_idle.id);
+        assert(partial.background.id && !partial.grass_background.id && !partial.grass_atlas.id);
+        assert(!partial.tree_background.id && !partial.tree_atlas.id);
         menu_screen_shutdown(&partial);
         assert(!partial.mascot.id && !partial.mascot_idle.id);
         assert(ChangeDirectory(root));
     }
+    const char *tree_fixtures[] = {"tree_missing", "tree_invalid"};
+    const char *sources[] = {background_path, "assets/sprites/menu_grass_background.png",
+                             "assets/sprites/menu_grass_atlas.png", "assets/sprites/menu_wind_background.png"};
+    const char *names[] = {"menu_backround_v2.png", "menu_grass_background.png",
+                           "menu_grass_atlas.png", "menu_wind_background.png"};
+    for (int i = 0; i < 2; i++) {
+        char dir[1024];
+        snprintf(dir, sizeof(dir), "build/menu_tree_preview/%s/assets/sprites", tree_fixtures[i]);
+        assert(DirectoryExists(dir) || MakeDirectory(dir) == 0);
+        for (int j = 0; j < 4; j++) {
+            data = LoadFileData(sources[j], &size);
+            assert(data && size > 0);
+            assert(SaveFileData(TextFormat("%s/%s", dir, names[j]), data, size));
+            UnloadFileData(data);
+        }
+        if (i == 1) {
+            invalid = GenImageColor(16, 16, WHITE);
+            assert(ExportImage(invalid, TextFormat("%s/menu_tree_atlas.png", dir)));
+            UnloadImage(invalid);
+        }
+        assert(ChangeDirectory(TextFormat("build/menu_tree_preview/%s", tree_fixtures[i])));
+        MenuScreen partial;
+        menu_screen_init(&partial);
+        assert(partial.background.id && partial.grass_background.id && partial.grass_atlas.id);
+        assert(!partial.tree_background.id && !partial.tree_atlas.id);
+        menu_screen_shutdown(&partial);
+        assert(!partial.background.id && !partial.grass_background.id && !partial.tree_atlas.id);
+        assert(ChangeDirectory(root));
+    }
+}
+
+static void check_wind(Game *game, RenderTexture2D target)
+{
+    assert(DirectoryExists("build/menu_grass_preview") || MakeDirectory("build/menu_grass_preview") == 0);
+    assert(DirectoryExists("build/menu_tree_preview") || MakeDirectory("build/menu_tree_preview") == 0);
+    assert(game->menu.grass_background.id && game->menu.grass_atlas.id);
+    assert(game->menu.tree_background.id && game->menu.tree_atlas.id);
+    game->screen = GAME_MENU;
+    game->menu.menu_open = false;
+    game->menu.input_blocked = false;
+    game->menu.grass_time = 1.0f;
+    game->menu.mascot_time = 0.5f;
+    key(game, KEY_ENTER);
+    assert(game->menu.grass_time > 1.0f && game->menu.grass_time < 1.31f);
+    assert(game->menu.mascot_time > 0.5f && game->menu.mascot_time < 0.81f);
+    key(game, KEY_ESCAPE);
+    assert(game->menu.grass_time > 1.0f && game->menu.grass_time < 1.61f);
+    MenuScreen saved = game->menu;
+    game->menu.grass_background = (Texture2D){0};
+    game->menu.grass_atlas = (Texture2D){0};
+    Image fallback = capture(game, target, "build/menu_grass_preview/static_fallback.png");
+    game->menu.grass_background = saved.grass_background;
+    Image half = capture(game, target, NULL);
+    assert(memcmp(fallback.data, half.data, GetPixelDataSize(1280, 720, half.format)) == 0);
+    UnloadImage(half);
+    game->menu.grass_background = (Texture2D){0};
+    game->menu.grass_atlas = saved.grass_atlas;
+    half = capture(game, target, NULL);
+    assert(memcmp(fallback.data, half.data, GetPixelDataSize(1280, 720, half.format)) == 0);
+    UnloadImage(half);
+    UnloadImage(fallback);
+    game->menu = saved;
+    game->menu.tree_background = (Texture2D){0};
+    game->menu.tree_atlas = (Texture2D){0};
+    fallback = capture(game, target, "build/menu_tree_preview/grass_fallback.png");
+    game->menu.tree_background = saved.tree_background;
+    half = capture(game, target, NULL);
+    assert(memcmp(fallback.data, half.data, GetPixelDataSize(1280, 720, half.format)) == 0);
+    UnloadImage(half);
+    game->menu.tree_background = (Texture2D){0};
+    game->menu.tree_atlas = saved.tree_atlas;
+    half = capture(game, target, NULL);
+    assert(memcmp(fallback.data, half.data, GetPixelDataSize(1280, 720, half.format)) == 0);
+    UnloadImage(half);
+    UnloadImage(fallback);
+    game->menu = saved;
+    game->menu.mascot_time = 0;
+    game->menu.grass_time = 0;
+    Image first = capture(game, target, NULL);
+    float scale = fmaxf(1280.0f / MENU_GRASS_SOURCE_WIDTH, 720.0f / MENU_GRASS_SOURCE_HEIGHT);
+    float origin_y = roundf((720 - MENU_GRASS_SOURCE_HEIGHT * scale) / 2);
+    int changes = 0;
+    for (int frame = 0; frame < MENU_GRASS_FRAME_COUNT; frame++) {
+        game->menu.grass_time = (frame + 0.01f) / MENU_GRASS_FPS;
+        game->menu.mascot_time = fmodf(frame / MENU_GRASS_FPS, MENU_MASCOT_FRAME_COUNT / MENU_MASCOT_FPS);
+        Image phase = capture(game, target, TextFormat("build/menu_grass_preview/title_%02d.png", frame));
+        assert(ExportImage(phase, TextFormat("build/menu_tree_preview/title_%02d.png", frame)));
+        const Color *a = first.data, *b = phase.data;
+        for (int y = 0; y < 720; y++) {
+            for (int x = 0; x < 1280; x++) {
+                if (memcmp(&a[y*1280+x], &b[y*1280+x], sizeof(Color)) == 0) continue;
+                bool in_grass = x >= 510 && x < 775 && y >= 368 && y < 568;
+                for (int i = 0; i < MENU_GRASS_REGION_COUNT; i++) {
+                    const MenuGrassRegion *r = &MENU_GRASS_REGIONS[i];
+                    Rectangle bounds = {r->origin.x*scale - 1, origin_y+r->origin.y*scale - 1,
+                                        r->source.width*scale + 2, r->source.height*scale + 2};
+                    if (CheckCollisionPointRec((Vector2){(float)x, (float)y}, bounds)) in_grass = true;
+                }
+                for (int i = 0; i < MENU_TREE_REGION_COUNT; i++) {
+                    const MenuTreeRegion *r = &MENU_TREE_REGIONS[i];
+                    Rectangle bounds = {r->origin.x*scale - 1, origin_y+r->origin.y*scale - 1,
+                                        r->poses[0].width*scale + 2, r->poses[0].height*scale + 2};
+                    if (CheckCollisionPointRec((Vector2){(float)x, (float)y}, bounds)) in_grass = true;
+                }
+                assert(in_grass); /* Só copas, grama e mascote mudam na reprodução conjunta. */
+                changes++;
+            }
+        }
+        UnloadImage(phase);
+    }
+    assert(changes > 0);
+    UnloadImage(first);
+    game->menu.menu_open = true;
+    game->menu.grass_time = 2.5f;
+    Image menu = capture(game, target, "build/menu_grass_preview/menu.png");
+    assert(ExportImage(menu, "build/menu_tree_preview/menu.png"));
+    UnloadImage(menu);
+    game->menu = saved;
+    puts("PASS: 32 fases de copas/grama/mascote, somente regioes previstas mudam, relogios continuos e fallback em camadas.");
 }
 
 int main(void)
@@ -117,6 +250,7 @@ int main(void)
     assert(game.trainer_select_assets.buttons.id);
     assert(game.menu.logo_source.width == 1481 && game.menu.mascot_source.width == 968);
     RenderTexture2D target = LoadRenderTexture(1280, 720);
+    game.menu.grass_time = 0; /* Isola o mascote nas comparações já existentes. */
     Image title = capture(&game, target, "build/menu_v2_preview/title.png");
     Texture2D idle = game.menu.mascot_idle;
     game.menu.mascot_idle = (Texture2D){0};
@@ -125,6 +259,7 @@ int main(void)
     UnloadImage(static_mascot);
     game.menu.mascot_idle = idle;
     for (int i = 0; i < 30; i++) tick(&game);
+    game.menu.grass_time = 0;
     Image still = capture(&game, target, NULL);
     check_mascot_only_change(title, still, true);
     UnloadImage(title);
@@ -157,8 +292,10 @@ int main(void)
     input(5, 0, 0);
     tick(&game);
     assert(game.screen == GAME_MENU && game.menu.pressed_option == -1);
+    game.menu.grass_time = 0;
     Image menu = capture(&game, target, "build/menu_v2_preview/menu.png");
     for (int i = 0; i < 30; i++) tick(&game);
+    game.menu.grass_time = 0;
     still = capture(&game, target, NULL);
     check_mascot_only_change(menu, still, true);
     UnloadImage(menu);
@@ -215,9 +352,12 @@ int main(void)
             UnloadImage(phase);
         }
     }
+    check_wind(&game, target);
     UnloadRenderTexture(target);
     game_shutdown(&game);
     assert(!game.menu.logo.id && !game.menu.mascot.id && !game.menu.mascot_idle.id && !game.menu.background.id && !game.trainer_select_assets.buttons.id);
+    assert(!game.menu.grass_background.id && !game.menu.grass_atlas.id);
+    assert(!game.menu.tree_background.id && !game.menu.tree_atlas.id);
     CloseWindow();
     puts("PASS: atlas/fallback alinhados, apenas mascote anima, pes/sombra/cenario fixos, relogio continuo no ENTER/ESC, 8 fases em ambas as telas, navegacao teclado/mouse, Campanha/exploracao/retorno, Sair, desenho imutavel e descarregamento.");
     return 0;

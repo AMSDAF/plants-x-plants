@@ -1,4 +1,4 @@
-/* Declara recursos, relógio do mascote e entrada das telas inicial e de menu. */
+/* Declara recursos, relógios de vegetação/mascote e entrada do título/menu. */
 #ifndef MENU_SCREEN_H
 #define MENU_SCREEN_H
 
@@ -9,6 +9,11 @@
 
 typedef struct {
     Texture2D background;
+    Texture2D grass_background;
+    Texture2D grass_atlas;
+    Texture2D tree_background;
+    Texture2D tree_atlas;
+    float grass_time;
     Texture2D logo;
     Texture2D mascot;
     Texture2D mascot_idle;

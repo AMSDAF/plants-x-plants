@@ -1,6 +1,8 @@
-/* Compõe título/menu pixel art, anima o mascote e encaminha ações de entrada. */
+/* Compõe título/menu pixel art, anima vegetação/mascote e encaminha ações de entrada. */
 #include "menu_screen.h"
 #include "menu_mascot_data.h"
+#include "menu_grass_data.h"
+#include "menu_tree_data.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -62,6 +64,54 @@ static Texture2D load_art(const char *path, Rectangle *source)
     return texture;
 }
 
+static void load_grass(MenuScreen *screen)
+{
+    const char *background_path = "assets/sprites/menu_grass_background.png";
+    const char *atlas_path = "assets/sprites/menu_grass_atlas.png";
+    if (!screen->background.id || screen->background.width != MENU_GRASS_SOURCE_WIDTH ||
+        screen->background.height != MENU_GRASS_SOURCE_HEIGHT ||
+        !FileExists(background_path) || !FileExists(atlas_path)) return;
+    Texture2D background = LoadTexture(background_path);
+    Texture2D atlas = LoadTexture(atlas_path);
+    if (background.id && atlas.id && background.width == MENU_GRASS_SOURCE_WIDTH &&
+        background.height == MENU_GRASS_SOURCE_HEIGHT &&
+        atlas.width == MENU_GRASS_PAGE_WIDTH * MENU_GRASS_COLUMNS &&
+        atlas.height == MENU_GRASS_PAGE_HEIGHT * (MENU_GRASS_FRAME_COUNT / MENU_GRASS_COLUMNS)) {
+        SetTextureFilter(background, TEXTURE_FILTER_POINT);
+        SetTextureFilter(atlas, TEXTURE_FILTER_POINT);
+        screen->grass_background = background;
+        screen->grass_atlas = atlas;
+    } else {
+        /* O par é indivisível: nunca exibe chão reconstruído sem suas touceiras. */
+        if (background.id) UnloadTexture(background);
+        if (atlas.id) UnloadTexture(atlas);
+        TraceLog(LOG_WARNING, "Recursos de grama invalidos; usando fundo completo estatico.");
+    }
+}
+
+static void load_trees(MenuScreen *screen)
+{
+    const char *background_path = "assets/sprites/menu_wind_background.png";
+    const char *atlas_path = "assets/sprites/menu_tree_atlas.png";
+    /* O fundo combinado depende também da grama: a carga tem fallback em camadas. */
+    if (!screen->grass_background.id || !screen->grass_atlas.id ||
+        !FileExists(background_path) || !FileExists(atlas_path)) return;
+    Texture2D background = LoadTexture(background_path);
+    Texture2D atlas = LoadTexture(atlas_path);
+    if (background.id && atlas.id && background.width == MENU_GRASS_SOURCE_WIDTH &&
+        background.height == MENU_GRASS_SOURCE_HEIGHT && atlas.width == MENU_TREE_ATLAS_WIDTH &&
+        atlas.height == MENU_TREE_ATLAS_HEIGHT) {
+        SetTextureFilter(background, TEXTURE_FILTER_POINT);
+        SetTextureFilter(atlas, TEXTURE_FILTER_POINT);
+        screen->tree_background = background;
+        screen->tree_atlas = atlas;
+    } else {
+        if (background.id) UnloadTexture(background);
+        if (atlas.id) UnloadTexture(atlas);
+        TraceLog(LOG_WARNING, "Recursos de copas invalidos; preservando arvores estaticas e grama.");
+    }
+}
+
 void menu_screen_init(MenuScreen *screen)
 {
     *screen = (MenuScreen){0};
@@ -69,6 +119,8 @@ void menu_screen_init(MenuScreen *screen)
     const char *background_path = FileExists("assets/sprites/menu_background_v2.png")
         ? "assets/sprites/menu_background_v2.png" : "assets/sprites/menu_backround_v2.png";
     screen->background = load_art(background_path, NULL);
+    load_grass(screen);
+    load_trees(screen);
     screen->logo = load_art("assets/sprites/logo_v2.png", &screen->logo_source);
     screen->mascot = load_art("assets/sprites/menu_mascot.png", &screen->mascot_source);
     const char *idle_path = "assets/sprites/menu_mascot_idle.png";
@@ -95,6 +147,7 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
     if (dt > 0.1f) dt = 0.1f;
     /* O relógio avança inclusive enquanto ENTER/ESC aguardam soltura. */
     screen->mascot_time = fmodf(screen->mascot_time + dt, MENU_MASCOT_FRAME_COUNT / MENU_MASCOT_FPS);
+    screen->grass_time = fmodf(screen->grass_time + dt, MENU_GRASS_FRAME_COUNT / MENU_GRASS_FPS);
     if (!accept_input) {
         clear_activation(screen);
         /* Sincroniza a soltura com o bloqueio de game.c ao voltar de outra tela. */
@@ -164,14 +217,39 @@ static void centered_text(const char *text, int center, int y, int size, Color c
     DrawText(text, center - MeasureText(text, size) / 2, y, size, color);
 }
 
-static void draw_background(Texture2D texture)
+static void draw_background(const MenuScreen *screen)
 {
-    if (!texture.id) return;
-    float scale = fmaxf(1280.0f / texture.width, 720.0f / texture.height);
-    float width = texture.width * scale, height = texture.height * scale;
+    Texture2D original = screen->background;
+    if (!original.id) return;
+    bool animated = screen->grass_background.id && screen->grass_atlas.id;
+    bool trees_animated = animated && screen->tree_background.id && screen->tree_atlas.id;
+    Texture2D texture = trees_animated ? screen->tree_background : animated ? screen->grass_background : original;
+    float scale = fmaxf(1280.0f / original.width, 720.0f / original.height);
+    float width = original.width * scale, height = original.height * scale;
+    Rectangle transform = {roundf((1280 - width) / 2), roundf((720 - height) / 2), width, height};
     DrawTexturePro(texture, (Rectangle){0, 0, (float)texture.width, (float)texture.height},
-                   (Rectangle){roundf((1280 - width) / 2), roundf((720 - height) / 2), width, height},
-                   (Vector2){0}, 0, WHITE);
+                   transform, (Vector2){0}, 0, WHITE);
+    if (!animated) return;
+    int frame = (int)(screen->grass_time * MENU_GRASS_FPS) % MENU_GRASS_FRAME_COUNT;
+    if (trees_animated) {
+        for (int i = 0; i < MENU_TREE_REGION_COUNT; i++) {
+            const MenuTreeRegion *region = &MENU_TREE_REGIONS[i];
+            Rectangle source = region->poses[region->frames[frame]];
+            Rectangle dest = {transform.x + region->origin.x * scale, transform.y + region->origin.y * scale,
+                              source.width * scale, source.height * scale};
+            DrawTexturePro(screen->tree_atlas, source, dest, (Vector2){0}, 0, WHITE);
+        }
+    }
+    for (int i = 0; i < MENU_GRASS_REGION_COUNT; i++) {
+        const MenuGrassRegion *region = &MENU_GRASS_REGIONS[i];
+        Rectangle source = region->source;
+        source.x += (frame % MENU_GRASS_COLUMNS) * MENU_GRASS_PAGE_WIDTH;
+        source.y += (frame / MENU_GRASS_COLUMNS) * MENU_GRASS_PAGE_HEIGHT;
+        /* Origem e tamanho usam a mesma transformação do fundo, sem arredondar patches. */
+        Rectangle dest = {transform.x + region->origin.x * scale, transform.y + region->origin.y * scale,
+                          region->source.width * scale, region->source.height * scale};
+        DrawTexturePro(screen->grass_atlas, source, dest, (Vector2){0}, 0, WHITE);
+    }
 }
 
 static void draw_art(Texture2D texture, Rectangle source, int center, int y, float height)
@@ -228,7 +306,7 @@ static void draw_mascot(const MenuScreen *screen)
 void menu_screen_draw(const MenuScreen *screen)
 {
     ClearBackground((Color){118, 143, 67, 255});
-    draw_background(screen->background);
+    draw_background(screen);
     if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28, screen->menu_open ? 244 : 324);
     else centered_text("Plants x Plants", 640, 90, 50, INK);
     if (screen->mascot.id || screen->mascot_idle.id) {
@@ -249,6 +327,10 @@ void menu_screen_draw(const MenuScreen *screen)
 void menu_screen_shutdown(MenuScreen *screen)
 {
     if (screen->background.id) UnloadTexture(screen->background);
+    if (screen->grass_background.id) UnloadTexture(screen->grass_background);
+    if (screen->grass_atlas.id) UnloadTexture(screen->grass_atlas);
+    if (screen->tree_background.id) UnloadTexture(screen->tree_background);
+    if (screen->tree_atlas.id) UnloadTexture(screen->tree_atlas);
     if (screen->logo.id) UnloadTexture(screen->logo);
     if (screen->mascot.id) UnloadTexture(screen->mascot);
     if (screen->mascot_idle.id) UnloadTexture(screen->mascot_idle);
