@@ -4,7 +4,7 @@ Este documento explica a organização do projeto e a responsabilidade de cada a
 
 O jogo será desenvolvido em C com raylib. A estrutura inicial prioriza simplicidade, divisão de tarefas e separação entre as regras do jogo e a interface gráfica.
 
-> O menu animado e o teste provisório de exploração estão implementados. Os módulos de combate abaixo ainda descrevem a arquitetura planejada.
+> A tela inicial e o menu em pixel art têm cenário estático e repouso animado do mascote. O teste provisório de exploração está implementado e a seleção de treinadores conserva suas animações. Os módulos de combate abaixo ainda descrevem a arquitetura planejada.
 
 ## Estrutura de pastas
 
@@ -31,7 +31,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 
 | Arquivos | Responsabilidade |
 |---|---|
-| `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial, menu, animações existentes e ações de Campanha/Sair. Versus local permanece desabilitado. A atualização pode suspender entrada sem pausar os efeitos. |
+| `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial/menu em pixel art e relógio contínuo do mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. Desenha painel/cursor em código e devolve ações de Campanha/Sair. Versus local permanece desabilitado. Protege as trocas título/menu até soltar entradas. |
 | `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Recursos próprios de retratos, respiração localizada, destaque suave e escolha por teclado/mouse. Retorna ações de confirmar/voltar; clicar no retrato apenas seleciona. Não muda a tela diretamente. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
 | `include/world.h`, `src/world.c` | Área provisória, grade, limites e restrição da caixa dos pés (16 × 8 pixels). |
@@ -41,12 +41,16 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/forest_scene.h`, `src/forest_scene.c` | Recursos próprios e composição da floresta em camadas. Atualiza vento, nuvens e folhas com delta time; mantém troncos fixos e desenho somente de leitura. Usado apenas na seleção. |
 | `tools/prepare_selection_scene.py`, `include/selection_scene_data.h` | Limpeza topológica do alfa, recortes medidos dos sprites e geração de metadados estáticos dos atlas. |
 | `tools/check_selection_scene.c`, `tools/preview_selection_scene.py` | Verificação opcional com eventos raylib e OpenGL; montagem de prévias temporais. Diagnósticos ficam em `build/selection_preview/`. |
+| `tools/check_menu_screen.c` | Verificação opcional de composição, repouso do mascote, entradas e fluxo completo do menu. Gera capturas OpenGL em `build/menu_v2_preview/` e `build/menu_mascot_preview/`. |
+| `tools/prepare_menu_mascot.py`, `include/menu_mascot_data.h` | Extrai partes e gera oito quadros do mascote na resolução original, sem criar cores; metadados compartilhados com a execução. Máscaras e GIFs ficam em `build/menu_mascot_preview/`. |
 
 `Game` mantém os estados de menu, seleção e exploração. `game.c` faz todas as transições e cancela ativações pendentes. Após cada transição, aguarda a soltura das teclas de navegação/confirmação e do mouse, sem bloquear o loop da janela. ESC na exploração ou seleção retorna ao menu aberto.
 
 Os atlas de caminhada são carregados uma vez em `game_init` e liberados em `game_shutdown`, usados somente pelo jogador na exploração. Recursos ausentes ou com dimensões incorretas recebem diagnóstico e marcador substituto. A posição representa os pés: o desenho usa o mesmo pivô em todas as poses, escala uniforme 0,30 e filtro pontual. A colisão ignora chapéu e mochila.
 
-`TrainerSelectAssets` mantém retratos estáticos e atlas de respiração separados, carregados e liberados no mesmo ciclo de vida. A seleção recebe a textura de botões do menu por empréstimo, sem duplicar seu carregamento. Os atlas têm 32 quadros de 320 × 480 em oito colunas, ciclo de 5,12 s e fases distintas. O relógio e o destaque são atualizados mesmo durante o bloqueio de entrada; o desenho apenas consulta o estado. Atlas ausentes/inválidos usam retratos estáticos; se o derivado estático faltar, tenta a fonte original com escala uniforme. A confirmação entra na exploração pelo `game.c`, preservando o treinador selecionado e o bloqueio até soltar teclas/mouse.
+`TrainerSelectAssets` mantém retratos estáticos, atlas de respiração e a textura dos botões de madeira, carregados e liberados no mesmo ciclo de vida. O menu novo não carrega essa textura; `game.c` encaminha a textura da própria seleção ao seu desenho, preservando a aparência anterior. Os atlas têm 32 quadros de 320 × 480 em oito colunas, ciclo de 5,12 s e fases distintas. O relógio e o destaque são atualizados mesmo durante o bloqueio de entrada; o desenho apenas consulta o estado. Atlas ausentes/inválidos usam retratos estáticos; se o derivado estático faltar, tenta a fonte original com escala uniforme. A confirmação entra na exploração pelo `game.c`, preservando o treinador selecionado e o bloqueio até soltar teclas/mouse.
+
+`MenuScreen` mantém fundo, logo, mascote estático, atlas opcional, recortes e estado de entrada. As fontes são inspecionadas pelo alfa durante a inicialização, sem modificar arquivos. O fundo cobre 1280 × 720 mantendo proporção; logo e mascote usam escala uniforme e filtro pontual. A composição é fixa, sem renderização global em baixa resolução. O atlas do mascote tem 4096 × 2048, oito células de 1024 × 1024 e reprodução a 6 FPS. Seu relógio usa delta time limitado a 0,1 s e avança antes da entrada, inclusive durante bloqueios; abrir/fechar o menu não reinicia a fase. Margens transparentes são compensadas no destino para preservar escala, sombra e pés. Atlas ausente/inválido usa o mascote estático; cada textura é carregada uma vez e liberada no encerramento. As áreas das opções são constantes. Um bloqueio local protege ENTER/ESC entre título e menu, enquanto `game.c` continua coordenando as transições para outras telas. A confirmação por teclado mantém feedback de cor de 0,12 s sem bloquear a janela. Assets e scripts antigos permanecem disponíveis, mas o menu não referencia suas camadas animadas.
 
 `TrainerSelectAssets` também possui a moldura de madeira e `ForestSceneAssets`, com carga única e liberação que aceita recursos parcialmente ausentes. `TrainerSelectScreen` possui `ForestScene`: nuvens e folhas usam posições persistentes, enquanto o vento usa fase periódica. As posições, pivôs e amplitudes ficam em tabelas constantes; os recortes são gerados a partir da inspeção das fontes. O fundo cobre a janela mantendo a proporção. Dosséis são omitidos quando faltam troncos para não criar galhos flutuantes. As demais camadas ausentes são omitidas; sem moldura, desenha um contorno e placa simples. A moldura mantém a proporção original de 2:3 e os retratos usam escala uniforme de 0,83 dentro da abertura, com pés alinhados. Nenhuma dessas camadas é usada no menu atual.
 

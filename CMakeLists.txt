@@ -59,8 +59,22 @@ add_executable(selection_scene_check EXCLUDE_FROM_ALL
 target_include_directories(selection_scene_check PRIVATE include)
 target_link_libraries(selection_scene_check PRIVATE raylib)
 
+# Verificação opcional da composição estática e navegação do novo menu.
+add_executable(menu_screen_check EXCLUDE_FROM_ALL
+    tools/check_menu_screen.c
+    src/game.c
+    src/menu_screen.c
+    src/trainer_select_screen.c
+    src/forest_scene.c
+    src/player.c
+    src/world.c
+)
+target_include_directories(menu_screen_check PRIVATE include)
+target_link_libraries(menu_screen_check PRIVATE raylib)
+
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(selection_scene_check PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(menu_screen_check PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(plants_x_plants PRIVATE
         -Wall
         -Wextra

@@ -39,6 +39,9 @@ void trainer_select_assets_load(TrainerSelectAssets *assets)
     *assets = (TrainerSelectAssets){0};
     forest_scene_assets_load(&assets->forest);
     assets->frame = load_portrait("assets/sprites/selection/prepared/portrait_frame.png", 1024, 1536);
+    /* Recurso exclusivo da seleção; o novo menu não usa botões de madeira. */
+    assets->buttons = load_portrait("assets/sprites/menu_buttons.png", 1254, 1254);
+    if (assets->buttons.id) SetTextureFilter(assets->buttons, TEXTURE_FILTER_POINT);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         assets->portraits[i] = load_portrait(TextFormat("assets/sprites/trainers/%s_portrait.png", names[i]),
                                             PORTRAIT_WIDTH, PORTRAIT_HEIGHT);
@@ -57,6 +60,7 @@ void trainer_select_assets_unload(TrainerSelectAssets *assets)
 {
     forest_scene_assets_unload(&assets->forest);
     if (assets->frame.id) UnloadTexture(assets->frame);
+    if (assets->buttons.id) UnloadTexture(assets->buttons);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         if (assets->portraits[i].id) UnloadTexture(assets->portraits[i]);
         if (assets->breathing[i].id) UnloadTexture(assets->breathing[i]);

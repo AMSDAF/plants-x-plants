@@ -76,7 +76,6 @@ int main(void)
     assert(game.trainer_select_assets.forest.canopies.id && game.trainer_select_assets.forest.ground.id);
     assert(game.trainer_select_assets.forest.leaves.id);
     game.menu.menu_open = true;
-    game.menu.transition = 1;
     campaign(&game);
     key(&game, KEY_RIGHT);
     assert(game.trainer_select.selected == TRAINER_FEMALE);

@@ -37,7 +37,7 @@ void game_init(Game *game)
 void game_update(Game *game)
 {
     if (game->input_blocked) {
-        /* As folhas e o vento continuam animando enquanto a entrada é liberada. */
+        /* A seleção continua animando enquanto aguarda a soltura das entradas. */
         if (game->screen == GAME_MENU) menu_screen_update(&game->menu, false);
         if (game->screen == GAME_TRAINER_SELECT)
             trainer_select_screen_update(&game->trainer_select, false, GetFrameTime());
@@ -75,7 +75,7 @@ void game_draw(const Game *game)
     switch (game->screen) {
         case GAME_MENU: menu_screen_draw(&game->menu); break;
         case GAME_TRAINER_SELECT:
-            trainer_select_screen_draw(&game->trainer_select, &game->trainer_select_assets, game->menu.buttons);
+            trainer_select_screen_draw(&game->trainer_select, &game->trainer_select_assets, game->trainer_select_assets.buttons);
             break;
         case GAME_EXPLORATION:
             world_draw(&game->world);

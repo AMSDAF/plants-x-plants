@@ -156,7 +156,20 @@ A partir da raiz do projeto:
 .\build\plants_x_plants.exe
 ```
 
-A versão atual abre a tela inicial animada. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado.
+A versão atual abre uma tela inicial em pixel art, com logo fixo e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
+
+O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Os recursos antigos de vento, vegetação e botões de madeira não são usados nessa apresentação; a seleção de treinadores conserva seus próprios botões. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
+
+Para refazer apenas a animação do mascote, usando o ambiente de preparação descrito abaixo:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_menu_mascot.py
+cmake --build build --target menu_screen_check
+.\build\menu_screen_check.exe
+.\build\trainer_tools\Scripts\python tools/prepare_menu_mascot.py --runtime-preview
+```
+
+O original permanece intacto. Máscaras, contato e GIFs ficam em `build/menu_mascot_preview/`; somente o atlas é gravado em `assets/`, acompanhado dos metadados em `include/menu_mascot_data.h`. Python não é necessário para jogar. Consulte [MENU_MASCOT_IDLE.md](docs/MENU_MASCOT_IDLE.md) para limites e validação.
 
 Na seleção **Escolha seu explorador**, use esquerda/direita ou A/D, ou clique no retrato de **Explorador** ou **Exploradora**. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para entrar. **Voltar** ou **ESC** retorna ao menu. Os retratos completos têm respiração discreta no tórax e destaque suave de seleção. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
 
@@ -201,7 +214,7 @@ O script preserva `trainer_male_portrait.png` e `trainer_female_portrait.png`, p
 
 ### Preparar novamente o cenário de seleção (opcional)
 
-O cenário da seleção usa fundo, árvores fixas, nuvens, dosséis, vegetação baixa, folhas e molduras de madeira. Tela inicial, menu e exploração mantêm seus recursos anteriores. Para reconstruir os derivados com o mesmo ambiente de preparação:
+O cenário da seleção usa fundo, árvores fixas, nuvens, dosséis, vegetação baixa, folhas e molduras de madeira. Seus recursos são independentes da tela inicial, do menu e da exploração. Para reconstruir os derivados com o mesmo ambiente de preparação:
 
 ```powershell
 .\build\trainer_tools\Scripts\python tools/prepare_selection_scene.py

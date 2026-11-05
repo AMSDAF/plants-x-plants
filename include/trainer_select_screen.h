@@ -15,6 +15,7 @@ typedef struct {
     Texture2D portraits[TRAINER_COUNT];
     Texture2D breathing[TRAINER_COUNT];
     Texture2D frame;
+    Texture2D buttons;
     ForestSceneAssets forest;
 } TrainerSelectAssets;
 
