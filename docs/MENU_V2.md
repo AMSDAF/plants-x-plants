@@ -16,13 +16,11 @@ O carregador prefere a grafia solicitada `menu_background_v2.png`, caso exista, 
 
 Na tela inicial, o logo tem altura visível de 324 pixels, começa em y=28 e fica centralizado em x=640. O mascote tem altura de 240 pixels e vai de y=374 a y=614, sobre a clareira, com sombra pequena em degraus. O aviso é desenhado em código próximo à base. No menu, o logo passa instantaneamente para altura 244; o mascote conserva posição e escala. O painel fica à direita, separado do mascote. Escalas são uniformes; o fundo cobre a janela mantendo proporção.
 
-A composição aprovada mencionada no pedido não veio anexada nesta etapa. As proporções foram definidas a partir da descrição e da arte fornecida; não foi possível comparar com essa referência específica.
-
 ## Entrada e integração
 
 ENTER abre o menu, que aguarda a soltura das entradas antes de aceitar outra ação. ESC retorna à tela inicial. Setas pulam Versus local e alternam as opções disponíveis, com retorno ao começo/fim. Mouse seleciona ao mover e ativa somente ao pressionar e soltar na mesma opção. Soltar fora cancela. A confirmação por teclado conserva o feedback breve de cor de 0,12 s. Não há espera bloqueante.
 
-Campanha continua entrando na seleção de treinadores por `game.c`, e a seleção entra na exploração existente. A proteção de entrada entre essas telas permanece. Os botões de madeira foram transferidos de `MenuScreen` para `TrainerSelectAssets`: continuam carregados uma vez, com filtro pontual, e o desenho da seleção não mudou. Nenhum asset ou script compartilhado antigo foi excluído.
+Campanha continua entrando na seleção de treinadores por `game.c`, e a seleção entra na exploração existente. A proteção de entrada entre essas telas permanece. A textura `assets/sprites/menu_buttons.png` pertence a `TrainerSelectAssets`, é carregada uma vez com filtro pontual e conserva os botões aprovados da seleção. As fontes e atlas do cenário de seleção também são independentes do menu.
 
 ## Verificação
 
@@ -39,4 +37,8 @@ Validação da etapa inicial estática em 05/11/2026: compilação e eventos aut
 
 `cmake --build build`, `git diff --check` e a regressão `selection_scene_check` também passaram, incluindo retorno pelo botão Voltar, reentrada e exploração com ambos os treinadores. A tela inicial foi observada na janela do executável. A injeção externa de ENTER não abriu o menu nessa janela; os testes de interação e as capturas do menu usaram eventos raylib e `game_draw` reais no verificador. Os textos inferiores têm margem adicional para reduzir sobreposição da barra de tarefas.
 
-Arquivos da etapa inicial: `src/menu_screen.c`, `include/menu_screen.h`, `src/game.c`, `src/trainer_select_screen.c`, `include/trainer_select_screen.h`, `tools/check_selection_scene.c`, `CMakeLists.txt`, `README.md`, `docs/ARCHITECTURE.md`, `tools/check_menu_screen.c` e este relatório. As três fontes fornecidas permanecem sem alterações; nenhum recurso antigo foi apagado. O atlas do mascote foi acrescentado na etapa posterior de repouso.
+## Manutenção dos recursos
+
+O menu mantém somente as fontes v2, a imagem aprovada do mascote e seu atlas de repouso. A arte e o experimento de vento da apresentação anterior foram removidos após verificação de referências em código, CMake, ferramentas e documentação. Os recursos compartilhados usados pela seleção e pela exploração permanecem disponíveis.
+
+A preparação atual do mascote usa Pillow, NumPy e SciPy em `tools/trainer_requirements.txt`, também necessários aos outros preparadores ativos. Não há dependência de OpenCV. Contatos, máscaras, GIFs e fixtures de teste ficam exclusivamente em `build/`, ignorado pelo Git. O menu não possui animação de grama ou vento.

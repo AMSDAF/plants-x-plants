@@ -59,7 +59,7 @@ add_executable(selection_scene_check EXCLUDE_FROM_ALL
 target_include_directories(selection_scene_check PRIVATE include)
 target_link_libraries(selection_scene_check PRIVATE raylib)
 
-# Verificação opcional da composição estática e navegação do novo menu.
+# Verificação opcional da composição, mascote e navegação do menu.
 add_executable(menu_screen_check EXCLUDE_FROM_ALL
     tools/check_menu_screen.c
     src/game.c
