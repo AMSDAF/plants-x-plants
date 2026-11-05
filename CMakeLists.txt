@@ -33,6 +33,10 @@ add_executable(plants_x_plants
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/player.c
+    src/world.c
+    src/trainer_select_screen.c
+    src/forest_scene.c
     src/menu_screen.c
 )
 
@@ -42,7 +46,21 @@ target_include_directories(plants_x_plants PRIVATE
 
 target_link_libraries(plants_x_plants PRIVATE raylib)
 
+# Verificação gráfica opcional; não participa da compilação normal do jogo.
+add_executable(selection_scene_check EXCLUDE_FROM_ALL
+    tools/check_selection_scene.c
+    src/game.c
+    src/menu_screen.c
+    src/trainer_select_screen.c
+    src/forest_scene.c
+    src/player.c
+    src/world.c
+)
+target_include_directories(selection_scene_check PRIVATE include)
+target_link_libraries(selection_scene_check PRIVATE raylib)
+
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(selection_scene_check PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(plants_x_plants PRIVATE
         -Wall
         -Wextra

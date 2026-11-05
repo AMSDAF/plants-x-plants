@@ -89,10 +89,10 @@ static const Color LEAF_COLORS[] = {
 
 #define LEAF_COLOR_COUNT (int)(sizeof(LEAF_COLORS) / sizeof(LEAF_COLORS[0]))
 
-/* Os modos serao habilitados quando estiverem implementados. */
+/* Versus local permanece indisponivel. */
 static bool option_is_enabled(int option)
 {
-    return option == 2;
+    return option == 0 || option == 2;
 }
 
 static float clamp01(float value)
@@ -569,7 +569,7 @@ void menu_screen_init(MenuScreen *screen)
         screen->foliage = LoadTexture("assets/sprites/menu_foliage.png");
     }
 
-    screen->selected_option = 2;
+    screen->selected_option = 0;
     clear_button_activation(screen);
 
     for (int i = 0; i < MENU_OPTION_COUNT; i++) {
@@ -597,7 +597,7 @@ void menu_screen_init(MenuScreen *screen)
     }
 }
 
-static bool update_menu_input(MenuScreen *screen, float delta_time)
+static MenuAction update_menu_input(MenuScreen *screen, float delta_time)
 {
     if (!screen->menu_open) {
         clear_button_activation(screen);
@@ -607,20 +607,20 @@ static bool update_menu_input(MenuScreen *screen, float delta_time)
             screen->mouse_focus = false;
         }
 
-        return false;
+        return MENU_ACTION_NONE;
     }
 
     /* ESC pode inverter a abertura sem reiniciar o progresso. */
     if (IsKeyPressed(KEY_ESCAPE)) {
         screen->menu_open = false;
         clear_button_activation(screen);
-        return false;
+        return MENU_ACTION_NONE;
     }
 
     /* Os botoes so respondem depois que a abertura termina. */
     if (screen->transition < 1.0f) {
         clear_button_activation(screen);
-        return false;
+        return MENU_ACTION_NONE;
     }
 
     /* O teclado exibe a pressao antes de executar inclusive a saida. */
@@ -630,10 +630,10 @@ static bool update_menu_input(MenuScreen *screen, float delta_time)
         if (screen->activation_time >= BUTTON_FEEDBACK_DURATION) {
             int option = screen->pending_option;
             clear_button_activation(screen);
-            return option_is_enabled(option) && option == 2;
+            return option == 0 ? MENU_ACTION_CAMPAIGN : MENU_ACTION_EXIT;
         }
 
-        return false;
+        return MENU_ACTION_NONE;
     }
 
     int direction = 0;
@@ -694,7 +694,7 @@ static bool update_menu_input(MenuScreen *screen, float delta_time)
             && CheckCollisionPointRec(
                 mouse, get_button_bounds(screen, pressed)
             )) {
-            return pressed == 2;
+            return pressed == 0 ? MENU_ACTION_CAMPAIGN : MENU_ACTION_EXIT;
         }
     }
 
@@ -706,11 +706,11 @@ static bool update_menu_input(MenuScreen *screen, float delta_time)
         screen->activation_time = 0.0f;
     }
 
-    return false;
+    return MENU_ACTION_NONE;
 }
 
-/* Retorna true apenas quando houver uma solicitacao de saida. */
-bool menu_screen_update(MenuScreen *screen)
+/* Informa a acao escolhida depois do feedback visual. */
+MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
 {
     float delta_time = GetFrameTime();
 
@@ -730,9 +730,10 @@ bool menu_screen_update(MenuScreen *screen)
     update_leaves(screen, delta_time);
     update_transition(screen, delta_time);
 
-    bool exit_requested = update_menu_input(screen, delta_time);
+    if (!accept_input) clear_button_activation(screen);
+    MenuAction action = accept_input ? update_menu_input(screen, delta_time) : MENU_ACTION_NONE;
     update_button_animations(screen, delta_time);
-    return exit_requested;
+    return action;
 }
 
 void menu_screen_draw(const MenuScreen *screen)
@@ -765,7 +766,7 @@ void menu_screen_draw(const MenuScreen *screen)
 
     if (hint_alpha > 0.0f) {
         draw_centered_text(
-            "Modos em desenvolvimento | ESC: voltar",
+            "Campanha: teste de movimento | Versus em desenvolvimento | ESC: voltar",
             685, 18, RAYWHITE, hint_alpha
         );
     }
@@ -798,4 +799,9 @@ void menu_screen_shutdown(MenuScreen *screen)
     }
 
     *screen = (MenuScreen){0};
+}
+
+void menu_screen_reset_input(MenuScreen *screen)
+{
+    clear_button_activation(screen);
 }

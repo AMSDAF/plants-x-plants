@@ -6,7 +6,7 @@ Monte sua equipe, evolua suas plantas e escolha seu caminho por diferentes bioma
 
 ## Status
 
-Em planejamento. As funcionalidades abaixo representam o escopo previsto.
+Teste jogável de movimento disponível pelo menu **Campanha**, com escolha de Explorador ou Exploradora. Combate e progressão de campanha continuam previstos; as seções abaixo descrevem o escopo planejado.
 
 ## Modos de jogo
 
@@ -156,9 +156,68 @@ A partir da raiz do projeto:
 .\build\plants_x_plants.exe
 ```
 
-A versão atual apresenta uma janela com uma tela provisória.
+A versão atual abre a tela inicial animada. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado.
 
-Para sair, pressione ESC ou feche a janela pelo botão X.
+Na seleção **Escolha seu explorador**, use esquerda/direita ou A/D, ou clique no retrato de **Explorador** ou **Exploradora**. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para entrar. **Voltar** ou **ESC** retorna ao menu. Os retratos completos têm respiração discreta no tórax e destaque suave de seleção. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
+
+- **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
+- **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
+- **ESC no menu:** voltar à tela inicial.
+- **Sair** no menu ou **X** da janela: encerrar.
+
+Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continuar. Isso evita confirmações e movimento herdados da tela anterior.
+
+Os atlas preparados em `assets/sprites/trainers/` já estão prontos para execução; Python não é necessário para jogar. Execute a partir da raiz para localizar os recursos. Um atlas ausente ou inválido gera diagnóstico no console e um marcador jogável.
+
+### Preparar novamente os sprites (opcional)
+
+As fontes `trainer_male_sheet.png` e `trainer_female_sheet.png` são preservadas. Para refazer os atlas e as prévias:
+
+```powershell
+python -m venv build/trainer_tools
+.\build\trainer_tools\Scripts\python -m pip install -r tools/trainer_requirements.txt
+.\build\trainer_tools\Scripts\python tools/prepare_trainers.py
+```
+
+Dependências de preparação: Pillow, NumPy e SciPy. As folhas de contato, oito GIFs direcionais e relatórios de inspeção ficam em `build/trainer_preview/`, ignorado pelo Git. Os dois PNGs preparados são os recursos aprovados. Consulte [o relatório dos sprites](docs/TRAINER_TEST.md) para as sequências e limitações da arte.
+
+Para preparar o experimento masculino de seis poses, sem sobrescrever os atlas aprovados:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_trainer_walk6.py
+```
+
+O script usa as mesmas dependências e grava `male_walk6.png` separadamente, com máscaras e GIFs A/B em `build/trainer_preview/walk6/`. Na exploração com o **Explorador**, **F6** alterna a caminhada aprovada e a experimental. A versão aprovada continua sendo o padrão; repouso e Exploradora permanecem iguais. Sem o atlas experimental, o jogo usa o aprovado. A duração do ciclo masculino é configurável por `PLAYER_MALE_WALK_CYCLE_SECONDS` em `include/player.h` (padrão: 0,56 s para ambas as versões, independentemente da quantidade de poses).
+
+### Preparar novamente os retratos de seleção (opcional)
+
+Os retratos são arte exclusiva da seleção, separados dos sprites de caminhada. Com o mesmo ambiente Python descrito acima:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_trainer_portraits.py
+```
+
+O script preserva `trainer_male_portrait.png` e `trainer_female_portrait.png`, prepara derivados estáticos de 320 × 480 e atlas de respiração em `assets/sprites/trainers/`. Diagnósticos de alfa, hashes, máscaras de movimento e GIFs ficam em `build/portrait_preview/`. Os derivados já estão prontos para execução; Python não é necessário para jogar. Sem um atlas de respiração válido, a seleção usa o retrato estático. Detalhes e validação estão em [TRAINER_SELECTION.md](docs/TRAINER_SELECTION.md).
+
+### Preparar novamente o cenário de seleção (opcional)
+
+O cenário da seleção usa fundo, árvores fixas, nuvens, dosséis, vegetação baixa, folhas e molduras de madeira. Tela inicial, menu e exploração mantêm seus recursos anteriores. Para reconstruir os derivados com o mesmo ambiente de preparação:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_selection_scene.py
+```
+
+O script procura as sete fontes em `assets/sprites/selection/` e, se ausentes nessa pasta, em `assets/sprites/`, onde estão os arquivos fornecidos atualmente. Preserva as fontes e grava os derivados em `assets/sprites/selection/prepared/`, além de gerar os retângulos medidos em `include/selection_scene_data.h`. Diagnósticos e comparações em fundos claro/escuro ficam em `build/selection_preview/`. Os recursos preparados já acompanham o projeto; Python é opcional para jogar.
+
+Para executar a verificação gráfica automatizada, a partir da raiz:
+
+```powershell
+cmake --build build --target selection_scene_check
+.\build\selection_scene_check.exe
+.\build\trainer_tools\Scripts\python tools/preview_selection_scene.py
+```
+
+O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
 
 ### Arquivos gerados
 

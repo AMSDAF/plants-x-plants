@@ -4,7 +4,7 @@ Este documento explica a organização do projeto e a responsabilidade de cada a
 
 O jogo será desenvolvido em C com raylib. A estrutura inicial prioriza simplicidade, divisão de tarefas e separação entre as regras do jogo e a interface gráfica.
 
-> No momento, os arquivos de código possuem apenas comentários de responsabilidade. Este documento descreve a arquitetura planejada.
+> O menu animado e o teste provisório de exploração estão implementados. Os módulos de combate abaixo ainda descrevem a arquitetura planejada.
 
 ## Estrutura de pastas
 
@@ -26,6 +26,33 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `src/game.c` | Controlar as telas, os modos de jogo, o início das partidas e o reinício. |
 
 O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalhes das telas devem ficar nos respectivos módulos.
+
+### Menu e teste de exploração
+
+| Arquivos | Responsabilidade |
+|---|---|
+| `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial, menu, animações existentes e ações de Campanha/Sair. Versus local permanece desabilitado. A atualização pode suspender entrada sem pausar os efeitos. |
+| `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Recursos próprios de retratos, respiração localizada, destaque suave e escolha por teclado/mouse. Retorna ações de confirmar/voltar; clicar no retrato apenas seleciona. Não muda a tela diretamente. |
+| `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
+| `include/world.h`, `src/world.c` | Área provisória, grade, limites e restrição da caixa dos pés (16 × 8 pixels). |
+| `tools/prepare_trainers.py` | Limpeza e normalização dos sprites, sem alterar as fontes; gera atlas de execução e prévias de inspeção. |
+| `tools/prepare_trainer_walk6.py` | Experimento isolado de extração e normalização de seis poses masculinas; gera outro atlas, máscaras e prévias A/B. |
+| `tools/prepare_trainer_portraits.py` | Limpa resíduos de alfa dos retratos sem filtrar cores, normaliza escala/pés e gera atlas de respiração localizada e diagnósticos. Não altera fontes nem atlas de caminhada. |
+| `include/forest_scene.h`, `src/forest_scene.c` | Recursos próprios e composição da floresta em camadas. Atualiza vento, nuvens e folhas com delta time; mantém troncos fixos e desenho somente de leitura. Usado apenas na seleção. |
+| `tools/prepare_selection_scene.py`, `include/selection_scene_data.h` | Limpeza topológica do alfa, recortes medidos dos sprites e geração de metadados estáticos dos atlas. |
+| `tools/check_selection_scene.c`, `tools/preview_selection_scene.py` | Verificação opcional com eventos raylib e OpenGL; montagem de prévias temporais. Diagnósticos ficam em `build/selection_preview/`. |
+
+`Game` mantém os estados de menu, seleção e exploração. `game.c` faz todas as transições e cancela ativações pendentes. Após cada transição, aguarda a soltura das teclas de navegação/confirmação e do mouse, sem bloquear o loop da janela. ESC na exploração ou seleção retorna ao menu aberto.
+
+Os atlas de caminhada são carregados uma vez em `game_init` e liberados em `game_shutdown`, usados somente pelo jogador na exploração. Recursos ausentes ou com dimensões incorretas recebem diagnóstico e marcador substituto. A posição representa os pés: o desenho usa o mesmo pivô em todas as poses, escala uniforme 0,30 e filtro pontual. A colisão ignora chapéu e mochila.
+
+`TrainerSelectAssets` mantém retratos estáticos e atlas de respiração separados, carregados e liberados no mesmo ciclo de vida. A seleção recebe a textura de botões do menu por empréstimo, sem duplicar seu carregamento. Os atlas têm 32 quadros de 320 × 480 em oito colunas, ciclo de 5,12 s e fases distintas. O relógio e o destaque são atualizados mesmo durante o bloqueio de entrada; o desenho apenas consulta o estado. Atlas ausentes/inválidos usam retratos estáticos; se o derivado estático faltar, tenta a fonte original com escala uniforme. A confirmação entra na exploração pelo `game.c`, preservando o treinador selecionado e o bloqueio até soltar teclas/mouse.
+
+`TrainerSelectAssets` também possui a moldura de madeira e `ForestSceneAssets`, com carga única e liberação que aceita recursos parcialmente ausentes. `TrainerSelectScreen` possui `ForestScene`: nuvens e folhas usam posições persistentes, enquanto o vento usa fase periódica. As posições, pivôs e amplitudes ficam em tabelas constantes; os recortes são gerados a partir da inspeção das fontes. O fundo cobre a janela mantendo a proporção. Dosséis são omitidos quando faltam troncos para não criar galhos flutuantes. As demais camadas ausentes são omitidas; sem moldura, desenha um contorno e placa simples. A moldura mantém a proporção original de 2:3 e os retratos usam escala uniforme de 0,83 dentro da abertura, com pés alinhados. Nenhuma dessas camadas é usada no menu atual.
+
+`PlayerAssets` também pode carregar `male_walk6.png` (1920 × 1280). A tecla F6 altera somente a opção local `Player.use_walk6` do Explorador durante a exploração. `player_draw` usa o atlas experimental apenas em movimento, com fallback para o aprovado quando ausente ou inválido. Repouso e personagem feminino na exploração continuam usando os recursos anteriores. O ciclo masculino usa uma duração configurável, independente das quatro ou seis poses; trocar a opção preserva a fase, a velocidade e a posição. A versão aprovada é o padrão em cada entrada na exploração.
+
+O movimento usa delta time, limitado a 0,1 s por quadro para evitar saltos após pausas. A prioridade fixa norte/sul/oeste/leste resolve teclas simultâneas. A animação avança apenas após deslocamento efetivo; contra um limite ou parado, volta à pose neutra da direção mantida. Limitações dos ciclos e parâmetros de preparação estão em [TRAINER_TEST.md](TRAINER_TEST.md).
 
 ### Plantas e equipes
 
@@ -85,7 +112,7 @@ Ela não deve calcular dano, decidir o vencedor ou alterar diretamente a vida da
 
 1. `main.c` abre a janela e inicializa o jogo.
 2. A cada quadro, chama as funções de atualização e desenho de `game.c`.
-3. `game.c` direciona a execução para a tela atual.
+3. `game.c` direciona a execução para menu, seleção ou exploração. Campanha abre o teste de movimento; combate ainda não é acessível pelo menu.
 4. Durante uma batalha, a interface captura a ação do jogador ou a IA escolhe uma ação.
 5. `battle.c` valida e resolve a ação, atualizando o estado da batalha.
 6. A interface desenha o estado atualizado.
@@ -149,7 +176,7 @@ A primeira entrega terá uma batalha completa, com:
 - Identificação do vencedor e opção de reiniciar.
 - Visual provisório, sem depender de sprites finalizados.
 
-Campanha, arenas, recrutamento e evolução serão implementados após a base de combate estar funcionando. Seus módulos serão definidos quando essas funcionalidades entrarem em desenvolvimento.
+O botão Campanha atualmente abre somente o teste provisório de movimento. Campanha completa, arenas, recrutamento e evolução continuam fora deste teste e não foram implementados.
 
 ## Convenções do projeto
 

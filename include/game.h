@@ -9,16 +9,26 @@
 
 #include <stdbool.h>
 #include "menu_screen.h"
+#include "trainer_select_screen.h"
 
 #define GAME_SCREEN_WIDTH 1280
 #define GAME_SCREEN_HEIGHT 720
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
 
-/* Estado geral que será expandido nas próximas tarefas. */
+typedef enum { GAME_MENU, GAME_TRAINER_SELECT, GAME_EXPLORATION } GameScreen;
+
+/* Estado e recursos compartilhados entre as telas. */
 typedef struct {
     bool exit_requested;
     MenuScreen menu;
+    GameScreen screen;
+    bool input_blocked;
+    PlayerAssets player_assets;
+    TrainerSelectAssets trainer_select_assets;
+    TrainerSelectScreen trainer_select;
+    Player player;
+    World world;
 } Game;
 
 void game_init(Game *game);

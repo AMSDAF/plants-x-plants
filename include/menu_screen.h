@@ -61,7 +61,9 @@ typedef struct {
 } MenuScreen;
 
 void menu_screen_init(MenuScreen *screen);
-bool menu_screen_update(MenuScreen *screen);
+typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_EXIT } MenuAction;
+MenuAction menu_screen_update(MenuScreen *screen, bool accept_input);
+void menu_screen_reset_input(MenuScreen *screen);
 void menu_screen_draw(const MenuScreen *screen);
 void menu_screen_shutdown(MenuScreen *screen);
 
