@@ -74,11 +74,16 @@ build/wind-venv/Scripts/python.exe tools/generate_menu_wind_test.py
 
 O gerador verifica hash da fonte, pixels inalterados fora das mascaras,
 recomposicao estatica identica a fonte, envelopes disjuntos, margem contra
-clipping, fixacoes imoveis e periodicidade. Cada `*_extracted.png` e
-`*_mask.png` permite inspecionar o recorte; nao sao carregados pelo jogo.
+clipping, fixacoes imoveis e periodicidade. Os recortes e as mascaras sao
+diagnosticos reproduziveis gerados a partir do fundo original, nao entradas
+necessarias nem assets de runtime. Ficam em `build/menu_wind_preview/`
+(ou no diretorio indicado por `--preview-dir`). Em `assets/sprites/menu_wind_test/`
+permanecem o fundo reconstruido, o atlas, os metadados e esta documentacao.
 O atlas substitui as sheets antigas dos dois musgos.
 
 Em `build/menu_wind_preview/`:
+- `*_extracted.png` e `*_mask.png`: recortes transparentes e mascaras das dez regioes.
+- `reconstruction_mask.png`: uniao das mascaras utilizadas na reconstrucao.
 - `menu_wind.gif`: ciclo completo em 1280 x 720, com o sombreamento do fundo,
   sem logo, botoes ou particulas. A paleta GIF e reduzida; os PNGs mantem as cores.
 - `scene_00.png`, `scene_16.png`, `scene_32.png`, `scene_48.png`, `scene_63.png`:

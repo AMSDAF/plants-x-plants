@@ -178,8 +178,8 @@ def main():
         pixels = np.array(layer)
         pixels[pixels[:, :, 3] == 0] = 0
         layer = Image.fromarray(pixels)
-        layer.save(OUTPUT / (item["name"] + "_extracted.png"))
-        mask.crop((x, y, x + w, y + h)).save(OUTPUT / (item["name"] + "_mask.png"))
+        layer.save(args.preview_dir / (item["name"] + "_extracted.png"))
+        mask.crop((x, y, x + w, y + h)).save(args.preview_dir / (item["name"] + "_mask.png"))
         frames = []
         loop_start, _ = animate(layer, item, 0)
         loop_end, _ = animate(layer, item, FRAME_COUNT)
@@ -233,10 +233,10 @@ def main():
     static_composite = background.copy()
     for item in REGIONS:
         static_composite.alpha_composite(
-            Image.open(OUTPUT / (item["name"] + "_extracted.png")), item["origin"])
+            Image.open(args.preview_dir / (item["name"] + "_extracted.png")), item["origin"])
     assert np.array_equal(np.asarray(static_composite.convert("RGB")), source)
     background.convert("RGB").save(OUTPUT / "background.png")
-    Image.fromarray(combined_mask).save(OUTPUT / "reconstruction_mask.png")
+    Image.fromarray(combined_mask).save(args.preview_dir / "reconstruction_mask.png")
     overview.save(args.preview_dir / "regions.png")
     write_header(atlas_height)
     # Atlas substitui as sheets antigas; nao manter nem carregar versoes duplicadas.
