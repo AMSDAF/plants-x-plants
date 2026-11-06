@@ -2,6 +2,7 @@
 #include "versus_screen.h"
 #include "selection_ui.h"
 #include "versus_grass_data.h"
+#include "versus_foliage_data.h"
 #include <math.h>
 
 #define CONFIRM_CONTROL 2
@@ -40,6 +41,18 @@ void versus_assets_load(VersusAssets *assets)
             TraceLog(LOG_WARNING, "Grama do Versus indisponivel; preservando fundo original completo.");
         }
     }
+    if (assets->grass_base.id && assets->grass_atlas.id) {
+        assets->foliage_base = load_texture("assets/sprites/versus/foliage_base.png");
+        assets->foliage_atlas = load_texture("assets/sprites/versus/foliage_atlas.png");
+        if (!assets->foliage_base.id || assets->foliage_base.width != 1672 || assets->foliage_base.height != 941 ||
+            !assets->foliage_atlas.id || assets->foliage_atlas.width != VERSUS_FOLIAGE_ATLAS_WIDTH ||
+            assets->foliage_atlas.height != VERSUS_FOLIAGE_ATLAS_HEIGHT) {
+            if (assets->foliage_base.id) UnloadTexture(assets->foliage_base);
+            if (assets->foliage_atlas.id) UnloadTexture(assets->foliage_atlas);
+            assets->foliage_base = assets->foliage_atlas = (Texture2D){0};
+            TraceLog(LOG_WARNING, "Folhagem do Versus indisponivel; preservando arvores estaticas e grama animada.");
+        }
+    }
     if (!assets->background.id)
         assets->background = load_texture("assets/sprites/versus_background_v1.png");
     assets->illustrations = load_texture("assets/sprites/versus_illustrations_source.png");
@@ -50,6 +63,8 @@ void versus_assets_unload(VersusAssets *assets)
     if (assets->background.id) UnloadTexture(assets->background);
     if (assets->grass_base.id) UnloadTexture(assets->grass_base);
     if (assets->grass_atlas.id) UnloadTexture(assets->grass_atlas);
+    if (assets->foliage_base.id) UnloadTexture(assets->foliage_base);
+    if (assets->foliage_atlas.id) UnloadTexture(assets->foliage_atlas);
     if (assets->illustrations.id) UnloadTexture(assets->illustrations);
     *assets = (VersusAssets){0};
 }
@@ -104,7 +119,8 @@ void versus_background_draw(const VersusAssets *assets, float elapsed)
     ClearBackground((Color){142,155,80,255});
     /* O par é indivisível: sem atlas ou base válidos, não remove a grama original. */
     bool animated = assets->grass_base.id && assets->grass_atlas.id;
-    Texture2D texture = animated ? assets->grass_base : assets->background;
+    bool foliage = animated && assets->foliage_base.id && assets->foliage_atlas.id;
+    Texture2D texture = foliage ? assets->foliage_base : animated ? assets->grass_base : assets->background;
     if (!texture.id) return;
     float scale = fmaxf(1280.0f/texture.width, 720.0f/texture.height);
     float x = (1280-texture.width*scale)/2;
@@ -112,6 +128,17 @@ void versus_background_draw(const VersusAssets *assets, float elapsed)
     DrawTexturePro(texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
                    (Rectangle){x,y,texture.width*scale,texture.height*scale}, (Vector2){0}, 0, WHITE);
     if (!animated) return;
+    if (foliage) {
+        /* Somente folhas em alfa; o relógio e a composição da grama permanecem iguais. */
+        for (int i = 0; i < VERSUS_FOLIAGE_COUNT; i++) {
+            const VersusFoliageRegion *region = &VERSUS_FOLIAGE_REGIONS[i];
+            int frame = (int)(fmodf(fmaxf(0,elapsed),32.0f)*region->fps) % 32;
+            Rectangle source = region->poses[region->frames[frame]];
+            DrawTexturePro(assets->foliage_atlas,source,
+                           (Rectangle){x+region->origin.x*scale,y+region->origin.y*scale,
+                                       source.width*scale,source.height*scale}, (Vector2){0},0,WHITE);
+        }
+    }
     for (int i = 0; i < VERSUS_GRASS_COUNT; i++) {
         const VersusGrassRegion *region = &VERSUS_GRASS_REGIONS[i];
         int frame = (int)(fmodf(fmaxf(0,elapsed),32.0f)*region->fps) % VERSUS_GRASS_FRAMES;

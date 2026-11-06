@@ -1,6 +1,7 @@
 /* Verifica navegação, confirmação isolada e capturas OpenGL da tela Versus. */
 #include "game.h"
 #include "versus_grass_data.h"
+#include "versus_foliage_data.h"
 #include <math.h>
 #undef NDEBUG
 #include <assert.h>
@@ -65,7 +66,8 @@ static void check_grass(Game *game, RenderTexture2D target)
 {
     assert(DirectoryExists("build/versus_grass_preview") || MakeDirectory("build/versus_grass_preview")==0);
     game->screen=GAME_VERSUS_SELECT;
-    const VersusAssets saved=game->versus_assets;
+    VersusAssets saved=game->versus_assets;
+    saved.foliage_base=saved.foliage_atlas=(Texture2D){0};
     assert(saved.grass_base.id && saved.grass_atlas.id);
     Image first=background_capture(&saved,target,0);
     Color *pixels=first.data;
@@ -131,7 +133,7 @@ static void check_grass(Game *game, RenderTexture2D target)
         const Color *next=current.data;
         for (int y=258;y<552;y++) {
             for (int x=208;x<1072;x++) {
-                if (x>=624 && x<656) continue;
+                if (x<224 || (x>=608 && x<672) || x>=1056) continue;
                 assert(memcmp(&before[y*1280+x],&next[y*1280+x],sizeof(Color))==0);
             }
         }
@@ -145,6 +147,124 @@ static void check_grass(Game *game, RenderTexture2D target)
     versus_screen_update(&clock,false,.1f);
     assert(clock.elapsed<.1f);
     puts("PASS: 20 touceiras, 64 instantes OpenGL, somente grama muda, ritmos distintos, ciclo de 32s, fallback parcial e cartoes imoveis.");
+}
+
+/* Fixtures isoladas exercitam a carga real sem renomear recursos do jogo. */
+static void check_foliage_loader(void)
+{
+    char root[1024]; snprintf(root,sizeof(root),"%s",GetWorkingDirectory());
+    const char *cases[]={"missing","bad_base","bad_atlas"};
+    const char *resources[]={"versus_background_generated_v1.png","versus/grass_base.png",
+                             "versus/grass_atlas.png","versus/foliage_base.png","versus/foliage_atlas.png"};
+    assert(DirectoryExists("build/versus_foliage_preview/fixtures") ||
+           MakeDirectory("build/versus_foliage_preview/fixtures")==0);
+    for (int c=0;c<3;c++) {
+        char base[256]; snprintf(base,sizeof(base),"build/versus_foliage_preview/fixtures/%s",cases[c]);
+        const char *suffixes[]={"","/assets","/assets/sprites","/assets/sprites/versus"};
+        for (int i=0;i<4;i++) {
+            const char *dir=TextFormat("%s%s",base,suffixes[i]);
+            assert(DirectoryExists(dir) || MakeDirectory(dir)==0);
+        }
+        for (int i=0;i<5;i++) {
+            if (i>=3 && c==0) continue;
+            int size=0;
+            unsigned char *data=LoadFileData(TextFormat("assets/sprites/%s",resources[i]),&size);
+            assert(data && size>0);
+            assert(SaveFileData(TextFormat("%s/assets/sprites/%s",base,resources[i]),data,size));
+            UnloadFileData(data);
+        }
+        if (c>0) {
+            Image invalid=GenImageColor(16,16,WHITE);
+            assert(ExportImage(invalid,TextFormat("%s/assets/sprites/versus/foliage_%s.png",base,c==1 ? "base" : "atlas")));
+            UnloadImage(invalid);
+        }
+        assert(ChangeDirectory(base));
+        VersusAssets partial; versus_assets_load(&partial);
+        assert(partial.background.id && partial.grass_base.id && partial.grass_atlas.id);
+        assert(!partial.foliage_base.id && !partial.foliage_atlas.id);
+        versus_assets_unload(&partial);
+        assert(!partial.background.id && !partial.grass_base.id && !partial.grass_atlas.id);
+        assert(ChangeDirectory(root));
+    }
+    puts("PASS: carga real com folhagem ausente, base invalida e atlas invalido; grama preservada e recursos liberados.");
+}
+
+static void check_foliage(Game *game, RenderTexture2D target)
+{
+    assert(DirectoryExists("build/versus_foliage_preview") || MakeDirectory("build/versus_foliage_preview")==0);
+    VersusAssets saved=game->versus_assets;
+    assert(saved.foliage_base.id && saved.foliage_atlas.id);
+    VersusAssets grass=saved;
+    grass.foliage_base=grass.foliage_atlas=(Texture2D){0};
+    Image first=background_capture(&saved,target,0);
+    int changes[VERSUS_FOLIAGE_COUNT]={0};
+    float scale=1280.0f/1672, origin_y=(720-941*scale)/2;
+    for (int frame=0;frame<64;frame++) {
+        float time=frame*.125f;
+        Image current=background_capture(&saved,target,time);
+        Image reference=background_capture(&grass,target,time);
+        const Color *pixels=current.data,*before=first.data,*old=reference.data;
+        for (int y=0;y<720;y++) {
+            for (int x=0;x<1280;x++) {
+                if (memcmp(&pixels[y*1280+x],&before[y*1280+x],sizeof(Color))==0) continue;
+                bool allowed=false;
+                for (int i=0;i<VERSUS_FOLIAGE_COUNT;i++) {
+                    const VersusFoliageRegion *r=&VERSUS_FOLIAGE_REGIONS[i];
+                    Rectangle bounds={r->origin.x*scale-1,origin_y+r->origin.y*scale-1,
+                                      r->poses[0].width*scale+2,r->poses[0].height*scale+2};
+                    if (CheckCollisionPointRec((Vector2){(float)x,(float)y},bounds)) {
+                        allowed=true; changes[i]++;
+                    }
+                }
+                for (int i=0;i<VERSUS_GRASS_COUNT;i++) {
+                    const VersusGrassRegion *r=&VERSUS_GRASS_REGIONS[i];
+                    Rectangle bounds={r->origin.x*scale-1,origin_y+r->origin.y*scale-1,
+                                      r->source.width*scale+2,r->source.height*scale+2};
+                    if (CheckCollisionPointRec((Vector2){(float)x,(float)y},bounds)) allowed=true;
+                }
+                assert(allowed);
+            }
+        }
+        /* A mesma grama precisa produzir exatamente os mesmos pixels em todos os tempos. */
+        for (int i=0;i<VERSUS_GRASS_COUNT;i++) {
+            const VersusGrassRegion *r=&VERSUS_GRASS_REGIONS[i];
+            int x0=(int)ceilf(r->origin.x*scale),y0=(int)ceilf(origin_y+r->origin.y*scale);
+            int x1=(int)floorf((r->origin.x+r->source.width)*scale);
+            int y1=(int)floorf(origin_y+(r->origin.y+r->source.height)*scale);
+            for (int y=y0;y<y1;y++) for (int x=x0;x<x1;x++)
+                assert(memcmp(&pixels[y*1280+x],&old[y*1280+x],sizeof(Color))==0);
+        }
+        if (frame==0) {
+            VersusAssets missing=saved; missing.foliage_base=(Texture2D){0};
+            Image fallback=background_capture(&missing,target,time);
+            assert(memcmp(reference.data,fallback.data,(size_t)1280*720*4)==0);
+            assert(ExportImage(fallback,"build/versus_foliage_preview/fallback_base.png"));
+            UnloadImage(fallback);
+            missing=saved; missing.foliage_atlas=(Texture2D){0};
+            fallback=background_capture(&missing,target,time);
+            assert(memcmp(reference.data,fallback.data,(size_t)1280*720*4)==0);
+            assert(ExportImage(fallback,"build/versus_foliage_preview/fallback_atlas.png"));
+            UnloadImage(fallback);
+        }
+        game->versus.elapsed=time;
+        Game state=*game;
+        BeginTextureMode(target); game_draw(game); EndTextureMode();
+        assert(memcmp(&state,game,sizeof(state))==0);
+        Image full=LoadImageFromTexture(target.texture); ImageFlipVertical(&full);
+        save_ppm(full,TextFormat("build/versus_foliage_preview/runtime_%02d.ppm",frame));
+        if (frame==0 || frame==1 || frame==15 || frame==31 || frame==32 || frame==63)
+            assert(ExportImage(full,TextFormat("build/versus_foliage_preview/screen_%02d.png",frame)));
+        UnloadImage(full); UnloadImage(reference); UnloadImage(current);
+    }
+    for (int i=0;i<VERSUS_FOLIAGE_COUNT;i++) assert(changes[i]>0);
+    Image loop=background_capture(&saved,target,32);
+    assert(memcmp(first.data,loop.data,(size_t)1280*720*4)==0);
+    UnloadImage(loop); UnloadImage(first);
+    for (int i=0;i<3;i++) {
+        game->versus.elapsed=32+(i-1)*.125f;
+        capture(game,target,TextFormat("build/versus_foliage_preview/boundary_%d.png",i));
+    }
+    puts("PASS: 13 copas/arbustos, 64 instantes, somente vegetacao muda, grama identica pixel a pixel, ciclo e transicoes, fallback independente e desenho imutavel.");
 }
 
 int main(void)
@@ -204,9 +324,12 @@ int main(void)
     assert(game.screen==GAME_TRAINER_SELECT);
     key(&game,KEY_ESCAPE); click(&game,1000,529); assert(game.exit_requested);
     check_grass(&game,target);
+    check_foliage(&game,target);
+    check_foliage_loader();
     UnloadRenderTexture(target); game_shutdown(&game);
     assert(!game.versus_assets.background.id && !game.versus_assets.illustrations.id);
     assert(!game.versus_assets.grass_base.id && !game.versus_assets.grass_atlas.id);
+    assert(!game.versus_assets.foliage_base.id && !game.versus_assets.foliage_atlas.id);
     CloseWindow();
     puts("PASS: Versus teclado/mouse, entrada mantida, confirmar/voltar, cancelamento de clique, modos em memoria, campanha preservada, fallback, desenho imutavel e recursos liberados.");
     return 0;

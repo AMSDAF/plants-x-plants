@@ -261,23 +261,37 @@ combate nem seleção de plantas nesta etapa. O cenário gerado aprovado é
 `versus_illustrations_source.png`, sem incorporar seus controles impressos.
 Painéis, cantos e cursor reutilizam `selection_ui`, com o mesmo pulso da seleção.
 
-Somente a grama do cenário Versus recebe vento: 20 touceiras com bases fixas,
-fases próprias e ritmos de 6, 7 ou 8 poses por segundo. Árvores, arbustos, nuvens
-e ilustrações dos cartões permanecem estáticos; os pulsos existentes da UI são
-preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
+A grama do cenário Versus mantém suas 20 touceiras com bases fixas,
+fases próprias e ritmos de 6, 7 ou 8 poses por segundo. As árvores e os arbustos
+recebem vento suave em 13 camadas de folhagem, com fases e ritmos independentes.
+Troncos, raízes e bases dos arbustos permanecem fixos. Nuvens e ilustrações dos
+cartões continuam estáticas; os pulsos existentes da UI são preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
 formam um par validado: se faltar ou falhar um deles, o cenário original completo
-é exibido. A fonte aprovada não é alterada. Python continua opcional para jogar.
+é exibido. O par adicional `foliage_base.png`/`foliage_atlas.png` só é ativado
+com a grama válida. Se falhar, árvores e arbustos ficam estáticos e a grama segue
+animando normalmente. A fonte aprovada e os recursos da grama não são alterados.
+Python continua opcional para jogar.
 
 Para regenerar as camadas e os diagnósticos com o mesmo ambiente de preparação:
 
 ```powershell
 .\build\trainer_tools\Scripts\python tools/prepare_versus_grass.py
+.\build\trainer_tools\Scripts\python tools/prepare_versus_foliage.py
 ```
 
 Máscaras, contato ampliado, GIF e relatório ficam em `build/versus_grass_preview/`.
 A verificação abaixo também compara 64 instantes OpenGL, o ciclo de 32 segundos,
 os cartões imóveis, o fallback parcial e a navegação existente. Execute
 `tools/preview_versus_grass.py` após a verificação para montar o GIF do jogo real.
+O teste adicional de folhagem compara a grama pixel a pixel com a versão anterior,
+verifica falhas parciais, o retorno do ciclo e os instantes antes/depois da troca
+de pose. Seus diagnósticos ficam em `build/versus_foliage_preview/`.
+
+Para montar o GIF e os recortes ampliados da folhagem a partir das capturas reais:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/preview_versus_foliage.py
+```
 
 Para verificar a tela e gerar capturas OpenGL em `build/versus_preview/`:
 

@@ -9,6 +9,8 @@ typedef struct {
     Texture2D background;
     Texture2D grass_base;
     Texture2D grass_atlas;
+    Texture2D foliage_base;
+    Texture2D foliage_atlas;
     Texture2D illustrations;
 } VersusAssets;
 typedef struct {
