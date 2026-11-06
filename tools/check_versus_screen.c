@@ -2,6 +2,7 @@
 #include "game.h"
 #include "versus_grass_data.h"
 #include "versus_foliage_data.h"
+#include "versus_character_data.h"
 #include <math.h>
 #undef NDEBUG
 #include <assert.h>
@@ -267,6 +268,138 @@ static void check_foliage(Game *game, RenderTexture2D target)
     puts("PASS: 13 copas/arbustos, 64 instantes, somente vegetacao muda, grama identica pixel a pixel, ciclo e transicoes, fallback independente e desenho imutavel.");
 }
 
+static Image scene_capture(Game *game, RenderTexture2D target)
+{
+    Game before=*game;
+    BeginTextureMode(target); game_draw(game); EndTextureMode();
+    assert(memcmp(&before,game,sizeof(before))==0);
+    Image image=LoadImageFromTexture(target.texture); ImageFlipVertical(&image);
+    return image;
+}
+
+static void check_character_loader(void)
+{
+    char root[1024]; snprintf(root,sizeof(root),"%s",GetWorkingDirectory());
+    const char *cases[]={"missing","bad_base","bad_atlas"};
+    const char *resources[]={"versus_illustrations_source.png","versus/character_base.png","versus/character_atlas.png"};
+    assert(DirectoryExists("build/versus_character_preview/fixtures") ||
+           MakeDirectory("build/versus_character_preview/fixtures")==0);
+    for (int c=0;c<3;c++) {
+        char base[256]; snprintf(base,sizeof(base),"build/versus_character_preview/fixtures/%s",cases[c]);
+        const char *suffixes[]={"","/assets","/assets/sprites","/assets/sprites/versus"};
+        for (int i=0;i<4;i++) {
+            const char *dir=TextFormat("%s%s",base,suffixes[i]);
+            assert(DirectoryExists(dir) || MakeDirectory(dir)==0);
+        }
+        for (int i=0;i<3;i++) {
+            if (i>0 && c==0) continue;
+            int size=0;
+            unsigned char *data=LoadFileData(TextFormat("assets/sprites/%s",resources[i]),&size);
+            assert(data && size>0);
+            assert(SaveFileData(TextFormat("%s/assets/sprites/%s",base,resources[i]),data,size));
+            UnloadFileData(data);
+        }
+        if (c>0) {
+            Image invalid=GenImageColor(16,16,WHITE);
+            assert(ExportImage(invalid,TextFormat("%s/assets/sprites/versus/character_%s.png",base,c==1 ? "base" : "atlas")));
+            UnloadImage(invalid);
+        }
+        assert(ChangeDirectory(base));
+        VersusAssets partial; versus_assets_load(&partial);
+        assert(partial.illustrations.id && !partial.character_base.id && !partial.character_atlas.id);
+        versus_assets_unload(&partial);
+        assert(!partial.illustrations.id);
+        assert(ChangeDirectory(root));
+    }
+    puts("PASS: carga dos repousos ausente/base invalida/atlas invalido recupera a arte original.");
+}
+
+static void check_characters(Game *game, RenderTexture2D target)
+{
+    assert(DirectoryExists("build/versus_character_preview") || MakeDirectory("build/versus_character_preview")==0);
+    game->screen=GAME_VERSUS_SELECT;
+    versus_screen_init(&game->versus,VERSUS_CPU);
+    assert(game->versus_assets.character_base.id && game->versus_assets.character_atlas.id);
+    VersusScreen initial=game->versus;
+    assert(initial.character_time[0]!=initial.character_time[1] && initial.character_time[2]!=initial.character_time[3]);
+    assert(versus_character_frame(&initial,-1)==0 && versus_character_frame(&initial,4)==0);
+    for (int i=0;i<4;i++) game->versus.character_time[i]=0;
+    Image neutral=scene_capture(game,target);
+    const Color *first=neutral.data;
+    for (int actor=0;actor<4;actor++) {
+        const VersusCharacterRegion *r=&VERSUS_CHARACTER_REGIONS[actor];
+        float left=232+r->card*448.0f,top=290,sx=368.0f/482,sy=186.0f/244;
+        Rectangle allowed={left+r->origin.x*sx-2,top+r->origin.y*sy-2,
+                           r->poses[0].width*sx+4,r->poses[0].height*sy+4};
+        int total=0;
+        for (int f=0;f<64;f++) {
+            game->versus.character_time[actor]=(f+.01f)/r->fps;
+            assert(versus_character_frame(&game->versus,actor)==f);
+            Image image=scene_capture(game,target);
+            const Color *next=image.data;
+            for (int y=0;y<720;y++) for (int x=0;x<1280;x++) {
+                if (memcmp(&first[y*1280+x],&next[y*1280+x],sizeof(Color))==0) continue;
+                assert(CheckCollisionPointRec((Vector2){(float)x,(float)y},allowed));
+                assert(y<(int)ceilf(top+r->fixed_y*sy));
+                total++;
+            }
+            if (f==0 || f==12 || f==42 || f==48 || f==52)
+                save_ppm(image,TextFormat("build/versus_character_preview/actor_%d_%02d.ppm",actor,f));
+            UnloadImage(image);
+        }
+        assert(total>0);
+        game->versus.character_time[actor]=0;
+        Image loop=scene_capture(game,target);
+        assert(memcmp(loop.data,neutral.data,(size_t)1280*720*4)==0);
+        UnloadImage(loop);
+        game->versus.character_time[actor]=64.0f/r->fps;
+        assert(versus_character_frame(&game->versus,actor)==0);
+        game->versus.character_time[actor]=0;
+    }
+    UnloadImage(neutral);
+    /* A ausência de qualquer derivado recupera exatamente a referência estática. */
+    VersusAssets saved=game->versus_assets;
+    game->versus_assets.character_base=game->versus_assets.character_atlas=(Texture2D){0};
+    Image fallback=scene_capture(game,target);
+    assert(ExportImage(fallback,"build/versus_character_preview/fallback.png"));
+    game->versus_assets=saved; game->versus_assets.character_base=(Texture2D){0};
+    Image partial=scene_capture(game,target);
+    assert(memcmp(fallback.data,partial.data,(size_t)1280*720*4)==0); UnloadImage(partial);
+    game->versus_assets=saved; game->versus_assets.character_atlas=(Texture2D){0};
+    partial=scene_capture(game,target);
+    assert(memcmp(fallback.data,partial.data,(size_t)1280*720*4)==0);
+    UnloadImage(partial); UnloadImage(fallback); game->versus_assets=saved;
+    game->versus=initial;
+    Image start=scene_capture(game,target);
+    for (int i=0;i<4;i++) {
+        const VersusCharacterRegion *r=&VERSUS_CHARACTER_REGIONS[i];
+        game->versus.character_time[i]=fmodf(initial.character_time[i]+32,64.0f/r->fps);
+        assert(versus_character_frame(&game->versus,i)==versus_character_frame(&initial,i));
+    }
+    Image end=scene_capture(game,target);
+    assert(memcmp(start.data,end.data,(size_t)1280*720*4)==0);
+    UnloadImage(start); UnloadImage(end);
+    game->versus=initial;
+    for (int f=0;f<256;f++) {
+        Image image=scene_capture(game,target);
+        save_ppm(image,TextFormat("build/versus_character_preview/runtime_%02d.ppm",f));
+        if (f==0 || f==8 || f==26 || f==44 || f==48)
+            assert(ExportImage(image,TextFormat("build/versus_character_preview/screen_%02d.png",f)));
+        UnloadImage(image);
+        versus_screen_update(&game->versus,false,.0625f);
+        versus_screen_update(&game->versus,false,.0625f);
+    }
+    VersusScreen before=game->versus;
+    versus_screen_update(&game->versus,false,-1);
+    for (int i=0;i<4;i++) assert(game->versus.character_time[i]==before.character_time[i]);
+    versus_screen_update(&game->versus,false,1);
+    for (int i=0;i<4;i++) {
+        float seconds=64.0f/VERSUS_CHARACTER_REGIONS[i].fps;
+        assert(fabsf(game->versus.character_time[i]-fmodf(before.character_time[i]+.1f,seconds))<.0001f);
+    }
+    puts("PASS: quatro repousos independentes, 256 poses OpenGL, mudancas restritas aos personagens, pes fixos, ciclos, dt limitado, fallback e desenho imutavel.");
+}
+
 int main(void)
 {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
@@ -326,10 +459,13 @@ int main(void)
     check_grass(&game,target);
     check_foliage(&game,target);
     check_foliage_loader();
+    check_characters(&game,target);
+    check_character_loader();
     UnloadRenderTexture(target); game_shutdown(&game);
     assert(!game.versus_assets.background.id && !game.versus_assets.illustrations.id);
     assert(!game.versus_assets.grass_base.id && !game.versus_assets.grass_atlas.id);
     assert(!game.versus_assets.foliage_base.id && !game.versus_assets.foliage_atlas.id);
+    assert(!game.versus_assets.character_base.id && !game.versus_assets.character_atlas.id);
     CloseWindow();
     puts("PASS: Versus teclado/mouse, entrada mantida, confirmar/voltar, cancelamento de clique, modos em memoria, campanha preservada, fallback, desenho imutavel e recursos liberados.");
     return 0;

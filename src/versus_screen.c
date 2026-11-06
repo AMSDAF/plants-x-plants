@@ -3,6 +3,7 @@
 #include "selection_ui.h"
 #include "versus_grass_data.h"
 #include "versus_foliage_data.h"
+#include "versus_character_data.h"
 #include <math.h>
 
 #define CONFIRM_CONTROL 2
@@ -56,6 +57,18 @@ void versus_assets_load(VersusAssets *assets)
     if (!assets->background.id)
         assets->background = load_texture("assets/sprites/versus_background_v1.png");
     assets->illustrations = load_texture("assets/sprites/versus_illustrations_source.png");
+    if (assets->illustrations.id && assets->illustrations.width == 1672 && assets->illustrations.height == 941) {
+        assets->character_base = load_texture("assets/sprites/versus/character_base.png");
+        assets->character_atlas = load_texture("assets/sprites/versus/character_atlas.png");
+        if (!assets->character_base.id || assets->character_base.width != 964 || assets->character_base.height != 244 ||
+            !assets->character_atlas.id || assets->character_atlas.width != VERSUS_CHARACTER_ATLAS_WIDTH ||
+            assets->character_atlas.height != VERSUS_CHARACTER_ATLAS_HEIGHT) {
+            if (assets->character_base.id) UnloadTexture(assets->character_base);
+            if (assets->character_atlas.id) UnloadTexture(assets->character_atlas);
+            assets->character_base = assets->character_atlas = (Texture2D){0};
+            TraceLog(LOG_WARNING, "Repousos do Versus indisponiveis; preservando ilustracoes originais.");
+        }
+    }
 }
 
 void versus_assets_unload(VersusAssets *assets)
@@ -65,6 +78,8 @@ void versus_assets_unload(VersusAssets *assets)
     if (assets->grass_atlas.id) UnloadTexture(assets->grass_atlas);
     if (assets->foliage_base.id) UnloadTexture(assets->foliage_base);
     if (assets->foliage_atlas.id) UnloadTexture(assets->foliage_atlas);
+    if (assets->character_base.id) UnloadTexture(assets->character_base);
+    if (assets->character_atlas.id) UnloadTexture(assets->character_atlas);
     if (assets->illustrations.id) UnloadTexture(assets->illustrations);
     *assets = (VersusAssets){0};
 }
@@ -72,11 +87,18 @@ void versus_assets_unload(VersusAssets *assets)
 void versus_screen_init(VersusScreen *screen, VersusMode selected)
 {
     *screen = (VersusScreen){.selected = selected, .hovered = -1, .pressed = -1};
+    for (int i = 0; i < VERSUS_CHARACTER_COUNT; i++)
+        screen->character_time[i] = VERSUS_CHARACTER_REGIONS[i].phase;
 }
 
 VersusAction versus_screen_update(VersusScreen *screen, bool accept_input, float dt)
 {
-    screen->elapsed = fmodf(screen->elapsed + fminf(0.1f, fmaxf(0, dt)), 128);
+    float delta = fminf(0.1f, fmaxf(0, dt));
+    screen->elapsed = fmodf(screen->elapsed + delta, 128);
+    for (int i = 0; i < VERSUS_CHARACTER_COUNT; i++) {
+        float seconds = VERSUS_CHARACTER_FRAMES/(float)VERSUS_CHARACTER_REGIONS[i].fps;
+        screen->character_time[i] = fmodf(screen->character_time[i] + delta, seconds);
+    }
     screen->hovered = -1;
     if (!accept_input) {
         screen->pressed = -1;
@@ -151,6 +173,29 @@ void versus_background_draw(const VersusAssets *assets, float elapsed)
     }
 }
 
+int versus_character_frame(const VersusScreen *screen, int index)
+{
+    if (index < 0 || index >= VERSUS_CHARACTER_COUNT) return 0;
+    const VersusCharacterRegion *region = &VERSUS_CHARACTER_REGIONS[index];
+    float seconds = VERSUS_CHARACTER_FRAMES/(float)region->fps;
+    return (int)(fmodf(fmaxf(0,screen->character_time[index]),seconds)*region->fps + 0.0001f) % VERSUS_CHARACTER_FRAMES;
+}
+
+static void draw_characters(const VersusScreen *screen, const VersusAssets *assets, int card, Rectangle destination)
+{
+    DrawTexturePro(assets->character_base,(Rectangle){card*482.0f,0,482,244},destination,(Vector2){0},0,WHITE);
+    for (int i = 0; i < VERSUS_CHARACTER_COUNT; i++) {
+        const VersusCharacterRegion *region = &VERSUS_CHARACTER_REGIONS[i];
+        if (region->card != card) continue;
+        Rectangle source = region->poses[region->frames[versus_character_frame(screen,i)]];
+        /* A mesma escala da referência; pivô e pés não dependem da pose. */
+        Rectangle dest = {destination.x+region->origin.x*destination.width/482,
+                          destination.y+region->origin.y*destination.height/244,
+                          source.width*destination.width/482,source.height*destination.height/244};
+        DrawTexturePro(assets->character_atlas,source,dest,(Vector2){0},0,WHITE);
+    }
+}
+
 void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source)
 {
     versus_background_draw(assets,screen->elapsed);
@@ -169,7 +214,9 @@ void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, 
         Rectangle card = control_bounds(i);
         bool selected = screen->selected == (VersusMode)i;
         panel(card,selected);
-        if (assets->illustrations.id) {
+        if (assets->character_base.id && assets->character_atlas.id) {
+            draw_characters(screen,assets,i,(Rectangle){card.x+24,card.y+32,368,186});
+        } else if (assets->illustrations.id) {
             /* Recortes da referência preservam a arte; os controles são desenhados em código. */
             Rectangle source = {i == 0 ? 294 : 886, 384, 482, 244};
             Texture2D texture = assets->illustrations;

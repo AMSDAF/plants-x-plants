@@ -264,19 +264,30 @@ Painéis, cantos e cursor reutilizam `selection_ui`, com o mesmo pulso da seleç
 A grama do cenário Versus mantém suas 20 touceiras com bases fixas,
 fases próprias e ritmos de 6, 7 ou 8 poses por segundo. As árvores e os arbustos
 recebem vento suave em 13 camadas de folhagem, com fases e ritmos independentes.
-Troncos, raízes e bases dos arbustos permanecem fixos. Nuvens e ilustrações dos
-cartões continuam estáticas; os pulsos existentes da UI são preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
+Troncos, raízes e bases dos arbustos permanecem fixos. As nuvens continuam
+estáticas; os pulsos existentes da UI são preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
 formam um par validado: se faltar ou falhar um deles, o cenário original completo
 é exibido. O par adicional `foliage_base.png`/`foliage_atlas.png` só é ativado
 com a grama válida. Se falhar, árvores e arbustos ficam estáticos e a grama segue
 animando normalmente. A fonte aprovada e os recursos da grama não são alterados.
 Python continua opcional para jogar.
 
+Os quatro personagens dos cartões usam repousos próprios, com relógios e fases
+independentes. As plantas verdes respiram discretamente, movem as folhas e erguem
+os punhos ocasionalmente; a vermelha tem gestos mais frequentes e vigorosos.
+O robô faz ajustes de um pixel no monitor e pisca. Todos usam pixels da arte
+original, sem escala variável ou filtro suave; pés, bases e sombras ficam fixos.
+O par `character_base.png`/`character_atlas.png` é validado ao carregar: se falhar,
+as ilustrações originais são exibidas. Os recursos aprovados do cenário são
+preservados. Os relógios continuam enquanto entradas mantidas aguardam soltura,
+sem modificar o modo selecionado ou as regras de navegação.
+
 Para regenerar as camadas e os diagnósticos com o mesmo ambiente de preparação:
 
 ```powershell
 .\build\trainer_tools\Scripts\python tools/prepare_versus_grass.py
 .\build\trainer_tools\Scripts\python tools/prepare_versus_foliage.py
+.\build\trainer_tools\Scripts\python tools/prepare_versus_characters.py
 ```
 
 Máscaras, contato ampliado, GIF e relatório ficam em `build/versus_grass_preview/`.
@@ -291,6 +302,14 @@ Para montar o GIF e os recortes ampliados da folhagem a partir das capturas reai
 
 ```powershell
 .\build\trainer_tools\Scripts\python tools/preview_versus_foliage.py
+```
+
+As verificações de personagens isolam 256 poses, conferem pés imóveis, ciclos,
+limite de delta time e retorno à ilustração estática. Capturas ficam em
+`build/versus_character_preview/`. Para montar GIFs do jogo e dos dois cartões:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/preview_versus_characters.py
 ```
 
 Para verificar a tela e gerar capturas OpenGL em `build/versus_preview/`:
