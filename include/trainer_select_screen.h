@@ -4,6 +4,7 @@
 
 #include "player.h"
 #include "forest_scene.h"
+#include "trainer_background.h"
 
 typedef enum {
     TRAINER_SELECT_NONE,
@@ -13,24 +14,30 @@ typedef enum {
 
 typedef struct {
     Texture2D portraits[TRAINER_COUNT];
-    Texture2D breathing[TRAINER_COUNT];
+    Rectangle portrait_bounds[TRAINER_COUNT]; /* Corpo sem halo, usado para escala e pés. */
+    Texture2D male_idle;
+    Texture2D male_idle_halo;
     Texture2D frame;
     Texture2D buttons;
     ForestSceneAssets forest;
+    TrainerBackgroundAssets background;
 } TrainerSelectAssets;
 
 typedef struct {
     Trainer selected;
     int pressed;
     int hovered;
-    float elapsed_time;
     float emphasis[TRAINER_COUNT];
     ForestScene forest;
+    bool background_preview;
+    float background_time;
+    float male_idle_time;
 } TrainerSelectScreen;
 
 void trainer_select_assets_load(TrainerSelectAssets *assets);
 void trainer_select_assets_unload(TrainerSelectAssets *assets);
 void trainer_select_screen_init(TrainerSelectScreen *screen);
+int trainer_select_male_idle_frame(float elapsed);
 TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bool accept_input, float dt);
 void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
                                Texture2D buttons);

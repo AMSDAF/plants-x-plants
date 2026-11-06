@@ -184,7 +184,7 @@ cmake --build build --target menu_screen_check
 
 As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
 
-Na seleção **Escolha seu explorador**, use esquerda/direita ou A/D, ou clique no retrato de **Explorador** ou **Exploradora**. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para entrar. **Voltar** ou **ESC** retorna ao menu. Os retratos completos têm respiração discreta no tórax e destaque suave de seleção. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
+Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para entrar na exploração existente. **Voltar** ou **ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; o homem tem repouso em quatro poses e a mulher permanece estática. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
@@ -220,12 +220,17 @@ O script usa as mesmas dependências e grava `male_walk6.png` separadamente, com
 Os retratos são arte exclusiva da seleção, separados dos sprites de caminhada. Com o mesmo ambiente Python descrito acima:
 
 ```powershell
-.\build\trainer_tools\Scripts\python tools/prepare_trainer_portraits.py
+.\build\trainer_tools\Scripts\python tools/prepare_selection_portraits_v2.py
 ```
 
-O script preserva `trainer_male_portrait.png` e `trainer_female_portrait.png`, prepara derivados estáticos de 320 × 480 e atlas de respiração em `assets/sprites/trainers/`. Diagnósticos de alfa, hashes, máscaras de movimento e GIFs ficam em `build/portrait_preview/`. Os derivados já estão prontos para execução; Python não é necessário para jogar. Sem um atlas de respiração válido, a seleção usa o retrato estático. Detalhes e validação estão em [TRAINER_SELECTION.md](docs/TRAINER_SELECTION.md).
+O script preserva `trainer_selection_portraits_v2.png` e divide suas metades em `male_portrait_v2.png` e `female_portrait_v2.png`, com margem transparente, em `assets/sprites/trainers/`. Cores, alfa e halo são copiados sem alteração. Diagnósticos de alfa, enquadramento e composição ficam em `build/selection_portrait_v2_preview/`. O repouso masculino é preparado separadamente por `tools/prepare_male_portrait_idle.py`; a mulher e o fallback permanecem estáticos. Recursos anteriores são preservados. Python não é necessário para jogar. Detalhes e validação estão em [TRAINER_SELECTION.md](docs/TRAINER_SELECTION.md).
 
 ### Preparar novamente o cenário de seleção (opcional)
+
+O novo fundo animado já acompanha os cartões em **Campanha**. Pressione **F7**
+para ver somente o cenário animado. **ESC** retorna ao menu; F7 recupera a seleção
+normal. Preparação, GIF completo e verificações estão em
+[TRAINER_SELECTION_BACKGROUND.md](docs/TRAINER_SELECTION_BACKGROUND.md).
 
 O cenário da seleção usa fundo, árvores fixas, nuvens, dosséis, vegetação baixa, folhas e molduras de madeira. Seus recursos são independentes da tela inicial, do menu e da exploração. Para reconstruir os derivados com o mesmo ambiente de preparação:
 

@@ -36,6 +36,7 @@ add_executable(plants_x_plants
     src/player.c
     src/world.c
     src/trainer_select_screen.c
+    src/trainer_background.c
     src/forest_scene.c
     src/menu_screen.c
 )
@@ -52,6 +53,7 @@ add_executable(selection_scene_check EXCLUDE_FROM_ALL
     src/game.c
     src/menu_screen.c
     src/trainer_select_screen.c
+    src/trainer_background.c
     src/forest_scene.c
     src/player.c
     src/world.c
@@ -65,6 +67,7 @@ add_executable(menu_screen_check EXCLUDE_FROM_ALL
     src/game.c
     src/menu_screen.c
     src/trainer_select_screen.c
+    src/trainer_background.c
     src/forest_scene.c
     src/player.c
     src/world.c
@@ -72,7 +75,16 @@ add_executable(menu_screen_check EXCLUDE_FROM_ALL
 target_include_directories(menu_screen_check PRIVATE include)
 target_link_libraries(menu_screen_check PRIVATE raylib)
 
+add_executable(trainer_background_check EXCLUDE_FROM_ALL
+    tools/check_trainer_background.c
+    src/game.c src/menu_screen.c src/trainer_select_screen.c
+    src/trainer_background.c src/forest_scene.c src/player.c src/world.c
+)
+target_include_directories(trainer_background_check PRIVATE include)
+target_link_libraries(trainer_background_check PRIVATE raylib)
+
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(trainer_background_check PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(selection_scene_check PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(menu_screen_check PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(plants_x_plants PRIVATE

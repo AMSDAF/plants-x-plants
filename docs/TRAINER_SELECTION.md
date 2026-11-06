@@ -1,6 +1,74 @@
 # Seleção de exploradores
 
-## Recursos e preparação
+## Composição atual
+
+**Campanha** abre “Escolha seu personagem” sobre o fundo animado aprovado.
+Cartões iguais de 336 × 480, controles e título são formas raylib, sem textura
+da folha de referência. A seleção muda apenas borda, cantos laranja e cursor;
+hitboxes e relógio do fundo permanecem estáveis. “Homem” e “Mulher” reutilizam
+os retratos simplificados com filtro pontual, proporção preservada, altura
+corporal de 360 pixels e pés em y=526. O homem tem repouso em quatro poses;
+a mulher permanece estática. Os controles, F7 e a confirmação para
+a exploração permanecem disponíveis. `selection_scene_check` salva ambos os
+estados em `build/selection_preview/selected_male.png` e `selected_female.png`.
+As seções de molduras de madeira e floresta anterior abaixo são históricas.
+
+## Retratos simplificados v2
+
+`tools/prepare_selection_portraits_v2.py` divide a fonte RGBA de 1536 × 1024
+em duas metades completas, com 24 pixels extras de margem. Gera dois PNGs
+816 × 1072 e `include/selection_portrait_v2_data.h`, sem remover pixels nem
+alterar cores/alfa. O maior componente de alfa ≥128 mede somente o corpo;
+nenhuma máscara é aplicada à arte. A fonte tem alfa 0–254; o halo marrom amplo
+está principalmente em RGB sob alfa zero e, por isso, quase não aparece no
+cartão creme. Não houve recorte retangular visível que exigisse suavização.
+Diagnósticos ficam em `build/selection_portrait_v2_preview/`. Após executar
+`selection_scene_check`, use o preparador com `--check-runtime` para comparar
+a arte estática nas capturas. As fontes e atlas detalhados antigos permanecem
+no projeto, mas seus atlas não são carregados pela seleção atual.
+
+## Repouso masculino
+
+`tools/prepare_male_portrait_idle.py` preserva a fonte RGBA
+`male_portrait_idle_source.png` (1199 × 1312) e mede cada quadrante separadamente.
+Alinha as solas e um pivô horizontal comum, sem redimensionar poses. O atlas
+`male_portrait_idle.png` contém quatro células 352 × 656. A parte inferior do
+neutro é reutilizada a partir da linha 372, junto ao cinto, mantendo pernas e
+botas idênticas. A escala comum é 360/586; não há deformação, rotação ou salto
+vertical do corpo inteiro. `male_portrait_idle_halo.png` preserva separadamente
+o halo do retrato v2, retirando somente seu corpo opaco; essa camada fica fixa.
+
+Tempos finais: neutro **3,80 s**, inspiração **0,35 s**, piscar **0,10 s** e
+relaxado **0,45 s**; ciclo de **4,70 s**. A pausa neutra inicial de 1,80 s foi
+ampliada para reduzir o piscar de cerca de 22 para 13 vezes por minuto. As
+quatro poses ainda têm pequenas diferenças de rosto/camisa, sem interpolação.
+O relógio avança inclusive sem seleção masculina, durante bloqueios e na prévia
+F7. Falha no atlas ou halo usa o retrato estático existente. A mulher e os
+recursos da exploração não mudam.
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_male_portrait_idle.py
+cmake --build build
+cmake --build build --target selection_scene_check
+.\build\selection_scene_check.exe
+.\build\trainer_tools\Scripts\python tools/prepare_male_portrait_idle.py --runtime-preview
+git diff --check
+```
+
+O preparador usa Pillow, NumPy e SciPy já disponíveis. Metadados ficam em
+`include/male_portrait_idle_data.h`; medidas, máscaras, contatos de emenda,
+GIFs e capturas OpenGL ficam em `build/male_portrait_idle_preview/`. O GIF
+`runtime_card_loop.gif` usa o cartão creme real; os outros relógios ficam
+congelados somente nas capturas para isolar a emenda do repouso. Verificações
+comparam pernas/botas, mulher, começo/fim e fallback, além dos limites dos
+tempos e continuidade do relógio. A revisão técnica usa capturas ampliadas.
+
+**Aprovação visual manual:** o usuário aprovou o repouso masculino antes deste
+commit, conforme informado na solicitação de registro. Essa aprovação se limita
+à animação masculina; as demais mudanças mantêm os registros de validação
+automatizada e inspeção de capturas descritos nesta documentação.
+
+## Recursos e preparação anteriores (histórico)
 
 As fontes `assets/sprites/trainer_male_portrait.png` e `trainer_female_portrait.png` são preservadas. `tools/prepare_trainer_portraits.py` usa as dependências de `tools/trainer_requirements.txt` e produz somente derivados de seleção em `assets/sprites/trainers/`:
 

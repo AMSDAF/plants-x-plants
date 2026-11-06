@@ -1,5 +1,6 @@
 /* Valida entradas, transições, fallback e composição com os módulos reais e OpenGL. */
 #include "game.h"
+#include "male_portrait_idle_data.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -71,14 +72,28 @@ int main(void)
     SetTargetFPS(60);
     Game game;
     game_init(&game);
+    assert(game.trainer_select_assets.portraits[0].width == 816);
+    assert(game.trainer_select_assets.portraits[1].height == 1072);
+    assert(game.trainer_select_assets.male_idle.id && game.trainer_select_assets.male_idle_halo.id);
+    float start = 0;
+    for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
+        assert(trainer_select_male_idle_frame(start + .001f) == i);
+        assert(trainer_select_male_idle_frame(start + MALE_PORTRAIT_IDLE_DURATIONS[i] - .001f) == i);
+        start += MALE_PORTRAIT_IDLE_DURATIONS[i];
+    }
+    assert(trainer_select_male_idle_frame(MALE_PORTRAIT_IDLE_SECONDS) == 0);
     assert(game.trainer_select_assets.frame.id && game.trainer_select_assets.forest.base.id);
     assert(game.trainer_select_assets.forest.clouds.id && game.trainer_select_assets.forest.trunks.id);
     assert(game.trainer_select_assets.forest.canopies.id && game.trainer_select_assets.forest.ground.id);
     assert(game.trainer_select_assets.forest.leaves.id);
     game.menu.menu_open = true;
     campaign(&game);
+    float background_before = game.trainer_select.background_time;
+    float idle_before = game.trainer_select.male_idle_time;
     key(&game, KEY_RIGHT);
     assert(game.trainer_select.selected == TRAINER_FEMALE);
+    assert(game.trainer_select.background_time > background_before);
+    assert(game.trainer_select.male_idle_time > idle_before);
     key(&game, KEY_LEFT);
     assert(game.trainer_select.selected == TRAINER_MALE);
     key(&game, KEY_D);
@@ -87,6 +102,12 @@ int main(void)
     assert(game.trainer_select.selected == TRAINER_MALE);
     click(&game, 820, 360);
     assert(game.screen == GAME_TRAINER_SELECT && game.trainer_select.selected == TRAINER_FEMALE);
+    key(&game, KEY_F7);
+    assert(game.trainer_select.background_preview);
+    key(&game, KEY_ENTER);
+    assert(game.screen == GAME_TRAINER_SELECT);
+    key(&game, KEY_F7);
+    assert(!game.trainer_select.background_preview && game.trainer_select.selected == TRAINER_FEMALE);
     input(7, 780, 670);
     input(6, 0, 0);
     tick(&game);
@@ -120,54 +141,58 @@ int main(void)
     key(&game, KEY_ESCAPE);
     assert(game.screen == GAME_MENU);
     campaign(&game);
+    key(&game, KEY_F7);
+    key(&game, KEY_ESCAPE);
+    assert(game.screen == GAME_MENU);
+    campaign(&game);
+    assert(!game.trainer_select.background_preview);
     key(&game, KEY_ENTER);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_MALE);
     key(&game, KEY_ESCAPE);
     campaign(&game);
 
-    /* Garante avanço e continuidade no limite de wrap, inclusive em longa execução. */
-    ForestScene forest;
-    forest_scene_init(&forest);
-    forest.cloud_x[0] = 1420.1f;
-    forest_scene_update(&forest, 0.1f);
-    assert(forest.cloud_x[0] > -140 && forest.cloud_x[0] < -139);
-    for (int i = 0; i < 7200; i++) forest_scene_update(&forest, 0.1f);
-    assert(isfinite(forest.wind_phase) && forest.wind_phase >= 0 && forest.wind_phase < 2 * PI);
-    for (int i = 0; i < FOREST_CLOUD_COUNT; i++)
-        assert(isfinite(forest.cloud_x[i]) && forest.cloud_x[i] >= -170 && forest.cloud_x[i] <= 1450);
-    for (int i = 0; i < FOREST_LEAF_COUNT; i++)
-        assert(forest.leaves[i].position.y >= -60 && forest.leaves[i].position.y <= 760);
     RenderTexture2D target = LoadRenderTexture(1280, 720);
     trainer_select_screen_init(&game.trainer_select);
+    game.trainer_select.selected = TRAINER_FEMALE;
+    game.trainer_select.male_idle_time = MALE_PORTRAIT_IDLE_SECONDS - .025f;
+    trainer_select_screen_update(&game.trainer_select, false, .1f);
+    assert(fabsf(game.trainer_select.male_idle_time - .075f) < .001f);
+    trainer_select_screen_init(&game.trainer_select);
+    assert(DirectoryExists("build/male_portrait_idle_preview") || MakeDirectory("build/male_portrait_idle_preview") == 0);
+    float pose_time = 0;
+    for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
+        game.trainer_select.male_idle_time = pose_time + .001f;
+        capture(&game, target, TextFormat("build/male_portrait_idle_preview/runtime_pose_%d.png",i), false);
+        pose_time += MALE_PORTRAIT_IDLE_DURATIONS[i];
+    }
+    game.trainer_select.male_idle_time = MALE_PORTRAIT_IDLE_SECONDS;
+    capture(&game, target, "build/male_portrait_idle_preview/runtime_loop_end.png", false);
+    Texture2D saved_idle = game.trainer_select_assets.male_idle;
+    game.trainer_select_assets.male_idle = (Texture2D){0};
+    capture(&game, target, "build/male_portrait_idle_preview/runtime_fallback.png", false);
+    game.trainer_select_assets.male_idle = saved_idle;
+    Texture2D saved_halo = game.trainer_select_assets.male_idle_halo;
+    game.trainer_select_assets.male_idle_halo = (Texture2D){0};
+    capture(&game, target, "build/male_portrait_idle_preview/runtime_fallback_halo.png", false);
+    game.trainer_select_assets.male_idle_halo = saved_halo;
+    game.trainer_select.male_idle_time = 0;
     capture(&game, target, "build/selection_preview/selected_male.png", false);
     game.trainer_select.selected = TRAINER_FEMALE;
     for (int i = 0; i < 60; i++) trainer_select_screen_update(&game.trainer_select, false, 1.0f / 60);
     capture(&game, target, "build/selection_preview/selected_female.png", false);
-    ForestScene saved_forest = game.trainer_select.forest;
-    game.trainer_select.forest.cloud_x[0] = 1420.1f;
-    capture(&game, target, "build/selection_preview/cloud_wrap_before.png", false);
-    forest_scene_update(&game.trainer_select.forest, 0.1f);
-    capture(&game, target, "build/selection_preview/cloud_wrap_after.png", false);
-    game.trainer_select.forest = saved_forest;
     for (int frame = 0; frame < 48; frame++) {
         for (int step = 0; step < 5; step++) trainer_select_screen_update(&game.trainer_select, false, 0.025f);
         capture(&game, target, TextFormat("build/selection_preview/loop_%02d.png", frame), true);
     }
     /* Copia emprestada para simular falha parcial, sem renomear fontes no disco. */
     TrainerSelectAssets saved = game.trainer_select_assets;
-    game.trainer_select_assets.forest = (ForestSceneAssets){0};
-    game.trainer_select_assets.frame = (Texture2D){0};
-    game.trainer_select_assets.breathing[0] = (Texture2D){0};
-    game.trainer_select_assets.breathing[1] = (Texture2D){0};
+    game.trainer_select_assets.background.atlas = (Texture2D){0};
     capture(&game, target, "build/selection_preview/fallback.png", false);
-    game.trainer_select_assets = saved;
-    game.trainer_select_assets.forest.trunks = (Texture2D){0};
-    capture(&game, target, "build/selection_preview/no_trunks.png", false);
     game.trainer_select_assets = saved;
     UnloadRenderTexture(target);
     game_shutdown(&game);
     assert(!game.trainer_select_assets.frame.id && !game.trainer_select_assets.forest.base.id);
     CloseWindow();
-    puts("PASS: teclado/mouse, confirmar/voltar, ESC, reentrada, ambos os treinadores, entrada mantida, wrap e 12 minutos simulados, desenho imutavel, 48 fases OpenGL, fallback e descarregamento.");
+    puts("PASS: teclado/mouse, confirmar/voltar, ESC, reentrada, ambos os treinadores, entrada mantida, relogio continuo, F7, desenho imutavel, ambos os estados OpenGL, fallback e descarregamento.");
     return 0;
 }
