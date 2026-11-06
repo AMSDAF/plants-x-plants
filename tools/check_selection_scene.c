@@ -98,6 +98,21 @@ static void check_static_fallback_loaders(void)
     }
 }
 
+static void confirm_campaign_name(Game *game)
+{
+    assert(game->screen==GAME_NAME_ENTRY);
+    for (int i=0;i<7;i++) {
+        trainer_select_screen_update(&game->trainer_select,false,.1f);
+        name_entry_update(&game->name_entry,false,.1f);
+    }
+    tick(game); tick(game);
+    if (game->name_entry.count==0) {
+        const char *name="Teste";
+        while (*name) assert(name_entry_append(&game->name_entry,*name++));
+    }
+    key(game,KEY_ENTER);
+}
+
 int main(void)
 {
     assert(DirectoryExists("build/selection_preview") || MakeDirectory("build/selection_preview") == 0);
@@ -162,6 +177,7 @@ int main(void)
     tick(&game);
     assert(game.screen == GAME_TRAINER_SELECT);
     click(&game, 780, 670);
+    confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_FEMALE);
     key(&game, KEY_ESCAPE);
     campaign(&game);
@@ -169,7 +185,7 @@ int main(void)
     tick(&game);
     input(2, KEY_ENTER, 0);
     tick(&game);
-    assert(game.screen == GAME_EXPLORATION && game.input_blocked);
+    assert(game.screen == GAME_NAME_ENTRY && game.input_blocked);
     Vector2 feet = game.player.feet;
     for (int i = 0; i < 5; i++) tick(&game);
     assert(game.input_blocked && game.player.feet.x == feet.x && game.player.feet.y == feet.y);
@@ -179,6 +195,7 @@ int main(void)
     input(1, KEY_D, 0);
     tick(&game);
     assert(!game.input_blocked);
+    confirm_campaign_name(&game);
     key(&game, KEY_ESCAPE);
     campaign(&game);
     click(&game, 490, 670);
@@ -193,6 +210,7 @@ int main(void)
     campaign(&game);
     assert(!game.trainer_select.background_preview);
     key(&game, KEY_ENTER);
+    confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_MALE);
     key(&game, KEY_ESCAPE);
     campaign(&game);

@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
+static void tick(Game *game)
+{
+    game_update(game);
+    BeginDrawing(); game_draw(game); EndDrawing();
+}
+
 static void key(Game *game, int code)
 {
     PlayAutomationEvent((AutomationEvent){.type=2,.params={code}});
@@ -37,6 +43,21 @@ static void capture(Game *game, RenderTexture2D target, const char *path)
         assert(fclose(file)==0);
     } else assert(ExportImage(image,path));
     UnloadImage(image);
+}
+
+static void confirm_campaign_name(Game *game)
+{
+    assert(game->screen==GAME_NAME_ENTRY);
+    for (int i=0;i<7;i++) {
+        trainer_select_screen_update(&game->trainer_select,false,.1f);
+        name_entry_update(&game->name_entry,false,.1f);
+    }
+    tick(game); tick(game);
+    if (game->name_entry.count==0) {
+        const char *name="Teste";
+        while (*name) assert(name_entry_append(&game->name_entry,*name++));
+    }
+    key(game,KEY_ENTER);
 }
 
 int main(void)
@@ -82,6 +103,7 @@ int main(void)
     key(&game,KEY_D);
     assert(game.trainer_select.selected == TRAINER_FEMALE);
     key(&game,KEY_ENTER);
+    confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION);
     game.trainer_select.background_time = 127.99f;
     trainer_select_screen_update(&game.trainer_select,false,.1f);

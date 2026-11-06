@@ -1,5 +1,6 @@
 /* Apresenta retratos de seleção e devolve ações ao coordenador de telas. */
 #include "trainer_select_screen.h"
+#include "selection_ui.h"
 #include "selection_portrait_v2_data.h"
 #include "male_portrait_idle_data.h"
 #include "female_portrait_idle_data.h"
@@ -10,10 +11,12 @@
 #define CONFIRM_CONTROL 2
 #define BACK_CONTROL 3
 
-static const Color CREAM = {247, 237, 198, 255};
-static const Color INK = {24, 52, 30, 255};
-static const Color BORDER = {53, 76, 43, 255};
-static const Color ACCENT_ORANGE = {190, 93, 28, 255};
+#define CREAM SELECTION_CREAM
+#define INK SELECTION_INK
+#define BORDER SELECTION_BORDER
+#define ACCENT_ORANGE SELECTION_ORANGE
+#define pixel_panel selection_ui_panel
+#define centered_text selection_ui_text
 
 static Rectangle control_bounds(int index)
 {
@@ -172,22 +175,7 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
     return action;
 }
 
-static void centered_text(const char *text, int center, int y, int size, Color color)
-{
-    DrawText(text, center - MeasureText(text, size) / 2, y, size, color);
-}
-
-/* Retângulos em três faixas formam cantos em degraus, sem antialiasing. */
-static void pixel_panel(Rectangle bounds, int corner, Color color)
-{
-    int x = (int)bounds.x, y = (int)bounds.y;
-    int w = (int)bounds.width, h = (int)bounds.height;
-    DrawRectangle(x + 2*corner, y, w - 4*corner, h, color);
-    DrawRectangle(x + corner, y + corner, w - 2*corner, h - 2*corner, color);
-    DrawRectangle(x, y + 2*corner, w, h - 4*corner, color);
-}
-
-static void draw_corner_accents(Rectangle bounds)
+static void draw_corner_accents(Rectangle bounds, float alpha)
 {
     int x = (int)bounds.x, y = (int)bounds.y;
     int w = (int)bounds.width, h = (int)bounds.height;
@@ -195,13 +183,13 @@ static void draw_corner_accents(Rectangle bounds)
         for (int bottom = 0; bottom < 2; bottom++) {
             int left = side ? x + w - 40 : x + 16;
             int top = bottom ? y + h - 40 : y + 16;
-            DrawRectangle(left, bottom ? top + 18 : top, 24, 6, ACCENT_ORANGE);
-            DrawRectangle(side ? left + 18 : left, top, 6, 24, ACCENT_ORANGE);
+            DrawRectangle(left, bottom ? top + 18 : top, 24, 6, Fade(ACCENT_ORANGE,alpha));
+            DrawRectangle(side ? left + 18 : left, top, 6, 24, Fade(ACCENT_ORANGE,alpha));
         }
     }
 }
 
-static void draw_cursor(int right, int center_y, float elapsed)
+static void draw_cursor(int right, int center_y, float elapsed, float alpha)
 {
     /* Pulso discreto na grade inteira, com o mesmo ritmo do menu. */
     float pulse = 1.0f + 0.1f * sinf(2.0f * PI * elapsed);
@@ -211,11 +199,11 @@ static void draw_cursor(int right, int center_y, float elapsed)
         int x0 = left + (int)roundf(step * width / 5.0f);
         int x1 = left + (int)roundf((step + 1) * width / 5.0f);
         int half_height = (int)roundf((10 - step*2) * pulse);
-        DrawRectangle(x0, center_y - half_height, x1 - x0, half_height*2 + 1, INK);
+        DrawRectangle(x0, center_y - half_height, x1 - x0, half_height*2 + 1, Fade(INK,alpha));
     }
 }
 
-static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle body, int index)
+static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle body, int index, Rectangle card, float alpha)
 {
     if (texture.id && body.height > 0 && body.width > 0) {
         /* Escala e pés dependem do corpo; margens e halo não entram na medida. */
@@ -223,71 +211,87 @@ static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle
         Rectangle dest = {roundf(448 + index*384.0f - (body.x + body.width/2)*scale),
                           roundf(526 - (body.y + body.height)*scale),
                           source.width*scale, source.height*scale};
-        DrawTexturePro(texture, source, dest, (Vector2){0}, 0, WHITE);
-    } else centered_text("Retrato indisponivel", 448 + index*384, 340, 20, INK);
+        Rectangle original=trainer_select_card_bounds((Trainer)index);
+        float factor=card.height/original.height;
+        dest=(Rectangle){roundf(card.x+(dest.x-original.x)*factor),roundf(card.y+(dest.y-original.y)*factor),
+                         dest.width*factor,dest.height*factor};
+        DrawTexturePro(texture, source, dest, (Vector2){0}, 0, Fade(WHITE,alpha));
+    } else centered_text("Retrato indisponivel", (int)roundf(card.x+card.width/2),
+                         (int)roundf(card.y+224*card.height/480),20,Fade(INK,alpha));
 }
 
-static void draw_portrait(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets, int index)
+static void draw_portrait(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets, int index, Rectangle card, float alpha)
 {
     if (index == TRAINER_MALE && assets->male_idle.id && assets->male_idle_halo.id) {
         Texture2D halo = assets->male_idle_halo;
         draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
-                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_MALE], index);
+                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_MALE], index, card, alpha);
         int frame = trainer_select_male_idle_frame(screen->male_idle_time);
         Rectangle source = {frame*MALE_PORTRAIT_IDLE_WIDTH,0,
                             MALE_PORTRAIT_IDLE_WIDTH,MALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index);
+        draw_portrait_texture(assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index, card, alpha);
     } else if (index == TRAINER_FEMALE && assets->female_idle.id && assets->female_idle_halo.id) {
         Texture2D halo = assets->female_idle_halo;
         draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
-                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index);
+                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index, card, alpha);
         int frame = trainer_select_female_idle_frame(screen->female_idle_time);
         Rectangle source = {frame*FEMALE_PORTRAIT_IDLE_WIDTH,0,
                             FEMALE_PORTRAIT_IDLE_WIDTH,FEMALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index);
+        draw_portrait_texture(assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha);
     } else {
         Texture2D texture = assets->portraits[index];
         draw_portrait_texture(texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
-                              assets->portrait_bounds[index], index);
+                              assets->portrait_bounds[index], index, card, alpha);
     }
+}
+
+Rectangle trainer_select_card_bounds(Trainer trainer)
+{
+    return control_bounds((int)trainer);
+}
+
+void trainer_select_draw_card(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
+                              Trainer trainer, Rectangle bounds, float alpha, bool selected, float label_alpha)
+{
+    const char *label=trainer==TRAINER_MALE ? "Homem" : "Mulher";
+    pixel_panel(bounds,8,Fade(selected ? INK : BORDER,alpha));
+    int border=selected ? 8 : 4;
+    Rectangle inner={bounds.x+border,bounds.y+border,bounds.width-2*border,bounds.height-2*border};
+    pixel_panel(inner,8,Fade(CREAM,alpha));
+    if (selected) draw_corner_accents(bounds,alpha);
+    draw_portrait(screen,assets,(int)trainer,bounds,alpha);
+    int center=(int)roundf(bounds.x+bounds.width/2);
+    float factor=bounds.height/480;
+    int y=(int)roundf(bounds.y+432*factor);
+    centered_text(label,center,y,30,Fade(INK,alpha*label_alpha));
+    if (selected) draw_cursor(center-MeasureText(label,30)/2-12,y+15,screen->background_time,alpha*label_alpha);
+}
+
+void trainer_select_draw_chrome(const TrainerSelectScreen *screen, float alpha)
+{
+    pixel_panel((Rectangle){260,28,760,64},4,Fade(INK,alpha));
+    pixel_panel((Rectangle){264,32,752,56},4,Fade(CREAM,alpha));
+    centered_text("Escolha seu personagem",640,40,40,Fade(INK,alpha));
+    for (int i=CONFIRM_CONTROL;i<=BACK_CONTROL;i++) {
+        Rectangle bounds=control_bounds(i);
+        bool hover=screen->hovered==i;
+        bool pressed=hover && screen->pressed==i;
+        pixel_panel(bounds,4,Fade(INK,alpha));
+        Rectangle inner={bounds.x+4,bounds.y+4,bounds.width-8,bounds.height-8};
+        Color fill=pressed ? (Color){212,211,155,255} : hover ? (Color){232,227,176,255} : CREAM;
+        pixel_panel(inner,4,Fade(fill,alpha));
+        if (hover) DrawRectangle((int)bounds.x+16,(int)bounds.y+12,4,28,Fade(ACCENT_ORANGE,alpha));
+        centered_text(i==CONFIRM_CONTROL ? "Confirmar" : "Voltar",(int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,Fade(INK,alpha));
+    }
+    pixel_panel((Rectangle){224,688,832,28},4,Fade(INK,alpha));
+    centered_text("Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar",640,692,20,Fade(CREAM,alpha));
 }
 
 void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets)
 {
-    trainer_background_draw(&assets->background, screen->background_time);
+    trainer_background_draw(&assets->background,screen->background_time);
     if (screen->background_preview) return;
-
-    pixel_panel((Rectangle){260, 28, 760, 64}, 4, INK);
-    pixel_panel((Rectangle){264, 32, 752, 56}, 4, CREAM);
-    centered_text("Escolha seu personagem", 640, 40, 40, INK);
-    const char *names[] = {"Homem", "Mulher"};
-    for (int i = 0; i < TRAINER_COUNT; i++) {
-        Rectangle bounds = control_bounds(i);
-        bool selected = screen->selected == (Trainer)i;
-        pixel_panel(bounds, 8, selected ? INK : BORDER);
-        int border = selected ? 8 : 4;
-        Rectangle inner = {bounds.x + border, bounds.y + border,
-                           bounds.width - 2*border, bounds.height - 2*border};
-        pixel_panel(inner, 8, CREAM);
-        if (selected) draw_corner_accents(bounds);
-        draw_portrait(screen, assets, i);
-        int center = 448 + i*384;
-        centered_text(names[i], center, 548, 30, INK);
-        if (selected) draw_cursor(center - MeasureText(names[i], 30)/2 - 12, 563, screen->background_time);
-    }
-    for (int i = CONFIRM_CONTROL; i <= BACK_CONTROL; i++) {
-        Rectangle bounds = control_bounds(i);
-        bool hover = screen->hovered == i;
-        bool pressed = hover && screen->pressed == i;
-        pixel_panel(bounds, 4, INK);
-        Rectangle inner = {bounds.x + 4, bounds.y + 4, bounds.width - 8, bounds.height - 8};
-        Color fill = pressed ? (Color){212, 211, 155, 255} :
-                     hover ? (Color){232, 227, 176, 255} : CREAM;
-        pixel_panel(inner, 4, fill);
-        if (hover) DrawRectangle((int)bounds.x + 16, (int)bounds.y + 12, 4, 28, ACCENT_ORANGE);
-        centered_text(i == CONFIRM_CONTROL ? "Confirmar" : "Voltar", (int)(bounds.x + bounds.width/2),
-                      (int)bounds.y + 12, 30, INK);
-    }
-    pixel_panel((Rectangle){224, 688, 832, 28}, 4, INK);
-    centered_text("Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar", 640, 692, 20, CREAM);
+    trainer_select_draw_chrome(screen,1);
+    for (int i=0;i<TRAINER_COUNT;i++)
+        trainer_select_draw_card(screen,assets,(Trainer)i,trainer_select_card_bounds((Trainer)i),1,screen->selected==(Trainer)i,1);
 }

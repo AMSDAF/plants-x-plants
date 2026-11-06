@@ -10,13 +10,21 @@
 #include <stdbool.h>
 #include "menu_screen.h"
 #include "trainer_select_screen.h"
+#include "name_entry_screen.h"
 
 #define GAME_SCREEN_WIDTH 1280
 #define GAME_SCREEN_HEIGHT 720
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
 
-typedef enum { GAME_MENU, GAME_TRAINER_SELECT, GAME_EXPLORATION } GameScreen;
+typedef enum { GAME_MENU, GAME_TRAINER_SELECT, GAME_NAME_ENTRY, GAME_EXPLORATION } GameScreen;
+
+/* Sessão de campanha somente em memória; o rascunho permanece na tela de nome. */
+typedef struct {
+    Trainer trainer;
+    char player_name[PLAYER_NAME_CAPACITY];
+    bool ready;
+} CampaignSession;
 
 /* Estado e recursos compartilhados entre as telas. */
 typedef struct {
@@ -27,6 +35,8 @@ typedef struct {
     PlayerAssets player_assets;
     TrainerSelectAssets trainer_select_assets;
     TrainerSelectScreen trainer_select;
+    NameEntryScreen name_entry;
+    CampaignSession campaign;
     Player player;
     World world;
 } Game;

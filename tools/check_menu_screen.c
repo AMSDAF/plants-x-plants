@@ -233,6 +233,21 @@ static void check_wind(Game *game, RenderTexture2D target)
     puts("PASS: 32 fases de copas/grama/mascote, somente regioes previstas mudam, relogios continuos e fallback em camadas.");
 }
 
+static void confirm_campaign_name(Game *game)
+{
+    assert(game->screen==GAME_NAME_ENTRY);
+    for (int i=0;i<7;i++) {
+        trainer_select_screen_update(&game->trainer_select,false,.1f);
+        name_entry_update(&game->name_entry,false,.1f);
+    }
+    tick(game); tick(game);
+    if (game->name_entry.count==0) {
+        const char *name="Teste";
+        while (*name) assert(name_entry_append(&game->name_entry,*name++));
+    }
+    key(game,KEY_ENTER);
+}
+
 int main(void)
 {
     assert(DirectoryExists("build/menu_v2_preview") || MakeDirectory("build/menu_v2_preview") == 0);
@@ -315,6 +330,7 @@ int main(void)
     assert(game.screen == GAME_TRAINER_SELECT);
     key(&game, KEY_RIGHT);
     key(&game, KEY_ENTER);
+    confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_FEMALE);
     key(&game, KEY_ESCAPE);
     assert(game.screen == GAME_MENU && game.menu.menu_open);

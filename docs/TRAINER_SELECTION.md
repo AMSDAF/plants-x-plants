@@ -7,8 +7,9 @@ Cartões iguais de 336 × 480, controles e título são formas raylib, sem textu
 da folha de referência. A seleção muda apenas borda, cantos laranja e cursor;
 hitboxes e relógio do fundo permanecem estáveis. “Homem” e “Mulher” reutilizam
 os retratos simplificados com filtro pontual, proporção preservada, altura
-corporal de 360 pixels e pés em y=526. Ambos têm repouso em quatro poses, com relógios independentes. Os controles, F7 e a confirmação para
-a exploração permanecem disponíveis. `selection_scene_check` salva ambos os
+corporal de 360 pixels e pés em y=526. Ambos têm repouso em quatro poses, com relógios independentes. Os controles e F7 permanecem disponíveis. A confirmação abre a
+[entrada de nome](CAMPAIGN_NAME_ENTRY.md) antes da exploração; voltar preserva
+a escolha, o rascunho e os relógios dos retratos/fundo. `selection_scene_check` salva ambos os
 estados em `build/selection_preview/selected_male.png` e `selected_female.png`.
 A auditoria de recursos e as remoções estão em [SELECTION_CLEANUP.md](SELECTION_CLEANUP.md).
 
