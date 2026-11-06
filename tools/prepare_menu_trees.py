@@ -2,7 +2,6 @@
 import argparse
 import hashlib
 import json
-import math
 
 import numpy as np
 from PIL import Image, ImageDraw

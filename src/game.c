@@ -75,7 +75,7 @@ void game_draw(const Game *game)
     switch (game->screen) {
         case GAME_MENU: menu_screen_draw(&game->menu); break;
         case GAME_TRAINER_SELECT:
-            trainer_select_screen_draw(&game->trainer_select, &game->trainer_select_assets, game->trainer_select_assets.buttons);
+            trainer_select_screen_draw(&game->trainer_select, &game->trainer_select_assets);
             break;
         case GAME_EXPLORATION:
             world_draw(&game->world);

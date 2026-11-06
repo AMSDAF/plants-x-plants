@@ -62,15 +62,52 @@ static void capture(Game *game, RenderTexture2D target, const char *path, bool t
     UnloadImage(shot);
 }
 
+static void check_static_fallback_loaders(void)
+{
+    /* Diretórios isolados verificam as duas camadas legadas sem alterar os assets reais. */
+    char root[1024];
+    snprintf(root, sizeof(root), "%s", GetWorkingDirectory());
+    const char *names[] = {"male", "female"};
+    for (int original = 0; original < 2; original++) {
+        const char *fixture = original ? "build/selection_cleanup/original_fallback" :
+                                         "build/selection_cleanup/prepared_fallback";
+        const char *directory = TextFormat("%s/assets/sprites/trainers", fixture);
+        assert(DirectoryExists(directory) || MakeDirectory(directory) == 0);
+        for (int i = 0; i < TRAINER_COUNT; i++) {
+            const char *source = original ? TextFormat("assets/sprites/trainer_%s_portrait.png", names[i]) :
+                                            TextFormat("assets/sprites/trainers/%s_portrait.png", names[i]);
+            int size = 0;
+            unsigned char *data = LoadFileData(source, &size);
+            assert(data && size > 0);
+            const char *target = original ? TextFormat("%s/assets/sprites/trainer_%s_portrait.png", fixture, names[i]) :
+                                            TextFormat("%s/assets/sprites/trainers/%s_portrait.png", fixture, names[i]);
+            assert(SaveFileData(target, data, size));
+            UnloadFileData(data);
+        }
+        assert(ChangeDirectory(fixture));
+        TrainerSelectAssets assets;
+        trainer_select_assets_load(&assets);
+        for (int i = 0; i < TRAINER_COUNT; i++) {
+            assert(assets.portraits[i].id);
+            assert(original ? assets.portraits[i].width > 320 : assets.portraits[i].width == 320);
+            assert(assets.portrait_bounds[i].height > 0);
+        }
+        assert(!assets.male_idle.id && !assets.female_idle.id);
+        trainer_select_assets_unload(&assets);
+        assert(ChangeDirectory(root));
+    }
+}
+
 int main(void)
 {
     assert(DirectoryExists("build/selection_preview") || MakeDirectory("build/selection_preview") == 0);
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
-    InitWindow(1280, 720, "Validacao da floresta de selecao");
+    InitWindow(1280, 720, "Validacao da selecao de personagens");
     assert(IsWindowReady());
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
+    check_static_fallback_loaders();
     Game game;
     game_init(&game);
     assert(game.trainer_select_assets.portraits[0].width == 816);
@@ -92,10 +129,7 @@ int main(void)
         start += FEMALE_PORTRAIT_IDLE_DURATIONS[i];
     }
     assert(trainer_select_female_idle_frame(FEMALE_PORTRAIT_IDLE_SECONDS) == 0);
-    assert(game.trainer_select_assets.frame.id && game.trainer_select_assets.forest.base.id);
-    assert(game.trainer_select_assets.forest.clouds.id && game.trainer_select_assets.forest.trunks.id);
-    assert(game.trainer_select_assets.forest.canopies.id && game.trainer_select_assets.forest.ground.id);
-    assert(game.trainer_select_assets.forest.leaves.id);
+    assert(game.trainer_select_assets.background.base.id && game.trainer_select_assets.background.atlas.id);
     game.menu.menu_open = true;
     campaign(&game);
     float background_before = game.trainer_select.background_time;
@@ -238,7 +272,7 @@ int main(void)
     UnloadRenderTexture(target);
     game_shutdown(&game);
     assert(!game.trainer_select_assets.female_idle.id && !game.trainer_select_assets.female_idle_halo.id);
-    assert(!game.trainer_select_assets.frame.id && !game.trainer_select_assets.forest.base.id);
+    assert(!game.trainer_select_assets.background.base.id && !game.trainer_select_assets.background.atlas.id);
     CloseWindow();
     puts("PASS: teclado/mouse, confirmar/voltar, ESC, reentrada, ambos os treinadores, entrada mantida, relogio continuo, F7, desenho imutavel, ambos os estados OpenGL, fallback e descarregamento.");
     return 0;

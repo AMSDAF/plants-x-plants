@@ -3,7 +3,6 @@
 #define TRAINER_SELECT_SCREEN_H
 
 #include "player.h"
-#include "forest_scene.h"
 #include "trainer_background.h"
 
 typedef enum {
@@ -19,9 +18,6 @@ typedef struct {
     Texture2D male_idle_halo;
     Texture2D female_idle;
     Texture2D female_idle_halo;
-    Texture2D frame;
-    Texture2D buttons;
-    ForestSceneAssets forest;
     TrainerBackgroundAssets background;
 } TrainerSelectAssets;
 
@@ -29,8 +25,6 @@ typedef struct {
     Trainer selected;
     int pressed;
     int hovered;
-    float emphasis[TRAINER_COUNT];
-    ForestScene forest;
     bool background_preview;
     float background_time;
     float male_idle_time;
@@ -43,7 +37,6 @@ void trainer_select_screen_init(TrainerSelectScreen *screen);
 int trainer_select_male_idle_frame(float elapsed);
 int trainer_select_female_idle_frame(float elapsed);
 TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bool accept_input, float dt);
-void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
-                               Texture2D buttons);
+void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets);
 
 #endif

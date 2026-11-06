@@ -158,7 +158,7 @@ A partir da raiz do projeto:
 
 A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
 
-O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. A seta de seleção pulsa discretamente sem alterar as áreas de clique. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção de treinadores mantém seus próprios recursos de vegetação e botões de madeira. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
+O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. A seta de seleção pulsa discretamente sem alterar as áreas de clique. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção mantém fundo e retratos próprios; seus cartões e controles são desenhados em código. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
 
 Para refazer apenas a animação do mascote, usando o ambiente de preparação descrito abaixo:
 
@@ -232,13 +232,14 @@ para ver somente o cenário animado. **ESC** retorna ao menu; F7 recupera a sele
 normal. Preparação, GIF completo e verificações estão em
 [TRAINER_SELECTION_BACKGROUND.md](docs/TRAINER_SELECTION_BACKGROUND.md).
 
-O cenário da seleção usa fundo, árvores fixas, nuvens, dosséis, vegetação baixa, folhas e molduras de madeira. Seus recursos são independentes da tela inicial, do menu e da exploração. Para reconstruir os derivados com o mesmo ambiente de preparação:
+O cenário usa somente `trainer_selection_background.png` e os derivados em
+`assets/sprites/selection/background/`. Para refazer os recursos:
 
 ```powershell
-.\build\trainer_tools\Scripts\python tools/prepare_selection_scene.py
+.\build\trainer_tools\Scripts\python tools/prepare_trainer_selection_background.py
 ```
 
-O script procura as sete fontes em `assets/sprites/selection/` e, se ausentes nessa pasta, em `assets/sprites/`, onde estão os arquivos fornecidos atualmente. Preserva as fontes e grava os derivados em `assets/sprites/selection/prepared/`, além de gerar os retângulos medidos em `include/selection_scene_data.h`. Diagnósticos e comparações em fundos claro/escuro ficam em `build/selection_preview/`. Os recursos preparados já acompanham o projeto; Python é opcional para jogar.
+Fontes e fallback completo são preservados; Python é opcional para jogar.
 
 Para executar a verificação gráfica automatizada, a partir da raiz:
 

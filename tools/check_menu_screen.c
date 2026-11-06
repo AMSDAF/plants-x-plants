@@ -248,7 +248,7 @@ int main(void)
     assert(game.menu.background.id && game.menu.logo.id && game.menu.mascot.id);
     assert(game.menu.mascot_idle.id && game.menu.mascot_idle.width == 4096 && game.menu.mascot_idle.height == 2048);
     check_atlas_loader_fallback();
-    assert(game.trainer_select_assets.buttons.id);
+    assert(game.trainer_select_assets.background.base.id);
     assert(game.menu.logo_source.width == 1481 && game.menu.mascot_source.width == 968);
     RenderTexture2D target = LoadRenderTexture(1280, 720);
     game.menu.ui_time = 0;
@@ -373,7 +373,7 @@ int main(void)
     }
     UnloadRenderTexture(target);
     game_shutdown(&game);
-    assert(!game.menu.logo.id && !game.menu.mascot.id && !game.menu.mascot_idle.id && !game.menu.background.id && !game.trainer_select_assets.buttons.id);
+    assert(!game.menu.logo.id && !game.menu.mascot.id && !game.menu.mascot_idle.id && !game.menu.background.id && !game.trainer_select_assets.background.base.id);
     assert(!game.menu.grass_background.id && !game.menu.grass_atlas.id);
     assert(!game.menu.tree_background.id && !game.menu.tree_atlas.id);
     CloseWindow();

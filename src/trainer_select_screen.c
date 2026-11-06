@@ -49,12 +49,7 @@ void trainer_select_assets_load(TrainerSelectAssets *assets)
 {
     const char *names[] = {"male", "female"};
     *assets = (TrainerSelectAssets){0};
-    forest_scene_assets_load(&assets->forest);
     trainer_background_load(&assets->background);
-    assets->frame = load_portrait("assets/sprites/selection/prepared/portrait_frame.png", 1024, 1536);
-    /* Recurso exclusivo da seleção; o novo menu não usa botões de madeira. */
-    assets->buttons = load_portrait("assets/sprites/menu_buttons.png", 1254, 1254);
-    if (assets->buttons.id) SetTextureFilter(assets->buttons, TEXTURE_FILTER_POINT);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         assets->portraits[i] = load_portrait(TextFormat("assets/sprites/trainers/%s_portrait_v2.png", names[i]),
                                             SELECTION_PORTRAIT_V2_WIDTH, SELECTION_PORTRAIT_V2_HEIGHT);
@@ -97,14 +92,11 @@ void trainer_select_assets_load(TrainerSelectAssets *assets)
 
 void trainer_select_assets_unload(TrainerSelectAssets *assets)
 {
-    forest_scene_assets_unload(&assets->forest);
     trainer_background_unload(&assets->background);
     if (assets->male_idle.id) UnloadTexture(assets->male_idle);
     if (assets->male_idle_halo.id) UnloadTexture(assets->male_idle_halo);
     if (assets->female_idle.id) UnloadTexture(assets->female_idle);
     if (assets->female_idle_halo.id) UnloadTexture(assets->female_idle_halo);
-    if (assets->frame.id) UnloadTexture(assets->frame);
-    if (assets->buttons.id) UnloadTexture(assets->buttons);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         if (assets->portraits[i].id) UnloadTexture(assets->portraits[i]);
     }
@@ -114,8 +106,7 @@ void trainer_select_assets_unload(TrainerSelectAssets *assets)
 void trainer_select_screen_init(TrainerSelectScreen *screen)
 {
     *screen = (TrainerSelectScreen){.selected = TRAINER_MALE, .pressed = -1, .hovered = -1,
-                                   .emphasis = {1, 0}, .female_idle_time = FEMALE_PORTRAIT_IDLE_PHASE_OFFSET};
-    forest_scene_init(&screen->forest);
+                                   .female_idle_time = FEMALE_PORTRAIT_IDLE_PHASE_OFFSET};
 }
 
 static int portrait_idle_frame(float elapsed, const float durations[4], float seconds)
@@ -154,7 +145,6 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
         screen->pressed = screen->hovered = -1;
         return accept_input && IsKeyPressed(KEY_ESCAPE) ? TRAINER_SELECT_BACK : TRAINER_SELECT_NONE;
     }
-    forest_scene_update(&screen->forest, dt);
     screen->hovered = -1;
     TrainerSelectAction action = TRAINER_SELECT_NONE;
     if (accept_input) {
@@ -179,10 +169,6 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
         if (IsKeyPressed(KEY_ENTER)) action = TRAINER_SELECT_CONFIRM;
         if (IsKeyPressed(KEY_ESCAPE)) action = TRAINER_SELECT_BACK;
     } else screen->pressed = -1;
-    for (int i = 0; i < TRAINER_COUNT; i++) {
-        float target = screen->selected == (Trainer)i ? 1.0f : 0.0f;
-        screen->emphasis[i] += (target - screen->emphasis[i]) * (1 - expf(-10 * dt));
-    }
     return action;
 }
 
@@ -266,11 +252,8 @@ static void draw_portrait(const TrainerSelectScreen *screen, const TrainerSelect
     }
 }
 
-void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
-                               Texture2D buttons)
+void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets)
 {
-    /* A assinatura é mantida para os chamadores existentes; os controles são geométricos. */
-    (void)buttons;
     trainer_background_draw(&assets->background, screen->background_time);
     if (screen->background_preview) return;
 

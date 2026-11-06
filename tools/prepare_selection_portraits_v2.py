@@ -1,6 +1,5 @@
 """Separa o par de retratos sem alterar cores, alfa, halo ou arte dos personagens."""
 from pathlib import Path
-import argparse
 import hashlib
 import json
 
@@ -79,24 +78,5 @@ def prepare():
     print(json.dumps(report, indent=2))
 
 
-def check_runtime():
-    # As duas capturas têm fases diferentes do fundo/cursor, mas a arte deve ser estática.
-    folder = ROOT / 'build/selection_preview'
-    images = [np.array(Image.open(folder/f'selected_{name}.png').convert('RGB'))
-              for name in ('male', 'female')]
-    for name, box in (('male', (340,150,550,534)), ('female', (730,150,935,534))):
-        x0,y0,x1,y1 = box
-        assert np.array_equal(images[0][y0:y1,x0:x1], images[1][y0:y1,x0:x1]), name
-    result = dict(static_portraits_across_selected_states=True, body_height=360, feet_y=526,
-                  validation='Capturas OpenGL de ambos os estados; sem teste manual prolongado.')
-    (PREVIEW/'runtime_validation.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
-    print('PASS: os dois retratos permanecem estáticos entre os estados selecionados.')
-
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--check-runtime', action='store_true')
-    if parser.parse_args().check_runtime:
-        check_runtime()
-    else:
-        prepare()
+    prepare()

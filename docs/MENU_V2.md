@@ -20,7 +20,7 @@ Na tela inicial, o logo tem altura visível de 324 pixels, tem posição central
 
 ENTER abre o menu, que aguarda a soltura das entradas antes de aceitar outra ação. ESC retorna à tela inicial. Setas pulam Versus local e alternam as opções disponíveis, com retorno ao começo/fim. Mouse seleciona ao mover e ativa somente ao pressionar e soltar na mesma opção. Soltar fora cancela. A confirmação por teclado conserva o feedback breve de cor de 0,12 s. Não há espera bloqueante.
 
-Campanha continua entrando na seleção de treinadores por `game.c`, e a seleção entra na exploração existente. A proteção de entrada entre essas telas permanece. A textura `assets/sprites/menu_buttons.png` pertence a `TrainerSelectAssets`, é carregada uma vez com filtro pontual e conserva os botões aprovados da seleção. As fontes e atlas do cenário de seleção também são independentes do menu.
+Campanha continua entrando na seleção de treinadores por `game.c`, e a seleção entra na exploração existente. A proteção de entrada entre essas telas permanece. Os cartões e controles da seleção são formas raylib; seu fundo e retratos permanecem independentes do menu. A antiga textura de botões de madeira foi removida por não participar mais do desenho.
 
 ## Verificação
 
