@@ -156,7 +156,7 @@ A partir da raiz do projeto:
 .\build\plants_x_plants.exe
 ```
 
-A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
+A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** abre a escolha entre **VS CPU** e **VS PLAYER**. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
 
 O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. A seta de seleção pulsa discretamente sem alterar as áreas de clique. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção mantém fundo e retratos próprios; seus cartões e controles são desenhados em código. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
 
@@ -250,6 +250,41 @@ cmake --build build --target selection_scene_check
 ```
 
 O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
+
+Na tela Versus, esquerda/direita ou A/D escolhem o modo; clicar no cartão apenas
+seleciona. ENTER ou **Confirmar** armazena a escolha em memória e exibe a confirmação
+na própria tela. **Voltar/ESC** retorna ao menu. Reabrir a tela recupera o último
+modo confirmado; sair sem confirmar descarta somente a seleção provisória. Não há
+combate nem seleção de plantas nesta etapa. O cenário gerado aprovado é
+`assets/sprites/versus_background_generated_v1.png`; `versus_background_v1.png`
+é usado como alternativa quando disponível. As ilustrações usam recortes da referência
+`versus_illustrations_source.png`, sem incorporar seus controles impressos.
+Painéis, cantos e cursor reutilizam `selection_ui`, com o mesmo pulso da seleção.
+
+Somente a grama do cenário Versus recebe vento: 20 touceiras com bases fixas,
+fases próprias e ritmos de 6, 7 ou 8 poses por segundo. Árvores, arbustos, nuvens
+e ilustrações dos cartões permanecem estáticos; os pulsos existentes da UI são
+preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
+formam um par validado: se faltar ou falhar um deles, o cenário original completo
+é exibido. A fonte aprovada não é alterada. Python continua opcional para jogar.
+
+Para regenerar as camadas e os diagnósticos com o mesmo ambiente de preparação:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_versus_grass.py
+```
+
+Máscaras, contato ampliado, GIF e relatório ficam em `build/versus_grass_preview/`.
+A verificação abaixo também compara 64 instantes OpenGL, o ciclo de 32 segundos,
+os cartões imóveis, o fallback parcial e a navegação existente. Execute
+`tools/preview_versus_grass.py` após a verificação para montar o GIF do jogo real.
+
+Para verificar a tela e gerar capturas OpenGL em `build/versus_preview/`:
+
+```powershell
+cmake --build build --target versus_screen_check
+.\build\versus_screen_check.exe
+```
 
 A entrada do nome e sua transição reversível estão documentadas em [CAMPAIGN_NAME_ENTRY.md](docs/CAMPAIGN_NAME_ENTRY.md), incluindo verificações e capturas reproduzíveis. Nome e personagem ficam somente na sessão em memória.
 

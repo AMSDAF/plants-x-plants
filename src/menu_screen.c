@@ -15,7 +15,15 @@ static const char *OPTION_LABELS[MENU_OPTION_COUNT] = {"Campanha", "Versus local
 
 static bool option_is_enabled(int option)
 {
-    return option == 0 || option == 2;
+    return option >= 0 && option < MENU_OPTION_COUNT;
+}
+
+static MenuAction option_action(int option)
+{
+    static const MenuAction actions[MENU_OPTION_COUNT] = {
+        MENU_ACTION_CAMPAIGN, MENU_ACTION_VERSUS, MENU_ACTION_EXIT
+    };
+    return option_is_enabled(option) ? actions[option] : MENU_ACTION_NONE;
 }
 
 /* Áreas fixas, compartilhadas pelo desenho e pelos testes de clique. */
@@ -177,7 +185,7 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
         if (screen->activation_time >= BUTTON_FEEDBACK_DURATION) {
             int option = screen->pending_option;
             clear_activation(screen);
-            return option == 0 ? MENU_ACTION_CAMPAIGN : MENU_ACTION_EXIT;
+            return option_action(option);
         }
         return MENU_ACTION_NONE;
     }
@@ -204,7 +212,7 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
         int pressed = screen->pressed_option;
         screen->pressed_option = -1;
         if (pressed >= 0 && option_is_enabled(pressed) && CheckCollisionPointRec(mouse, option_bounds(pressed)))
-            return pressed == 0 ? MENU_ACTION_CAMPAIGN : MENU_ACTION_EXIT;
+            return option_action(pressed);
     }
     if (IsKeyPressed(KEY_ENTER) && option_is_enabled(screen->selected_option)) {
         screen->pressed_option = -1;

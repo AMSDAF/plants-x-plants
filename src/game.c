@@ -7,6 +7,7 @@ static void change_screen(Game *game, GameScreen screen)
     game->input_blocked = true;
     menu_screen_reset_input(&game->menu);
     game->trainer_select.pressed = -1;
+    game->versus.pressed = -1;
     game->player.moving = false;
     game->player.walk_time = 0;
     /* Descarta eventos enfileirados; entradas mantidas aguardam soltura. */
@@ -29,6 +30,8 @@ void game_init(Game *game)
     menu_screen_init(&game->menu);
     player_assets_load(&game->player_assets);
     trainer_select_assets_load(&game->trainer_select_assets);
+    versus_assets_load(&game->versus_assets);
+    versus_screen_init(&game->versus, VERSUS_CPU);
     world_init(&game->world);
     trainer_select_screen_init(&game->trainer_select);
     name_entry_init(&game->name_entry);
@@ -56,6 +59,8 @@ void game_update(Game *game)
         if (game->screen == GAME_MENU) menu_screen_update(&game->menu, false);
         if (game->screen == GAME_TRAINER_SELECT)
             trainer_select_screen_update(&game->trainer_select, false, GetFrameTime());
+        if (game->screen == GAME_VERSUS_SELECT)
+            versus_screen_update(&game->versus, false, GetFrameTime());
         if (!transition_input_down()) game->input_blocked = false;
         return;
     }
@@ -66,6 +71,20 @@ void game_update(Game *game)
             if (action == MENU_ACTION_CAMPAIGN) {
                 trainer_select_screen_init(&game->trainer_select);
                 change_screen(game, GAME_TRAINER_SELECT);
+            }
+            if (action == MENU_ACTION_VERSUS) {
+                versus_screen_init(&game->versus, game->versus_mode);
+                change_screen(game, GAME_VERSUS_SELECT);
+            }
+            break;
+        }
+        case GAME_VERSUS_SELECT: {
+            VersusAction action = versus_screen_update(&game->versus, true, GetFrameTime());
+            if (action == VERSUS_BACK) change_screen(game, GAME_MENU);
+            else if (action == VERSUS_CONFIRM) {
+                game->versus_mode = game->versus.selected;
+                game->versus_mode_selected = true;
+                game->versus.confirmed = true;
             }
             break;
         }
@@ -90,6 +109,9 @@ void game_draw(const Game *game)
 {
     switch (game->screen) {
         case GAME_MENU: menu_screen_draw(&game->menu); break;
+        case GAME_VERSUS_SELECT:
+            versus_screen_draw(&game->versus, &game->versus_assets, game->menu.logo, game->menu.logo_source);
+            break;
         case GAME_TRAINER_SELECT:
             trainer_select_screen_draw(&game->trainer_select, &game->trainer_select_assets);
             break;
@@ -113,5 +135,6 @@ void game_shutdown(Game *game)
 {
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);
+    versus_assets_unload(&game->versus_assets);
     menu_screen_shutdown(&game->menu);
 }

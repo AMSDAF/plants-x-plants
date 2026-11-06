@@ -29,7 +29,7 @@ typedef struct {
     float activation_time;
 } MenuScreen;
 
-typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_EXIT } MenuAction;
+typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_VERSUS, MENU_ACTION_EXIT } MenuAction;
 
 void menu_screen_init(MenuScreen *screen);
 MenuAction menu_screen_update(MenuScreen *screen, bool accept_input);

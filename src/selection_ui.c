@@ -30,3 +30,31 @@ void selection_ui_discard_text(void)
 {
     while (GetCharPressed()!=0) {}
 }
+
+void selection_ui_accents(Rectangle bounds, float alpha)
+{
+    int x = (int)bounds.x, y = (int)bounds.y;
+    int w = (int)bounds.width, h = (int)bounds.height;
+    for (int side = 0; side < 2; side++) {
+        for (int bottom = 0; bottom < 2; bottom++) {
+            int left = side ? x + w - 40 : x + 16;
+            int top = bottom ? y + h - 40 : y + 16;
+            DrawRectangle(left, bottom ? top + 18 : top, 24, 6, Fade(SELECTION_ORANGE,alpha));
+            DrawRectangle(side ? left + 18 : left, top, 6, 24, Fade(SELECTION_ORANGE,alpha));
+        }
+    }
+}
+
+void selection_ui_cursor(int right, int center_y, float elapsed, float alpha)
+{
+    /* Pulso discreto na grade inteira, com o mesmo ritmo do menu. */
+    float pulse = 1.0f + 0.1f * sinf(2.0f * PI * elapsed);
+    int width = 2 * (int)roundf(7 * pulse) + 1;
+    int left = right - width;
+    for (int step = 0; step < 5; step++) {
+        int x0 = left + (int)roundf(step * width / 5.0f);
+        int x1 = left + (int)roundf((step + 1) * width / 5.0f);
+        int half_height = (int)roundf((10 - step*2) * pulse);
+        DrawRectangle(x0, center_y - half_height, x1 - x0, half_height*2 + 1, Fade(SELECTION_INK,alpha));
+    }
+}
