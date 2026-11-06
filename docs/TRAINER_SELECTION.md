@@ -7,8 +7,7 @@ Cartões iguais de 336 × 480, controles e título são formas raylib, sem textu
 da folha de referência. A seleção muda apenas borda, cantos laranja e cursor;
 hitboxes e relógio do fundo permanecem estáveis. “Homem” e “Mulher” reutilizam
 os retratos simplificados com filtro pontual, proporção preservada, altura
-corporal de 360 pixels e pés em y=526. O homem tem repouso em quatro poses;
-a mulher permanece estática. Os controles, F7 e a confirmação para
+corporal de 360 pixels e pés em y=526. Ambos têm repouso em quatro poses, com relógios independentes. Os controles, F7 e a confirmação para
 a exploração permanecem disponíveis. `selection_scene_check` salva ambos os
 estados em `build/selection_preview/selected_male.png` e `selected_female.png`.
 As seções de molduras de madeira e floresta anterior abaixo são históricas.
@@ -43,8 +42,8 @@ relaxado **0,45 s**; ciclo de **4,70 s**. A pausa neutra inicial de 1,80 s foi
 ampliada para reduzir o piscar de cerca de 22 para 13 vezes por minuto. As
 quatro poses ainda têm pequenas diferenças de rosto/camisa, sem interpolação.
 O relógio avança inclusive sem seleção masculina, durante bloqueios e na prévia
-F7. Falha no atlas ou halo usa o retrato estático existente. A mulher e os
-recursos da exploração não mudam.
+F7. Falha no atlas ou halo usa o retrato estático existente. Os recursos da
+exploração não mudam.
 
 ```powershell
 .\build\trainer_tools\Scripts\python tools/prepare_male_portrait_idle.py
@@ -67,6 +66,46 @@ tempos e continuidade do relógio. A revisão técnica usa capturas ampliadas.
 commit, conforme informado na solicitação de registro. Essa aprovação se limita
 à animação masculina; as demais mudanças mantêm os registros de validação
 automatizada e inspeção de capturas descritos nesta documentação.
+
+## Repouso feminino
+
+A mesma ferramenta, com `--character female`, prepara a fonte corrigida
+`female_portrait_idle_source.png` (1094 × 1437). Mede os quatro quadrantes e
+alinha as solas em y=672, com eixo horizontal comum x=259 na fonte. As células
+384 × 704 usam escala única 360/619 e pés em y=526. A junção na linha 370,
+na camisa acima do cinto, reutiliza a parte inferior neutra para estabilizar
+calça, botas e antebraço. Trança, mão na alça e planta continuam na arte desenhada.
+O halo v2 é separado em `female_portrait_idle_halo.png` e permanece imóvel.
+
+Durações: **4,40 / 0,35 / 0,10 / 0,45 s**, ciclo **5,30 s**, fase inicial
+**2,20 s**. Trocar/hover nos cartões não reinicia relógios. O fallback feminino
+usa o retrato estático, sem interromper o homem. Atlas, halo, metadados e tempos
+masculinos aprovados permanecem idênticos.
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_male_portrait_idle.py --character female
+cmake --build build
+cmake --build build --target selection_scene_check
+.\build\selection_scene_check.exe
+.\build\trainer_tools\Scripts\python tools/prepare_male_portrait_idle.py --character female --runtime-preview
+git diff --check
+```
+
+Capturas, contatos e GIFs ficam em `build/female_portrait_idle_preview/`.
+`runtime_card_loop.gif` isola a mulher no cartão real, com outros relógios
+congelados nas capturas. `both_portraits_loop.gif` combina as 16 poses pareadas
+capturadas em OpenGL e respeita ambos os tempos e o deslocamento inicial;
+o período conjunto completo é 249,10 s. Fundo/cursor ficam congelados somente
+nessa prévia para testar o fechamento. Os testes verificam pernas e botas fixas,
+limites temporais, continuidade, fallback e fechamento dos dois ciclos.
+Permanecem pequenas mudanças de posição/detalhes no rosto e na camisa entre as
+poses fornecidas; não foram usadas deformações ou suavização. A revisão técnica
+feminina usou capturas e GIFs decodificados.
+
+**Aprovação visual manual:** o usuário aprovou o repouso feminino e solicitou
+seu commit. Esse registro complementa a aprovação masculina anterior, sem
+estender aprovação manual às demais mudanças da seleção. A animação masculina
+e seus tempos aprovados permanecem preservados.
 
 ## Recursos e preparação anteriores (histórico)
 

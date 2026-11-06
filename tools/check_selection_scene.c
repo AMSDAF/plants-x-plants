@@ -1,6 +1,7 @@
 /* Valida entradas, transições, fallback e composição com os módulos reais e OpenGL. */
 #include "game.h"
 #include "male_portrait_idle_data.h"
+#include "female_portrait_idle_data.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -75,6 +76,8 @@ int main(void)
     assert(game.trainer_select_assets.portraits[0].width == 816);
     assert(game.trainer_select_assets.portraits[1].height == 1072);
     assert(game.trainer_select_assets.male_idle.id && game.trainer_select_assets.male_idle_halo.id);
+    assert(game.trainer_select_assets.female_idle.id && game.trainer_select_assets.female_idle_halo.id);
+    assert(game.trainer_select.female_idle_time == FEMALE_PORTRAIT_IDLE_PHASE_OFFSET);
     float start = 0;
     for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
         assert(trainer_select_male_idle_frame(start + .001f) == i);
@@ -82,6 +85,13 @@ int main(void)
         start += MALE_PORTRAIT_IDLE_DURATIONS[i];
     }
     assert(trainer_select_male_idle_frame(MALE_PORTRAIT_IDLE_SECONDS) == 0);
+    start = 0;
+    for (int i = 0; i < FEMALE_PORTRAIT_IDLE_FRAMES; i++) {
+        assert(trainer_select_female_idle_frame(start + .001f) == i);
+        assert(trainer_select_female_idle_frame(start + FEMALE_PORTRAIT_IDLE_DURATIONS[i] - .001f) == i);
+        start += FEMALE_PORTRAIT_IDLE_DURATIONS[i];
+    }
+    assert(trainer_select_female_idle_frame(FEMALE_PORTRAIT_IDLE_SECONDS) == 0);
     assert(game.trainer_select_assets.frame.id && game.trainer_select_assets.forest.base.id);
     assert(game.trainer_select_assets.forest.clouds.id && game.trainer_select_assets.forest.trunks.id);
     assert(game.trainer_select_assets.forest.canopies.id && game.trainer_select_assets.forest.ground.id);
@@ -90,10 +100,12 @@ int main(void)
     campaign(&game);
     float background_before = game.trainer_select.background_time;
     float idle_before = game.trainer_select.male_idle_time;
+    float female_before = game.trainer_select.female_idle_time;
     key(&game, KEY_RIGHT);
     assert(game.trainer_select.selected == TRAINER_FEMALE);
     assert(game.trainer_select.background_time > background_before);
     assert(game.trainer_select.male_idle_time > idle_before);
+    assert(game.trainer_select.female_idle_time > female_before);
     key(&game, KEY_LEFT);
     assert(game.trainer_select.selected == TRAINER_MALE);
     key(&game, KEY_D);
@@ -157,6 +169,10 @@ int main(void)
     game.trainer_select.male_idle_time = MALE_PORTRAIT_IDLE_SECONDS - .025f;
     trainer_select_screen_update(&game.trainer_select, false, .1f);
     assert(fabsf(game.trainer_select.male_idle_time - .075f) < .001f);
+    game.trainer_select.selected = TRAINER_MALE;
+    game.trainer_select.female_idle_time = FEMALE_PORTRAIT_IDLE_SECONDS - .025f;
+    trainer_select_screen_update(&game.trainer_select, false, .1f);
+    assert(fabsf(game.trainer_select.female_idle_time - .075f) < .001f);
     trainer_select_screen_init(&game.trainer_select);
     assert(DirectoryExists("build/male_portrait_idle_preview") || MakeDirectory("build/male_portrait_idle_preview") == 0);
     float pose_time = 0;
@@ -176,6 +192,36 @@ int main(void)
     capture(&game, target, "build/male_portrait_idle_preview/runtime_fallback_halo.png", false);
     game.trainer_select_assets.male_idle_halo = saved_halo;
     game.trainer_select.male_idle_time = 0;
+    assert(DirectoryExists("build/female_portrait_idle_preview") || MakeDirectory("build/female_portrait_idle_preview") == 0);
+    game.trainer_select.selected = TRAINER_FEMALE;
+    pose_time = 0;
+    for (int i = 0; i < FEMALE_PORTRAIT_IDLE_FRAMES; i++) {
+        game.trainer_select.female_idle_time = pose_time + .001f;
+        capture(&game, target, TextFormat("build/female_portrait_idle_preview/runtime_pose_%d.png",i), false);
+        pose_time += FEMALE_PORTRAIT_IDLE_DURATIONS[i];
+    }
+    game.trainer_select.female_idle_time = FEMALE_PORTRAIT_IDLE_SECONDS;
+    capture(&game, target, "build/female_portrait_idle_preview/runtime_loop_end.png", false);
+    saved_idle = game.trainer_select_assets.female_idle;
+    game.trainer_select_assets.female_idle = (Texture2D){0};
+    capture(&game, target, "build/female_portrait_idle_preview/runtime_fallback.png", false);
+    game.trainer_select_assets.female_idle = saved_idle;
+    saved_halo = game.trainer_select_assets.female_idle_halo;
+    game.trainer_select_assets.female_idle_halo = (Texture2D){0};
+    capture(&game, target, "build/female_portrait_idle_preview/runtime_fallback_halo.png", false);
+    game.trainer_select_assets.female_idle_halo = saved_halo;
+    float male_time = 0;
+    for (int m = 0; m < 4; m++) {
+        float female_time = 0;
+        for (int f = 0; f < 4; f++) {
+            game.trainer_select.male_idle_time = male_time + .001f;
+            game.trainer_select.female_idle_time = female_time + .001f;
+            capture(&game,target,TextFormat("build/female_portrait_idle_preview/pair_%d_%d.png",m,f),false);
+            female_time += FEMALE_PORTRAIT_IDLE_DURATIONS[f];
+        }
+        male_time += MALE_PORTRAIT_IDLE_DURATIONS[m];
+    }
+    trainer_select_screen_init(&game.trainer_select);
     capture(&game, target, "build/selection_preview/selected_male.png", false);
     game.trainer_select.selected = TRAINER_FEMALE;
     for (int i = 0; i < 60; i++) trainer_select_screen_update(&game.trainer_select, false, 1.0f / 60);
@@ -191,6 +237,7 @@ int main(void)
     game.trainer_select_assets = saved;
     UnloadRenderTexture(target);
     game_shutdown(&game);
+    assert(!game.trainer_select_assets.female_idle.id && !game.trainer_select_assets.female_idle_halo.id);
     assert(!game.trainer_select_assets.frame.id && !game.trainer_select_assets.forest.base.id);
     CloseWindow();
     puts("PASS: teclado/mouse, confirmar/voltar, ESC, reentrada, ambos os treinadores, entrada mantida, relogio continuo, F7, desenho imutavel, ambos os estados OpenGL, fallback e descarregamento.");

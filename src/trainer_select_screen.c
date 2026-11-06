@@ -2,6 +2,7 @@
 #include "trainer_select_screen.h"
 #include "selection_portrait_v2_data.h"
 #include "male_portrait_idle_data.h"
+#include "female_portrait_idle_data.h"
 #include <math.h>
 
 #define PORTRAIT_WIDTH 320
@@ -81,6 +82,17 @@ void trainer_select_assets_load(TrainerSelectAssets *assets)
         assets->male_idle = assets->male_idle_halo = (Texture2D){0};
         TraceLog(LOG_WARNING, "Repouso masculino indisponivel; usando retrato estatico.");
     }
+    assets->female_idle = load_portrait("assets/sprites/trainers/female_portrait_idle.png",
+                                       FEMALE_PORTRAIT_IDLE_WIDTH*FEMALE_PORTRAIT_IDLE_FRAMES,
+                                       FEMALE_PORTRAIT_IDLE_HEIGHT);
+    assets->female_idle_halo = load_portrait("assets/sprites/trainers/female_portrait_idle_halo.png",
+                                            SELECTION_PORTRAIT_V2_WIDTH, SELECTION_PORTRAIT_V2_HEIGHT);
+    if (!assets->female_idle.id || !assets->female_idle_halo.id) {
+        if (assets->female_idle.id) UnloadTexture(assets->female_idle);
+        if (assets->female_idle_halo.id) UnloadTexture(assets->female_idle_halo);
+        assets->female_idle = assets->female_idle_halo = (Texture2D){0};
+        TraceLog(LOG_WARNING, "Repouso feminino indisponivel; usando retrato estatico.");
+    }
 }
 
 void trainer_select_assets_unload(TrainerSelectAssets *assets)
@@ -89,6 +101,8 @@ void trainer_select_assets_unload(TrainerSelectAssets *assets)
     trainer_background_unload(&assets->background);
     if (assets->male_idle.id) UnloadTexture(assets->male_idle);
     if (assets->male_idle_halo.id) UnloadTexture(assets->male_idle_halo);
+    if (assets->female_idle.id) UnloadTexture(assets->female_idle);
+    if (assets->female_idle_halo.id) UnloadTexture(assets->female_idle_halo);
     if (assets->frame.id) UnloadTexture(assets->frame);
     if (assets->buttons.id) UnloadTexture(assets->buttons);
     for (int i = 0; i < TRAINER_COUNT; i++) {
@@ -100,19 +114,29 @@ void trainer_select_assets_unload(TrainerSelectAssets *assets)
 void trainer_select_screen_init(TrainerSelectScreen *screen)
 {
     *screen = (TrainerSelectScreen){.selected = TRAINER_MALE, .pressed = -1, .hovered = -1,
-                                   .emphasis = {1, 0}};
+                                   .emphasis = {1, 0}, .female_idle_time = FEMALE_PORTRAIT_IDLE_PHASE_OFFSET};
     forest_scene_init(&screen->forest);
+}
+
+static int portrait_idle_frame(float elapsed, const float durations[4], float seconds)
+{
+    float phase = fmodf(fmaxf(0, elapsed), seconds);
+    float end = 0;
+    for (int i = 0; i < 4; i++) {
+        end += durations[i];
+        if (phase < end) return i;
+    }
+    return 0;
 }
 
 int trainer_select_male_idle_frame(float elapsed)
 {
-    float phase = fmodf(fmaxf(0, elapsed), MALE_PORTRAIT_IDLE_SECONDS);
-    float end = 0;
-    for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
-        end += MALE_PORTRAIT_IDLE_DURATIONS[i];
-        if (phase < end) return i;
-    }
-    return 0;
+    return portrait_idle_frame(elapsed, MALE_PORTRAIT_IDLE_DURATIONS, MALE_PORTRAIT_IDLE_SECONDS);
+}
+
+int trainer_select_female_idle_frame(float elapsed)
+{
+    return portrait_idle_frame(elapsed, FEMALE_PORTRAIT_IDLE_DURATIONS, FEMALE_PORTRAIT_IDLE_SECONDS);
 }
 
 TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bool accept_input, float dt)
@@ -121,6 +145,7 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
     if (dt > 0.1f) dt = 0.1f;
     screen->background_time = fmodf(screen->background_time + dt, 128.0f);
     screen->male_idle_time = fmodf(screen->male_idle_time + dt, MALE_PORTRAIT_IDLE_SECONDS);
+    screen->female_idle_time = fmodf(screen->female_idle_time + dt, FEMALE_PORTRAIT_IDLE_SECONDS);
     if (accept_input && IsKeyPressed(KEY_F7)) {
         screen->background_preview = !screen->background_preview;
         screen->pressed = -1;
@@ -226,6 +251,14 @@ static void draw_portrait(const TrainerSelectScreen *screen, const TrainerSelect
         Rectangle source = {frame*MALE_PORTRAIT_IDLE_WIDTH,0,
                             MALE_PORTRAIT_IDLE_WIDTH,MALE_PORTRAIT_IDLE_HEIGHT};
         draw_portrait_texture(assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index);
+    } else if (index == TRAINER_FEMALE && assets->female_idle.id && assets->female_idle_halo.id) {
+        Texture2D halo = assets->female_idle_halo;
+        draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
+                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index);
+        int frame = trainer_select_female_idle_frame(screen->female_idle_time);
+        Rectangle source = {frame*FEMALE_PORTRAIT_IDLE_WIDTH,0,
+                            FEMALE_PORTRAIT_IDLE_WIDTH,FEMALE_PORTRAIT_IDLE_HEIGHT};
+        draw_portrait_texture(assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index);
     } else {
         Texture2D texture = assets->portraits[index];
         draw_portrait_texture(texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},

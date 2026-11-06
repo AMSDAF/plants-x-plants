@@ -184,7 +184,7 @@ cmake --build build --target menu_screen_check
 
 As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
 
-Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para entrar na exploração existente. **Voltar** ou **ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; o homem tem repouso em quatro poses e a mulher permanece estática. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
+Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para entrar na exploração existente. **Voltar** ou **ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
@@ -223,7 +223,7 @@ Os retratos são arte exclusiva da seleção, separados dos sprites de caminhada
 .\build\trainer_tools\Scripts\python tools/prepare_selection_portraits_v2.py
 ```
 
-O script preserva `trainer_selection_portraits_v2.png` e divide suas metades em `male_portrait_v2.png` e `female_portrait_v2.png`, com margem transparente, em `assets/sprites/trainers/`. Cores, alfa e halo são copiados sem alteração. Diagnósticos de alfa, enquadramento e composição ficam em `build/selection_portrait_v2_preview/`. O repouso masculino é preparado separadamente por `tools/prepare_male_portrait_idle.py`; a mulher e o fallback permanecem estáticos. Recursos anteriores são preservados. Python não é necessário para jogar. Detalhes e validação estão em [TRAINER_SELECTION.md](docs/TRAINER_SELECTION.md).
+O script preserva `trainer_selection_portraits_v2.png` e divide suas metades em `male_portrait_v2.png` e `female_portrait_v2.png`, com margem transparente, em `assets/sprites/trainers/`. Cores, alfa e halo são copiados sem alteração. Diagnósticos de alfa, enquadramento e composição ficam em `build/selection_portrait_v2_preview/`. Os repousos são preparados por `tools/prepare_male_portrait_idle.py` (padrão masculino; `--character female` para a mulher); ambos preservam fallback estático. Recursos anteriores são preservados. Python não é necessário para jogar. Detalhes e validação estão em [TRAINER_SELECTION.md](docs/TRAINER_SELECTION.md).
 
 ### Preparar novamente o cenário de seleção (opcional)
 

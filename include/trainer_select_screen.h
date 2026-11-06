@@ -17,6 +17,8 @@ typedef struct {
     Rectangle portrait_bounds[TRAINER_COUNT]; /* Corpo sem halo, usado para escala e pés. */
     Texture2D male_idle;
     Texture2D male_idle_halo;
+    Texture2D female_idle;
+    Texture2D female_idle_halo;
     Texture2D frame;
     Texture2D buttons;
     ForestSceneAssets forest;
@@ -32,12 +34,14 @@ typedef struct {
     bool background_preview;
     float background_time;
     float male_idle_time;
+    float female_idle_time;
 } TrainerSelectScreen;
 
 void trainer_select_assets_load(TrainerSelectAssets *assets);
 void trainer_select_assets_unload(TrainerSelectAssets *assets);
 void trainer_select_screen_init(TrainerSelectScreen *screen);
 int trainer_select_male_idle_frame(float elapsed);
+int trainer_select_female_idle_frame(float elapsed);
 TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bool accept_input, float dt);
 void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
                                Texture2D buttons);
