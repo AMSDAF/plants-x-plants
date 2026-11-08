@@ -46,3 +46,20 @@ void Plant_TakeDamage(Plant *plant, int damage) {
         plant->current_hp = 0;
     }
 }
+
+Plant* Team_GetActivePlant(Team *team) {
+    if (team == NULL || team->active_index < 0 || team->active_index >= team->count) {
+        return NULL;
+    }
+    return &team->plants[team->active_index];
+}
+
+int Team_HasLivingPlants(const Team *team) {
+    if (team == NULL) return 0;
+    for (int i = 0; i < team->count; i++) {
+        if (Plant_IsAlive(&team->plants[i])) {
+            return 1; // Tem pelo menos uma viva
+        }
+    }
+    return 0; // Todas mortas
+}

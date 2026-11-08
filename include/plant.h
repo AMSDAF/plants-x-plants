@@ -40,6 +40,10 @@ typedef struct {
     int active_index;        // Índice da planta que está lutando agora
 } Team;
 
+// --- ADICIONE ESTAS DECLARAÇÕES AQUI ---
+Plant* Team_GetActivePlant(Team *team);
+int Team_HasLivingPlants(const Team *team);
+
 // Funções utilitárias da planta e da equipe
 int Plant_IsAlive(const Plant *plant);
 void Plant_TakeDamage(Plant *plant, int damage);

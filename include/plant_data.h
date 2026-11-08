@@ -22,7 +22,7 @@ typedef struct {
     int base_hp;
     int base_attack;
     int base_defense;
-    int moves[MAX_MOVES];
+    Move moves[MAX_MOVES];
 } SpeciesData;
 
 // Função para obter os dados base de uma espécie pelo ID
