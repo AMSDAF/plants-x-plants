@@ -78,7 +78,7 @@ void player_update(Player *player, const World *world, float dt)
         if (facing == FACING_SOUTH) next.y += step;
         if (facing == FACING_WEST) next.x -= step;
         if (facing == FACING_EAST) next.x += step;
-        next = world_constrain(world, next);
+        next = world_constrain(world, player->feet, next);
     }
     bool moved = next.x != player->feet.x || next.y != player->feet.y;
     if (!moved || facing != player->facing) player->walk_time = 0;

@@ -4,7 +4,7 @@ Este documento explica a organização do projeto e a responsabilidade de cada a
 
 O jogo será desenvolvido em C com raylib. A estrutura inicial prioriza simplicidade, divisão de tarefas e separação entre as regras do jogo e a interface gráfica.
 
-> A tela inicial e o menu em pixel art têm vento localizado na grama/copas e repouso animado do mascote. O teste provisório de exploração está implementado e a seleção de treinadores conserva suas animações. Os módulos de combate abaixo ainda descrevem a arquitetura planejada.
+> A campanha abre a Estufa Lógica. O Versus abre a arena de combate contra o computador ou outro jogador.
 
 ## Estrutura de pastas
 
@@ -33,7 +33,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 |---|---|
 | `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial/menu em pixel art e relógios contínuos de grama e mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. Desenha painel/cursor em código e devolve ações explícitas de Campanha/Versus/Sair. Protege as trocas título/menu até soltar entradas. |
 | `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões e controles geométricos em pixel art sobre `TrainerBackgroundAssets`, retratos v2, repousos com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa limites corporais gerados para igualar altura/pés sem medir o halo. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
-| `include/versus_screen.h`, `src/versus_screen.c` | Escolha VS CPU/VS PLAYER por teclado e mouse, cenário aprovado com vento na grama e em camadas próprias de copas/arbustos, ilustrações da referência e controles compartilhados; devolve confirmar/voltar sem iniciar combate. `tools/check_versus_screen.c` verifica fluxo, isolamento da campanha e capturas OpenGL. |
+| `include/versus_screen.h`, `src/versus_screen.c` | Escolha VS CPU/VS PLAYER por teclado e mouse, cenário animado, ilustrações da referência e controles compartilhados. A tela devolve a ação de confirmar ou voltar a `game.c`, que inicia a batalha ou retorna ao menu. |
 | `tools/prepare_versus_grass.py`, `include/versus_grass_data.h` | Extrai 20 touceiras isoladas em alfa, reconstrói somente o chão exposto e prepara 32 poses com cinco linhas de base fixas, fases e ritmos próprios. Derivados ficam em `assets/sprites/versus/`; a fonte aprovada permanece intacta. `versus_background_draw` valida o par base/atlas e mantém fallback completo. Diagnósticos e GIF do renderizador ficam em `build/versus_grass_preview/`, preparados também por `tools/preview_versus_grass.py`. |
 | `tools/prepare_versus_foliage.py`, `include/versus_foliage_data.h` | Prepara 13 camadas de copas/arbustos com alfa binário, ligações fixas e poses inteiras. Parte da base da grama sem alterá-la e reconstrói apenas franjas expostas. `versus_background_draw` ativa o par de folhagem somente com grama válida; sua falha mantém grama animada e folhagem estática. `tools/preview_versus_foliage.py` monta os diagnósticos OpenGL em `build/versus_foliage_preview/`. |
 | `tools/prepare_versus_characters.py`, `include/versus_character_data.h` | Extrai plantas/robô da referência e prepara partes sobrepostas, poses sem escala, pés fixos, piscadas e gestos ocasionais. Gera base/atlas separados do cenário, preservando os originais. `VersusScreen.character_time` mantém quatro relógios limitados por delta time e fases independentes; desenhar não os altera. O par inválido usa a ilustração estática. `tools/preview_versus_characters.py` monta GIFs OpenGL em `build/versus_character_preview/`. |
@@ -42,7 +42,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/selection_ui.h`, `src/selection_ui.c` | Paleta, geometria em degraus, cantos laranja e cursor pulsante compartilhados entre seleção, nome e Versus, centralização de texto e descarte de entrada. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
-| `include/world.h`, `src/world.c` | Área provisória, grade, limites e restrição da caixa dos pés (16 × 8 pixels). |
+| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels) e desenho do cenário e do painel. |
 | `tools/prepare_trainers.py` | Limpeza e normalização dos sprites, sem alterar as fontes; gera atlas de execução e prévias de inspeção. |
 | `tools/prepare_trainer_walk6.py` | Experimento isolado de extração e normalização de seis poses masculinas; gera outro atlas, máscaras e prévias A/B. |
 | `tools/prepare_trainer_portraits.py` | Regenera os retratos detalhados de fallback estático; não gera mais a respiração procedural antiga. Não altera fontes nem atlas de caminhada. |
@@ -55,7 +55,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `tools/prepare_trainer_selection_background.py`, `include/trainer_background_data.h` | Extração e reconstrução local da nova fonte; poses e fases próprias, sem alterar recursos do menu aprovado. |
 | `tools/check_trainer_background.c`, `tools/preview_trainer_selection_background.py` | Capturas OpenGL do ciclo completo, verificação da prévia e montagem de GIF/contatos em `build/trainer_selection_preview/`. Consulte [os detalhes do fundo](TRAINER_SELECTION_BACKGROUND.md). |
 
-`Game` mantém os estados de menu, escolha Versus, seleção, entrada de nome e exploração, além de `CampaignSession` com personagem e nome confirmado somente em memória. `VersusMode` e `versus_mode_selected` guardam somente o último modo confirmado em memória, separados de `CampaignSession`; a confirmação permanece na tela Versus com aviso, sem seleção de plantas ou combate. A confirmação da seleção de personagem abre a entrada de nome; um nome válido inicia a exploração. `NameEntryScreen` mantém o rascunho ao voltar, enquanto `TrainerSelectScreen` continua avançando fundo e repousos. Consulte [CAMPAIGN_NAME_ENTRY.md](CAMPAIGN_NAME_ENTRY.md). `game.c` faz todas as transições e cancela ativações pendentes. Após cada transição, aguarda a soltura das teclas de navegação/confirmação e do mouse, sem bloquear o loop da janela. ESC na exploração ou seleção retorna ao menu aberto.
+`Game` mantém os estados de menu, escolha Versus, batalha, seleção, entrada de nome e exploração, além de `CampaignSession` com personagem e nome confirmado somente em memória. `VersusMode` e `versus_mode_selected` guardam o último modo confirmado em memória, separados de `CampaignSession`. A confirmação do Versus abre a montagem das equipes e dos golpes lógicos. O reinício restaura as equipes escolhidas no mesmo modo. A confirmação da seleção de personagem abre a entrada de nome; um nome válido inicia a exploração. `NameEntryScreen` mantém o rascunho ao voltar, enquanto `TrainerSelectScreen` continua avançando fundo e repousos. Consulte [CAMPAIGN_NAME_ENTRY.md](CAMPAIGN_NAME_ENTRY.md). `game.c` faz todas as transições e cancela ativações pendentes. Após cada transição, aguarda a soltura das teclas de navegação/confirmação e do mouse, sem bloquear o loop da janela. ESC na exploração ou seleção retorna ao menu aberto.
 
 Os atlas de caminhada são carregados uma vez em `game_init` e liberados em `game_shutdown`, usados somente pelo jogador na exploração. Recursos ausentes ou com dimensões incorretas recebem diagnóstico e marcador substituto. A posição representa os pés: o desenho usa o mesmo pivô em todas as poses, escala uniforme 0,30 e filtro pontual. A colisão ignora chapéu e mochila.
 
@@ -80,7 +80,7 @@ O movimento usa delta time, limitado a 0,1 s por quadro para evitar saltos após
 | `include/plant.h` | Definir as estruturas de plantas, golpes e equipes, além das operações sobre esses dados. |
 | `src/plant.c` | Implementar a criação e a manipulação de plantas e equipes. |
 | `include/plant_data.h` | Declarar o acesso ao catálogo de espécies, evoluções e golpes. |
-| `src/plant_data.c` | Armazenar nomes, atributos e golpes de cada espécie e estágio evolutivo. |
+| `src/plant_data.c` | Armazenar nomes, atributos e golpes de cada espécie. |
 
 O catálogo contém os dados usados para criar as plantas. Durante uma partida, cada planta possui seu próprio estado, como a vida atual.
 
@@ -96,6 +96,13 @@ Por exemplo: dois cactos podem partir dos mesmos atributos do catálogo, mas per
 Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a interface já impede uma escolha inválida.
 
 Uma ação inválida não deve alterar a batalha nem consumir o turno.
+
+Cada equipe escolhe de duas a quatro das 12 espécies catalogadas em `plant_data.c`.
+O Golpe Lógico tem uma fórmula por equipe. `battle_screen.c` coleta as duas
+condições e o operador antes da partida e mostra os valores durante os turnos.
+`battle.c` interpreta a fórmula, resolve a disponibilidade e executa o golpe
+pela mesma função usada para os golpes das espécies. A CPU consulta essa
+disponibilidade antes de escolher uma ação. O reinício preserva as fórmulas.
 
 ### Adversário controlado pelo computador
 
@@ -131,7 +138,7 @@ Ela não deve calcular dano, decidir o vencedor ou alterar diretamente a vida da
 
 1. `main.c` abre a janela e inicializa o jogo.
 2. A cada quadro, chama as funções de atualização e desenho de `game.c`.
-3. `game.c` direciona a execução para menu, escolha Versus, seleção ou exploração. Campanha abre o teste de movimento; combate ainda não é acessível pelo menu.
+3. `game.c` direciona a execução para menu, escolha Versus, batalha, seleção de personagem, entrada de nome ou exploração.
 4. Durante uma batalha, a interface captura a ação do jogador ou a IA escolhe uma ação.
 5. `battle.c` valida e resolve a ação, atualizando o estado da batalha.
 6. A interface desenha o estado atualizado.
@@ -184,7 +191,7 @@ Ao alterar uma estrutura ou a assinatura de uma função, também é necessário
 
 ## Escopo do primeiro protótipo
 
-A primeira entrega terá uma batalha completa, com:
+O protótipo Versus inclui:
 
 - Modo contra o computador e versus local.
 - Duas plantas por equipe, com capacidade máxima prevista de quatro.
@@ -195,7 +202,7 @@ A primeira entrega terá uma batalha completa, com:
 - Identificação do vencedor e opção de reiniciar.
 - Visual provisório, sem depender de sprites finalizados.
 
-O botão Campanha atualmente abre somente o teste provisório de movimento. Campanha completa, arenas, recrutamento e evolução continuam fora deste teste e não foram implementados.
+O botão Campanha abre uma missão com comporta, ponte e saída. A progressão por arenas, recrutamento e evolução permanece planejada. Consulte [CAMPAIGN_GREENHOUSE.md](CAMPAIGN_GREENHOUSE.md).
 
 ## Convenções do projeto
 

@@ -63,3 +63,39 @@ int Team_HasLivingPlants(const Team *team) {
     }
     return 0; // Todas mortas
 }
+
+int Team_SelectSpecies(Team *team, int index, int species_id)
+{
+    if (index < 0 || index > team->count || index >= MAX_TEAM_SIZE ||
+        !PlantData_GetSpecies((SpeciesId)species_id))
+        return 0;
+    for (int i = 0; i < team->count; i++) {
+        if (i != index && team->plants[i].id == species_id) {
+            if (index == team->count) return 0;
+            Plant previous = team->plants[index];
+            team->plants[index] = team->plants[i];
+            team->plants[i] = previous;
+            return 1;
+        }
+    }
+    team->plants[index] = Plant_CreateFromSpecies(species_id, 1);
+    if (index == team->count) team->count++;
+    return 1;
+}
+
+int Team_RemoveReserve(Team *team, int index)
+{
+    if (team->count <= MIN_VERSUS_TEAM_SIZE || index <= 0 || index >= team->count)
+        return 0;
+    for (int i = index; i + 1 < team->count; i++)
+        team->plants[i] = team->plants[i + 1];
+    team->count--;
+    return 1;
+}
+
+void Team_Restore(Team *team)
+{
+    team->active_index = 0;
+    for (int i = 0; i < team->count; i++)
+        team->plants[i].current_hp = team->plants[i].max_hp;
+}

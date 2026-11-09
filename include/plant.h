@@ -9,6 +9,7 @@
 
 #define MAX_MOVES 2
 #define MAX_TEAM_SIZE 4
+#define MIN_VERSUS_TEAM_SIZE 2
 
 // Estrutura de um golpe
 typedef struct {
@@ -43,6 +44,9 @@ typedef struct {
 // --- ADICIONE ESTAS DECLARAÇÕES AQUI ---
 Plant* Team_GetActivePlant(Team *team);
 int Team_HasLivingPlants(const Team *team);
+int Team_SelectSpecies(Team *team, int index, int species_id);
+int Team_RemoveReserve(Team *team, int index);
+void Team_Restore(Team *team);
 
 // Funções utilitárias da planta e da equipe
 int Plant_IsAlive(const Plant *plant);

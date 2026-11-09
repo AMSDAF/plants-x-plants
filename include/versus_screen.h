@@ -24,7 +24,6 @@ typedef struct {
     float elapsed;
     float character_time[4];
     float cloud_time;
-    bool confirmed;
 } VersusScreen;
 
 void versus_assets_load(VersusAssets *assets);

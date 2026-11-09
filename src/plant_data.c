@@ -30,7 +30,27 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
             {"Raio Solar", 50, 90},
             {"Folha Navalha", 40, 100}
         }
-    }
+    },
+    {SPECIES_ALOE, "Babosa", 110, 42, 53,
+        {{"Espinho Curto", 39, 100}, {"Corte de Aloe", 51, 85}}},
+    {SPECIES_ROSE, "Rosa", 89, 54, 38,
+        {{"Espinho Rubro", 42, 100}, {"Pétala Cortante", 55, 80}}},
+    {SPECIES_IVY, "Hera", 97, 47, 45,
+        {{"Cipó Ágil", 40, 100}, {"Cipó Feroz", 52, 85}}},
+    {SPECIES_BAMBOO, "Bambu", 106, 48, 49,
+        {{"Haste Rápida", 36, 100}, {"Bastão Verde", 49, 85}}},
+    {SPECIES_FERN, "Samambaia", 99, 45, 47,
+        {{"Fronda Rápida", 40, 100}, {"Fronda Pesada", 54, 80}}},
+    {SPECIES_LAVENDER, "Lavanda", 88, 51, 43,
+        {{"Ramo Violeta", 42, 100}, {"Ramo Perfurante", 53, 85}}},
+    {SPECIES_ORCHID, "Orquídea", 86, 53, 40,
+        {{"Pétala Rosa", 41, 100}, {"Corte Floral", 54, 85}}},
+    {SPECIES_LOTUS, "Lótus", 101, 43, 50,
+        {{"Folha Lisa", 39, 100}, {"Pétala Pesada", 52, 85}}},
+    {SPECIES_MINT, "Hortelã", 92, 50, 42,
+        {{"Folha Fresca", 40, 100}, {"Lâmina Verde", 52, 85}}},
+    {SPECIES_CLOVER, "Trevo", 94, 47, 46,
+        {{"Folha Tripla", 41, 100}, {"Trinca de Folhas", 55, 80}}}
 };
 
 const SpeciesData* PlantData_GetSpecies(SpeciesId id) {

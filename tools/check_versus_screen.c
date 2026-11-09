@@ -1,5 +1,6 @@
-/* Verifica navegação, confirmação isolada e capturas OpenGL da tela Versus. */
+/* Verifica navegação, partidas e capturas OpenGL do modo Versus. */
 #include "game.h"
+#include "plant_data.h"
 #include "versus_grass_data.h"
 #include "versus_foliage_data.h"
 #include "versus_character_data.h"
@@ -537,6 +538,27 @@ static void check_cloud_loader(RenderTexture2D target)
     puts("PASS: atlas ausente/invalido e correcao invalida mantem a nuvem baixa removida usando o recurso valido.");
 }
 
+static void check_logic_truth_tables(BattleState battle)
+{
+    const int expected[LOGIC_OPERATOR_COUNT][4] = {
+        [LOGIC_AND] = {0, 0, 0, 1},
+        [LOGIC_OR] = {0, 1, 1, 1},
+        [LOGIC_XOR] = {0, 1, 1, 0}
+    };
+    Plant *own = &battle.player_team.plants[0];
+    Plant *enemy = &battle.enemy_team.plants[0];
+    for (int op = 0; op < LOGIC_OPERATOR_COUNT; op++) {
+        LogicFormula formula = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_LOW_HP, op};
+        for (int row = 0; row < 4; row++) {
+            own->current_hp = row / 2 ? own->max_hp / 2 : own->max_hp / 2 + 1;
+            enemy->current_hp = row % 2 ? enemy->max_hp / 2 : enemy->max_hp / 2 + 1;
+            LogicEvaluation value = Battle_EvaluateFormula(&battle, 0, formula);
+            assert(value.left == row / 2 && value.right == row % 2);
+            assert(value.result == expected[op][row]);
+        }
+    }
+}
+
 int main(void)
 {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
@@ -563,20 +585,139 @@ int main(void)
     CampaignSession campaign=game.campaign;
     key(&game,KEY_ENTER);
     assert(game.versus_mode_selected && game.versus_mode==VERSUS_PLAYER);
-    assert(game.screen==GAME_VERSUS_SELECT && game.versus.confirmed);
+    assert(game.screen==GAME_BATTLE && !game.battle_screen.versus_cpu);
     assert(memcmp(&campaign,&game.campaign,sizeof(campaign))==0);
-    capture(&game,target,"build/versus_preview/player_confirmed.png");
-    click(&game,410,400); assert(game.versus.selected==VERSUS_CPU && !game.versus.confirmed);
+    assert(game.battle_screen.setup_side == 0);
+    assert(game.battle_screen.choosing_team && SPECIES_COUNT == 12);
+    BattleState *battle = &game.battle_screen.battle;
+    capture(&game,target,"build/versus_preview/battle_roster.png");
+    click(&game, 780, 240); /* Babosa como ativa. */
+    key(&game, KEY_UP);
+    key(&game, KEY_RIGHT);
+    key(&game, KEY_SPACE); /* Trevo como reserva. */
+    assert(game.battle_screen.battle.player_team.plants[0].id == SPECIES_ALOE);
+    assert(game.battle_screen.battle.player_team.plants[1].id == SPECIES_CLOVER);
+    click(&game, 1120, 470); /* A espécie da reserva troca de posição. */
+    assert(game.battle_screen.battle.player_team.plants[0].id == SPECIES_CLOVER);
+    assert(game.battle_screen.battle.player_team.plants[1].id == SPECIES_ALOE);
+    key(&game, KEY_Q);
+    click(&game, 180, 240);
+    click(&game, 460, 240);
+    click(&game, 720, 557); /* Terceira vaga. */
+    click(&game, 180, 240); /* Duplicata em vaga livre é rejeitada. */
+    assert(battle->player_team.count == 2);
+    click(&game, 780, 240);
+    key(&game, KEY_R);
+    click(&game, 1120, 470);
+    assert(battle->player_team.count == 4 && battle->player_team.plants[3].id == SPECIES_CLOVER);
+    capture(&game,target,"build/versus_preview/battle_roster_full.png");
+    key(&game, KEY_E);
+    click(&game, 620, 625);
+    assert(battle->player_team.count == 3 && battle->player_team.plants[2].id == SPECIES_CLOVER);
+    key(&game, KEY_BACKSPACE);
+    key(&game, KEY_BACKSPACE);
+    assert(battle->player_team.count == 2);
+    key(&game, KEY_ENTER);
+    capture(&game,target,"build/versus_preview/battle_logic_setup.png");
+    key(&game, KEY_ENTER);
+    assert(game.battle_screen.setup_side == 1);
+    key(&game, KEY_W);
+    click(&game, 780, 240); /* Jogador 2 leva Babosa para a arena. */
+    key(&game, KEY_ENTER);
+    key(&game, KEY_W);
+    click(&game, 530, 250);
+    key(&game, KEY_E);
+    click(&game, 150, 630);
+    assert(game.battle_screen.setup_side == -1);
+    capture(&game,target,"build/versus_preview/battle_player.png");
+    assert(battle->formulas[0].operator == LOGIC_AND && battle->formulas[1].operator == LOGIC_XOR);
+    assert(battle->formulas[1].right == LOGIC_ENEMY_LOW_HP);
+    check_logic_truth_tables(*battle);
+    key(&game, KEY_THREE);
+    assert(battle->current_turn == 0 && battle->enemy_team.plants[0].current_hp == 90);
+    key(&game, KEY_Q); assert(battle->current_turn == 0);
+    click(&game, 180, 590);
+    assert(battle->enemy_team.plants[0].current_hp == 17 && battle->current_turn == 1);
+    key(&game, KEY_TWO); assert(battle->player_team.plants[0].current_hp == 35);
+    assert(Battle_GetAvailableLogicMove(battle));
+    capture(&game,target,"build/versus_preview/battle_logic_ready.png");
+    click(&game, 850, 590);
+    assert(strstr(battle->last_message, "Golpe Lógico"));
+    assert(battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 1);
+    key(&game, KEY_ONE); assert(battle->state == BATTLE_STATE_REPLACEMENT);
+    click(&game, 450, 660);
+    assert(battle->state == BATTLE_STATE_ONGOING && battle->current_turn == 1);
+    assert(battle->enemy_team.active_index == 1);
+    key(&game, KEY_ONE);
+    assert(strstr(battle->last_message, "Babosa usou Espinho Curto"));
+    assert(battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0);
+    key(&game, KEY_W); assert(battle->current_turn == 0);
+    key(&game, KEY_TWO);
+    key(&game, KEY_ONE);
+    key(&game, KEY_TWO);
+    assert(battle->state == BATTLE_STATE_PLAYER_WIN);
+    assert(!Battle_ExecuteMove(battle, 0) && !Battle_SwitchPlant(battle, 0));
+    capture(&game,target,"build/versus_preview/battle_result.png");
+    key(&game, KEY_ENTER);
+    assert(battle->state == BATTLE_STATE_ONGOING && battle->current_turn == 0);
+    assert(game.battle_screen.setup_side == -1 && battle->formulas[1].operator == LOGIC_XOR);
+    assert(battle->enemy_team.plants[1].id == SPECIES_ALOE && battle->enemy_team.plants[1].current_hp == 110);
+    assert(battle->player_team.plants[0].current_hp == 100 && battle->enemy_team.plants[0].current_hp == 90);
+    key(&game, KEY_W);
+    assert(battle->player_team.active_index == 1 && battle->current_turn == 1);
+    battle->enemy_team.plants[0].moves[1].accuracy = 0;
+    key(&game, KEY_TWO);
+    assert(battle->current_turn == 0 && battle->player_team.plants[1].current_hp == 90);
+    key(&game, KEY_ESCAPE); assert(game.screen == GAME_MENU);
+    click(&game,1000,460); assert(game.versus.selected == VERSUS_PLAYER);
+    click(&game,410,400); assert(game.versus.selected==VERSUS_CPU);
     assert(game.versus_mode==VERSUS_PLAYER);
     input(7,780,618); input(6,0,0); tick(&game);
     input(7,20,20); input(5,0,0); tick(&game);
     assert(game.versus_mode==VERSUS_PLAYER && game.versus.pressed==-1);
     click(&game,780,618); assert(game.versus_mode==VERSUS_CPU);
-    capture(&game,target,"build/versus_preview/cpu_confirmed.png");
+    assert(game.screen == GAME_BATTLE && game.battle_screen.versus_cpu);
+    key(&game, KEY_ENTER);
+    assert(battle->enemy_team.plants[0].id != battle->enemy_team.plants[1].id);
+    Team_SelectSpecies(&battle->enemy_team, 0, SPECIES_SUNFLOWER);
+    Team_SelectSpecies(&battle->enemy_team, 1, SPECIES_CACTUS);
+    key(&game, KEY_ENTER);
+    assert(game.battle_screen.setup_side == -1);
+    capture(&game,target,"build/versus_preview/battle_cpu.png");
+    battle->enemy_team.plants[0].current_hp = 1;
+    key(&game, KEY_ONE);
+    assert(battle->state == BATTLE_STATE_REPLACEMENT && battle->enemy_team.active_index == 0);
+    key(&game, KEY_W); assert(battle->enemy_team.active_index == 0);
+    for (int i = 0; i < 180 && battle->current_turn == 1; i++) tick(&game);
+    assert(battle->enemy_team.active_index == 1 && battle->current_turn == 0);
+    assert(battle->player_team.plants[0].current_hp == 25);
+    key(&game, KEY_ONE);
+    for (int i = 0; i < 120 && battle->current_turn == 1; i++) tick(&game);
+    assert(battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0);
+    assert(strstr(battle->last_message, "Golpe Lógico"));
+    key(&game, KEY_W);
+    key(&game, KEY_TWO);
+    assert(battle->state == BATTLE_STATE_PLAYER_WIN);
     click(&game,490,618); assert(game.screen==GAME_MENU && game.menu.menu_open);
     click(&game,1000,460);
-    assert(game.screen==GAME_VERSUS_SELECT && !game.versus.confirmed);
+    assert(game.screen==GAME_VERSUS_SELECT);
     assert(game.versus.selected==VERSUS_CPU);
+    key(&game, KEY_ENTER);
+    key(&game, KEY_E);
+    click(&game, 780, 240);
+    key(&game, KEY_R);
+    click(&game, 1120, 470);
+    key(&game, KEY_ENTER);
+    assert(battle->player_team.count == 4 && battle->enemy_team.count == 4);
+    for (int i = 0; i < 4; i++) {
+        for (int j = i + 1; j < 4; j++)
+            assert(battle->enemy_team.plants[i].id != battle->enemy_team.plants[j].id);
+    }
+    key(&game, KEY_ENTER);
+    key(&game, KEY_R);
+    assert(battle->player_team.active_index == 3);
+    key(&game, KEY_ESCAPE);
+    click(&game,1000,460);
     click(&game,850,400); key(&game,KEY_ESCAPE);
     assert(game.screen==GAME_MENU && game.versus_mode==VERSUS_CPU);
     click(&game,1000,460); assert(game.versus.selected==VERSUS_CPU);

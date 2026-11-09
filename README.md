@@ -6,7 +6,7 @@ Monte sua equipe, evolua suas plantas e escolha seu caminho por diferentes bioma
 
 ## Status
 
-Teste jogável de movimento disponível pelo menu **Campanha**, com escolha de Explorador ou Exploradora. Combate e progressão de campanha continuam previstos; as seções abaixo descrevem o escopo planejado.
+O menu **Versus local** abre batalhas contra o computador ou outro jogador, com 12 espécies disponíveis para montar a equipe. O menu **Campanha** abre a Estufa Lógica, uma missão de exploração com escolha de Explorador ou Exploradora. A progressão posterior de campanha é planejada.
 
 ## Modos de jogo
 
@@ -18,7 +18,7 @@ A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativa
 
 ### Versus local
 
-Dois jogadores montam suas equipes e se enfrentam no mesmo computador, alternando suas ações por turno. Não é necessário concluir a campanha para jogar esse modo.
+Jogue no mesmo computador em **VS PLAYER** ou enfrente o computador em **VS CPU**. Cada grupo tem uma planta ativa e até três reservas.
 
 ## Sistema de combate
 
@@ -26,7 +26,7 @@ Dois jogadores montam suas equipes e se enfrentam no mesmo computador, alternand
 - Apenas uma planta de cada equipe fica ativa por vez.
 - No turno, o jogador pode usar um golpe ou trocar a planta ativa.
 - A troca voluntária consome o turno.
-- Quando uma planta é derrotada, o jogador escolhe outra disponível.
+- Quando uma planta é derrotada e há reserva viva, o lado derrotado escolhe a substituta e então joga seu turno.
 - Vence quem derrotar todas as plantas da equipe adversária.
 
 ## Progressão da campanha
@@ -184,14 +184,20 @@ cmake --build build --target menu_screen_check
 
 As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
 
-Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na exploração existente. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
+Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
+- **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a saída ao se aproximar.
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
 - **ESC no menu:** voltar à tela inicial.
 - **Sair** no menu ou **X** da janela: encerrar.
 
 Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continuar. Isso evita confirmações e movimento herdados da tela anterior.
+
+Na estufa, abra a comporta com `Água E (Luz OU Chave)`. Depois, deixe
+exatamente um canal aberto para estender a ponte e atravesse até a saída.
+O painel mostra os valores das duas fórmulas durante a exploração.
+Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
 Os atlas preparados em `assets/sprites/trainers/` já estão prontos para execução; Python não é necessário para jogar. Execute a partir da raiz para localizar os recursos. Um atlas ausente ou inválido gera diagnóstico no console e um marcador jogável.
 
@@ -251,11 +257,20 @@ cmake --build build --target selection_scene_check
 
 O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
 
-Na tela Versus, esquerda/direita ou A/D escolhem o modo; clicar no cartão apenas
-seleciona. ENTER ou **Confirmar** armazena a escolha em memória e exibe a confirmação
-na própria tela. **Voltar/ESC** retorna ao menu. Reabrir a tela recupera o último
-modo confirmado; sair sem confirmar descarta somente a seleção provisória. Não há
-combate nem seleção de plantas nesta etapa. O cenário gerado aprovado é
+Na tela Versus, esquerda/direita, A/D ou um clique no cartão selecionam o modo.
+**ENTER** ou **Confirmar** abre a montagem da equipe. **Voltar/ESC** retorna ao menu.
+Ao reabrir a seleção, o último modo confirmado aparece selecionado.
+Monte um grupo de duas a quatro plantas. Clique em uma vaga ou use **Q/W/E/R**
+para selecioná-la. Depois, clique em uma espécie ou use **setas** e **Espaço**.
+Use **Backspace** ou o botão de remoção para tirar uma reserva e **Enter** para confirmar.
+Antes da luta, monte também o **Golpe Lógico**. Use **Q/W** para escolher as condições,
+**E** para mudar o operador e **ENTER** para confirmar. Os botões aceitam cliques.
+Na arena, use **1/2** para os golpes da espécie, **3** para o Golpe Lógico e
+**Q/W/E/R** para trocar de planta. O golpe personalizado é liberado quando a fórmula é verdadeira.
+No resultado, **ENTER** reinicia a partida e **M/ESC** retorna ao menu.
+Consulte o [relatório do combate](docs/BATTLE_PROTOTYPE.md) para regras e validação.
+
+O cenário gerado aprovado da seleção Versus é
 `assets/sprites/versus_background_generated_v1.png`; `versus_background_v1.png`
 é usado como alternativa quando disponível. As ilustrações usam recortes da referência
 `versus_illustrations_source.png`, sem incorporar seus controles impressos.

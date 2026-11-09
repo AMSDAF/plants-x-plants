@@ -115,6 +115,84 @@ static void check_names(void)
         assert(font.glyphs[GetGlyphIndex(font,accents[i])].value==accents[i]);
 }
 
+static void walk_axis(Game *game, bool horizontal, float target)
+{
+    float *position = horizontal ? &game->player.feet.x : &game->player.feet.y;
+    bool forward = target > *position;
+    int code = horizontal ? (forward ? KEY_D : KEY_A) : (forward ? KEY_S : KEY_W);
+    input(2, code, 0);
+    for (int i = 0; i < 400 && (forward ? *position < target : *position > target); i++) {
+        float before = *position;
+        player_update(&game->player, &game->world, 1.0f / 60.0f);
+        if (*position == before) break;
+    }
+    input(1, code, 0);
+    tick(game);
+}
+
+static void check_greenhouse(Game *game)
+{
+    World *world = &game->world;
+    for (int row = 0; row < 8; row++) {
+        World sample = {.water = (row & 4) != 0, .light = (row & 2) != 0, .key_collected = (row & 1) != 0};
+        assert(world_gate_open(&sample) == (row >= 5));
+    }
+    for (int row = 0; row < 4; row++) {
+        World sample = {.north_channel = (row & 2) != 0, .south_channel = (row & 1) != 0};
+        assert(world_bridge_open(&sample) == (row == 1 || row == 2));
+    }
+
+    RenderTexture2D target = LoadRenderTexture(1280, 720);
+    capture(game, target, "build/name_entry_preview/greenhouse_start.png");
+    key(game, KEY_E);
+    assert(!world->water && !world->completed);
+    walk_axis(game, true, 585);
+    assert(game->player.feet.x < 520);
+    walk_axis(game, true, 218);
+    walk_axis(game, false, 305);
+    key(game, KEY_E);
+    assert(world->water && !world_gate_open(world));
+    walk_axis(game, true, 397);
+    key(game, KEY_E);
+    assert(world_gate_open(world));
+    walk_axis(game, true, 585);
+    assert(game->player.feet.x < 520); /* A parede continua sólida fora do vão. */
+    walk_axis(game, true, 397);
+    key(game, KEY_E);
+    assert(!world_gate_open(world));
+    walk_axis(game, true, 342);
+    walk_axis(game, false, 536);
+    key(game, KEY_E);
+    assert(world->key_collected && world_gate_open(world));
+    walk_axis(game, false, 420);
+    walk_axis(game, true, 960);
+    assert(game->player.feet.x > 552 && game->player.feet.x < 785);
+    walk_axis(game, true, 675);
+    walk_axis(game, false, 305);
+    key(game, KEY_E);
+    assert(world_bridge_open(world));
+    walk_axis(game, false, 536);
+    key(game, KEY_E);
+    assert(world->north_channel && world->south_channel && !world_bridge_open(world));
+    walk_axis(game, false, 420);
+    walk_axis(game, true, 960);
+    assert(game->player.feet.x < 785);
+    walk_axis(game, true, 675);
+    walk_axis(game, false, 305);
+    key(game, KEY_E);
+    assert(!world->north_channel && world->south_channel && world_bridge_open(world));
+    walk_axis(game, false, 420);
+    capture(game, target, "build/name_entry_preview/greenhouse_open.png");
+    walk_axis(game, true, 1080);
+    key(game, KEY_E);
+    assert(world->completed);
+    capture(game, target, "build/name_entry_preview/greenhouse_complete.png");
+    key(game, KEY_ENTER);
+    assert(game->screen == GAME_MENU);
+    UnloadRenderTexture(target);
+    puts("PASS: estufa, tabelas-verdade, interações, colisões, soluções da comporta, XOR e saída.");
+}
+
 int main(void)
 {
     assert(DirectoryExists("build/name_entry_preview") || MakeDirectory("build/name_entry_preview")==0);
@@ -179,6 +257,7 @@ int main(void)
     assert(strcmp(game.name_entry.draft,"João")==0 && game.name_entry.focus==0);
     key(&game,KEY_TAB); key(&game,KEY_TAB); assert(game.name_entry.focus==2);
     key(&game,KEY_ENTER); assert(game.screen==GAME_EXPLORATION);
+    check_greenhouse(&game);
     /* Botão Voltar focado por teclado e soltura de mouse mantido na entrada. */
     game.screen=GAME_TRAINER_SELECT; game.input_blocked=false;
     name_entry_init(&game.name_entry);

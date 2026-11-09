@@ -25,15 +25,19 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
-add_executable(plants_x_plants
-    src/main.c
-    src/versus_screen.c
-    src/game.c
+set(BATTLE_SOURCES
     src/plant.c
     src/plant_data.c
     src/battle.c
     src/ai.c
     src/battle_screen.c
+)
+
+add_executable(plants_x_plants
+    src/main.c
+    src/versus_screen.c
+    src/game.c
+    ${BATTLE_SOURCES}
     src/player.c
     src/world.c
     src/trainer_select_screen.c
@@ -52,6 +56,7 @@ target_link_libraries(plants_x_plants PRIVATE raylib)
 # Verificação gráfica opcional; não participa da compilação normal do jogo.
 add_executable(selection_scene_check EXCLUDE_FROM_ALL
     tools/check_selection_scene.c
+    ${BATTLE_SOURCES}
     src/versus_screen.c
     src/game.c
     src/menu_screen.c
@@ -68,6 +73,7 @@ target_link_libraries(selection_scene_check PRIVATE raylib)
 # Verificação opcional da composição, mascote e navegação do menu.
 add_executable(menu_screen_check EXCLUDE_FROM_ALL
     tools/check_menu_screen.c
+    ${BATTLE_SOURCES}
     src/versus_screen.c
     src/game.c
     src/menu_screen.c
@@ -83,6 +89,7 @@ target_link_libraries(menu_screen_check PRIVATE raylib)
 
 add_executable(trainer_background_check EXCLUDE_FROM_ALL
     tools/check_trainer_background.c
+    ${BATTLE_SOURCES}
     src/versus_screen.c
     src/game.c src/menu_screen.c src/trainer_select_screen.c src/selection_ui.c src/name_entry_screen.c
     src/trainer_background.c src/player.c src/world.c
@@ -93,6 +100,7 @@ target_link_libraries(trainer_background_check PRIVATE raylib)
 if(WIN32)
     add_executable(name_entry_check EXCLUDE_FROM_ALL
         tools/check_name_entry.c tools/check_name_entry_input.c
+        ${BATTLE_SOURCES}
         src/versus_screen.c
         src/game.c src/menu_screen.c src/trainer_select_screen.c src/trainer_background.c
         src/name_entry_screen.c src/selection_ui.c src/player.c src/world.c)
@@ -117,6 +125,7 @@ endif()
 # Verifica escolha de modos e integração com o fluxo de telas real.
 add_executable(versus_screen_check EXCLUDE_FROM_ALL
     tools/check_versus_screen.c
+    ${BATTLE_SOURCES}
     src/game.c src/versus_screen.c src/menu_screen.c src/trainer_select_screen.c
     src/selection_ui.c src/name_entry_screen.c src/trainer_background.c src/player.c src/world.c)
 target_include_directories(versus_screen_check PRIVATE include)

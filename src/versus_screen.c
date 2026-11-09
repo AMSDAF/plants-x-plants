@@ -125,7 +125,6 @@ VersusAction versus_screen_update(VersusScreen *screen, bool accept_input, float
         screen->pressed = -1;
         return VERSUS_NONE;
     }
-    VersusMode previous = screen->selected;
     if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) screen->selected = VERSUS_CPU;
     if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) screen->selected = VERSUS_PLAYER;
     for (int i = 0; i < 4; i++)
@@ -135,7 +134,6 @@ VersusAction versus_screen_update(VersusScreen *screen, bool accept_input, float
         if (screen->pressed >= 0 && screen->pressed < 2)
             screen->selected = (VersusMode)screen->pressed;
     }
-    if (previous != screen->selected) screen->confirmed = false;
     VersusAction action = VERSUS_NONE;
     if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
         if (screen->pressed == screen->hovered) {
@@ -301,12 +299,6 @@ void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, 
         if (hover) DrawRectangle((int)bounds.x+16,(int)bounds.y+12,4,28,SELECTION_ORANGE);
         selection_ui_text(i == CONFIRM_CONTROL ? "Confirmar" : "Voltar",
                           (int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,SELECTION_INK);
-    }
-    if (screen->confirmed) {
-        selection_ui_panel((Rectangle){208,654,864,26},4,SELECTION_INK);
-        selection_ui_text(screen->selected == VERSUS_CPU
-            ? "VS CPU selecionado. Combate em desenvolvimento."
-            : "VS PLAYER selecionado. Combate em desenvolvimento.",640,658,20,SELECTION_CREAM);
     }
     selection_ui_panel((Rectangle){224,688,832,28},4,SELECTION_INK);
     selection_ui_text("Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar",640,692,20,SELECTION_CREAM);
