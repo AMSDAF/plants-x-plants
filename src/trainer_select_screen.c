@@ -175,34 +175,6 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
     return action;
 }
 
-static void draw_corner_accents(Rectangle bounds, float alpha)
-{
-    int x = (int)bounds.x, y = (int)bounds.y;
-    int w = (int)bounds.width, h = (int)bounds.height;
-    for (int side = 0; side < 2; side++) {
-        for (int bottom = 0; bottom < 2; bottom++) {
-            int left = side ? x + w - 40 : x + 16;
-            int top = bottom ? y + h - 40 : y + 16;
-            DrawRectangle(left, bottom ? top + 18 : top, 24, 6, Fade(ACCENT_ORANGE,alpha));
-            DrawRectangle(side ? left + 18 : left, top, 6, 24, Fade(ACCENT_ORANGE,alpha));
-        }
-    }
-}
-
-static void draw_cursor(int right, int center_y, float elapsed, float alpha)
-{
-    /* Pulso discreto na grade inteira, com o mesmo ritmo do menu. */
-    float pulse = 1.0f + 0.1f * sinf(2.0f * PI * elapsed);
-    int width = 2 * (int)roundf(7 * pulse) + 1;
-    int left = right - width;
-    for (int step = 0; step < 5; step++) {
-        int x0 = left + (int)roundf(step * width / 5.0f);
-        int x1 = left + (int)roundf((step + 1) * width / 5.0f);
-        int half_height = (int)roundf((10 - step*2) * pulse);
-        DrawRectangle(x0, center_y - half_height, x1 - x0, half_height*2 + 1, Fade(INK,alpha));
-    }
-}
-
 static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle body, int index, Rectangle card, float alpha)
 {
     if (texture.id && body.height > 0 && body.width > 0) {
@@ -258,13 +230,13 @@ void trainer_select_draw_card(const TrainerSelectScreen *screen, const TrainerSe
     int border=selected ? 8 : 4;
     Rectangle inner={bounds.x+border,bounds.y+border,bounds.width-2*border,bounds.height-2*border};
     pixel_panel(inner,8,Fade(CREAM,alpha));
-    if (selected) draw_corner_accents(bounds,alpha);
+    if (selected) selection_ui_accents(bounds,alpha);
     draw_portrait(screen,assets,(int)trainer,bounds,alpha);
     int center=(int)roundf(bounds.x+bounds.width/2);
     float factor=bounds.height/480;
     int y=(int)roundf(bounds.y+432*factor);
     centered_text(label,center,y,30,Fade(INK,alpha*label_alpha));
-    if (selected) draw_cursor(center-MeasureText(label,30)/2-12,y+15,screen->background_time,alpha*label_alpha);
+    if (selected) selection_ui_cursor(center-MeasureText(label,30)/2-12,y+15,screen->background_time,alpha*label_alpha);
 }
 
 void trainer_select_draw_chrome(const TrainerSelectScreen *screen, float alpha)

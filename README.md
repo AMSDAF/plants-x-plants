@@ -156,7 +156,7 @@ A partir da raiz do projeto:
 .\build\plants_x_plants.exe
 ```
 
-A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
+A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** abre a escolha entre **VS CPU** e **VS PLAYER**. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
 
 O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. A seta de seleção pulsa discretamente sem alterar as áreas de clique. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção mantém fundo e retratos próprios; seus cartões e controles são desenhados em código. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
 
@@ -250,6 +250,89 @@ cmake --build build --target selection_scene_check
 ```
 
 O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
+
+Na tela Versus, esquerda/direita ou A/D escolhem o modo; clicar no cartão apenas
+seleciona. ENTER ou **Confirmar** armazena a escolha em memória e exibe a confirmação
+na própria tela. **Voltar/ESC** retorna ao menu. Reabrir a tela recupera o último
+modo confirmado; sair sem confirmar descarta somente a seleção provisória. Não há
+combate nem seleção de plantas nesta etapa. O cenário gerado aprovado é
+`assets/sprites/versus_background_generated_v1.png`; `versus_background_v1.png`
+é usado como alternativa quando disponível. As ilustrações usam recortes da referência
+`versus_illustrations_source.png`, sem incorporar seus controles impressos.
+Painéis, cantos e cursor reutilizam `selection_ui`, com o mesmo pulso da seleção.
+
+A grama do cenário Versus mantém suas 20 touceiras com bases fixas,
+fases próprias e ritmos de 6, 7 ou 8 poses por segundo. As árvores e os arbustos
+recebem vento suave em 13 camadas de folhagem, com fases e ritmos independentes.
+Troncos, raízes e bases dos arbustos permanecem fixos; os pulsos existentes da UI
+são preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
+formam um par validado: se faltar ou falhar um deles, o cenário original completo
+é exibido. O par adicional `foliage_base.png`/`foliage_atlas.png` só é ativado
+com a grama válida. Se falhar, árvores e arbustos ficam estáticos e a grama segue
+animando normalmente. A fonte aprovada e os recursos da grama não são alterados.
+Python continua opcional para jogar.
+
+Os quatro personagens dos cartões usam repousos próprios, com relógios e fases
+independentes. As plantas verdes respiram discretamente, movem as folhas e erguem
+os punhos ocasionalmente; a vermelha tem gestos mais frequentes e vigorosos.
+O robô faz ajustes de um pixel no monitor e pisca. Todos usam pixels da arte
+original, sem escala variável ou filtro suave; pés, bases e sombras ficam fixos.
+O par `character_base.png`/`character_atlas.png` é validado ao carregar: se falhar,
+as ilustrações originais são exibidas. Os recursos aprovados do cenário são
+preservados. Os relógios continuam enquanto entradas mantidas aguardam soltura,
+sem modificar o modo selecionado ou as regras de navegação.
+
+As três nuvens do alto se deslocam lentamente para a direita, em ritmos
+independentes, com filtro pontual e retorno somente quando estão inteiramente
+fora da janela. O relógio próprio não reinicia junto ao ciclo da vegetação.
+A nuvem baixa à direita, sobre o gramado acima de VS PLAYER, foi removida por uma
+correção localizada do fundo. Nenhuma outra nuvem foi removida. Fonte e recursos
+aprovados permanecem intactos; as camadas do céu são desenhadas atrás das folhas.
+Se o atlas falhar, as três nuvens superiores ficam estáticas e a correção baixa
+continua aplicada. O atlas também contém uma cópia da correção para tolerar a
+falha isolada desse recurso.
+
+Para regenerar as camadas e os diagnósticos com o mesmo ambiente de preparação:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_versus_grass.py
+.\build\trainer_tools\Scripts\python tools/prepare_versus_foliage.py
+.\build\trainer_tools\Scripts\python tools/prepare_versus_characters.py
+.\build\trainer_tools\Scripts\python tools/prepare_versus_clouds.py
+```
+
+Máscaras, contato ampliado, GIF e relatório ficam em `build/versus_grass_preview/`.
+A verificação abaixo também compara 64 instantes OpenGL, o ciclo de 32 segundos,
+os cartões imóveis, o fallback parcial e a navegação existente. Execute
+`tools/preview_versus_grass.py` após a verificação para montar o GIF do jogo real.
+O teste adicional de folhagem compara a grama pixel a pixel com a versão anterior,
+verifica falhas parciais, o retorno do ciclo e os instantes antes/depois da troca
+de pose. Seus diagnósticos ficam em `build/versus_foliage_preview/`.
+
+Para montar o GIF e os recortes ampliados da folhagem a partir das capturas reais:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/preview_versus_foliage.py
+```
+
+As verificações de personagens isolam 256 poses, conferem pés imóveis, ciclos,
+limite de delta time e retorno à ilustração estática. Capturas ficam em
+`build/versus_character_preview/`. Para montar GIFs do jogo e dos dois cartões:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/preview_versus_characters.py
+```
+
+A verificação das nuvens inspeciona os ciclos longos, as saídas/entradas da janela,
+a remoção permanente no local original e os recursos de fallback. Capturas,
+comparações antes/depois e relatório ficam em `build/versus_cloud_preview/`.
+
+Para verificar a tela e gerar capturas OpenGL em `build/versus_preview/`:
+
+```powershell
+cmake --build build --target versus_screen_check
+.\build\versus_screen_check.exe
+```
 
 A entrada do nome e sua transição reversível estão documentadas em [CAMPAIGN_NAME_ENTRY.md](docs/CAMPAIGN_NAME_ENTRY.md), incluindo verificações e capturas reproduzíveis. Nome e personagem ficam somente na sessão em memória.
 
