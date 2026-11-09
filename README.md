@@ -6,7 +6,7 @@ Monte sua equipe, evolua suas plantas e escolha seu caminho por diferentes bioma
 
 ## Status
 
-Em planejamento. As funcionalidades abaixo representam o escopo previsto.
+Teste jogável de movimento disponível pelo menu **Campanha**, com escolha de Explorador ou Exploradora. Combate e progressão de campanha continuam previstos; as seções abaixo descrevem o escopo planejado.
 
 ## Modos de jogo
 
@@ -156,9 +156,102 @@ A partir da raiz do projeto:
 .\build\plants_x_plants.exe
 ```
 
-A versão atual apresenta uma janela com uma tela provisória.
+A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** permanece desabilitado. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
 
-Para sair, pressione ESC ou feche a janela pelo botão X.
+O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. A seta de seleção pulsa discretamente sem alterar as áreas de clique. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção mantém fundo e retratos próprios; seus cartões e controles são desenhados em código. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
+
+Para refazer apenas a animação do mascote, usando o ambiente de preparação descrito abaixo:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_menu_mascot.py
+cmake --build build --target menu_screen_check
+.\build\menu_screen_check.exe
+.\build\trainer_tools\Scripts\python tools/prepare_menu_mascot.py --runtime-preview
+```
+
+O original permanece intacto. Máscaras, contato e GIFs ficam em `build/menu_mascot_preview/`; somente o atlas é gravado em `assets/`, acompanhado dos metadados em `include/menu_mascot_data.h`. Python não é necessário para jogar. Consulte [MENU_MASCOT_IDLE.md](docs/MENU_MASCOT_IDLE.md) para limites e validação.
+
+Para refazer o vento da vegetação com o mesmo ambiente Python (copas após a grama):
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_menu_grass.py
+.\build\trainer_tools\Scripts\python tools/prepare_menu_trees.py
+cmake --build build --target menu_screen_check
+.\build\menu_screen_check.exe
+.\build\trainer_tools\Scripts\python tools/prepare_menu_grass.py --runtime-preview
+.\build\trainer_tools\Scripts\python tools/prepare_menu_trees.py --runtime-preview
+```
+
+As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
+
+Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na exploração existente. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes. A exploração usa chão neutro, grade e limites provisórios, sem mapa final ou batalhas.
+
+- **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
+- **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
+- **ESC no menu:** voltar à tela inicial.
+- **Sair** no menu ou **X** da janela: encerrar.
+
+Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continuar. Isso evita confirmações e movimento herdados da tela anterior.
+
+Os atlas preparados em `assets/sprites/trainers/` já estão prontos para execução; Python não é necessário para jogar. Execute a partir da raiz para localizar os recursos. Um atlas ausente ou inválido gera diagnóstico no console e um marcador jogável.
+
+### Preparar novamente os sprites (opcional)
+
+As fontes `trainer_male_sheet.png` e `trainer_female_sheet.png` são preservadas. Para refazer os atlas e as prévias:
+
+```powershell
+python -m venv build/trainer_tools
+.\build\trainer_tools\Scripts\python -m pip install -r tools/trainer_requirements.txt
+.\build\trainer_tools\Scripts\python tools/prepare_trainers.py
+```
+
+Dependências de preparação: Pillow, NumPy e SciPy. As folhas de contato, oito GIFs direcionais e relatórios de inspeção ficam em `build/trainer_preview/`, ignorado pelo Git. Os dois PNGs preparados são os recursos aprovados. Consulte [o relatório dos sprites](docs/TRAINER_TEST.md) para as sequências e limitações da arte.
+
+Para preparar o experimento masculino de seis poses, sem sobrescrever os atlas aprovados:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_trainer_walk6.py
+```
+
+O script usa as mesmas dependências e grava `male_walk6.png` separadamente, com máscaras e GIFs A/B em `build/trainer_preview/walk6/`. Na exploração com o **Explorador**, **F6** alterna a caminhada aprovada e a experimental. A versão aprovada continua sendo o padrão; repouso e Exploradora permanecem iguais. Sem o atlas experimental, o jogo usa o aprovado. A duração do ciclo masculino é configurável por `PLAYER_MALE_WALK_CYCLE_SECONDS` em `include/player.h` (padrão: 0,56 s para ambas as versões, independentemente da quantidade de poses).
+
+### Preparar novamente os retratos de seleção (opcional)
+
+Os retratos são arte exclusiva da seleção, separados dos sprites de caminhada. Com o mesmo ambiente Python descrito acima:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_selection_portraits_v2.py
+```
+
+O script preserva `trainer_selection_portraits_v2.png` e divide suas metades em `male_portrait_v2.png` e `female_portrait_v2.png`, com margem transparente, em `assets/sprites/trainers/`. Cores, alfa e halo são copiados sem alteração. Diagnósticos de alfa, enquadramento e composição ficam em `build/selection_portrait_v2_preview/`. Os repousos são preparados por `tools/prepare_male_portrait_idle.py` (padrão masculino; `--character female` para a mulher); ambos preservam fallback estático. Recursos anteriores são preservados. Python não é necessário para jogar. Detalhes e validação estão em [TRAINER_SELECTION.md](docs/TRAINER_SELECTION.md).
+
+### Preparar novamente o cenário de seleção (opcional)
+
+O novo fundo animado já acompanha os cartões em **Campanha**. Pressione **F7**
+para ver somente o cenário animado. **ESC** retorna ao menu; F7 recupera a seleção
+normal. Preparação, GIF completo e verificações estão em
+[TRAINER_SELECTION_BACKGROUND.md](docs/TRAINER_SELECTION_BACKGROUND.md).
+
+O cenário usa somente `trainer_selection_background.png` e os derivados em
+`assets/sprites/selection/background/`. Para refazer os recursos:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/prepare_trainer_selection_background.py
+```
+
+Fontes e fallback completo são preservados; Python é opcional para jogar.
+
+Para executar a verificação gráfica automatizada, a partir da raiz:
+
+```powershell
+cmake --build build --target selection_scene_check
+.\build\selection_scene_check.exe
+.\build\trainer_tools\Scripts\python tools/preview_selection_scene.py
+```
+
+O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
+
+A entrada do nome e sua transição reversível estão documentadas em [CAMPAIGN_NAME_ENTRY.md](docs/CAMPAIGN_NAME_ENTRY.md), incluindo verificações e capturas reproduzíveis. Nome e personagem ficam somente na sessão em memória.
 
 ### Arquivos gerados
 

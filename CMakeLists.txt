@@ -33,6 +33,12 @@ add_executable(plants_x_plants
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/player.c
+    src/world.c
+    src/trainer_select_screen.c
+    src/selection_ui.c
+    src/name_entry_screen.c
+    src/trainer_background.c
     src/menu_screen.c
 )
 
@@ -42,7 +48,60 @@ target_include_directories(plants_x_plants PRIVATE
 
 target_link_libraries(plants_x_plants PRIVATE raylib)
 
+# Verificação gráfica opcional; não participa da compilação normal do jogo.
+add_executable(selection_scene_check EXCLUDE_FROM_ALL
+    tools/check_selection_scene.c
+    src/game.c
+    src/menu_screen.c
+    src/trainer_select_screen.c
+    src/selection_ui.c
+    src/name_entry_screen.c
+    src/trainer_background.c
+    src/player.c
+    src/world.c
+)
+target_include_directories(selection_scene_check PRIVATE include)
+target_link_libraries(selection_scene_check PRIVATE raylib)
+
+# Verificação opcional da composição, mascote e navegação do menu.
+add_executable(menu_screen_check EXCLUDE_FROM_ALL
+    tools/check_menu_screen.c
+    src/game.c
+    src/menu_screen.c
+    src/trainer_select_screen.c
+    src/selection_ui.c
+    src/name_entry_screen.c
+    src/trainer_background.c
+    src/player.c
+    src/world.c
+)
+target_include_directories(menu_screen_check PRIVATE include)
+target_link_libraries(menu_screen_check PRIVATE raylib)
+
+add_executable(trainer_background_check EXCLUDE_FROM_ALL
+    tools/check_trainer_background.c
+    src/game.c src/menu_screen.c src/trainer_select_screen.c src/selection_ui.c src/name_entry_screen.c
+    src/trainer_background.c src/player.c src/world.c
+)
+target_include_directories(trainer_background_check PRIVATE include)
+target_link_libraries(trainer_background_check PRIVATE raylib)
+
+if(WIN32)
+    add_executable(name_entry_check EXCLUDE_FROM_ALL
+        tools/check_name_entry.c tools/check_name_entry_input.c
+        src/game.c src/menu_screen.c src/trainer_select_screen.c src/trainer_background.c
+        src/name_entry_screen.c src/selection_ui.c src/player.c src/world.c)
+    target_include_directories(name_entry_check PRIVATE include)
+    target_link_libraries(name_entry_check PRIVATE raylib)
+endif()
+
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    if(TARGET name_entry_check)
+        target_compile_options(name_entry_check PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    target_compile_options(trainer_background_check PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(selection_scene_check PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(menu_screen_check PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(plants_x_plants PRIVATE
         -Wall
         -Wextra

@@ -4,7 +4,7 @@ Este documento explica a organização do projeto e a responsabilidade de cada a
 
 O jogo será desenvolvido em C com raylib. A estrutura inicial prioriza simplicidade, divisão de tarefas e separação entre as regras do jogo e a interface gráfica.
 
-> No momento, os arquivos de código possuem apenas comentários de responsabilidade. Este documento descreve a arquitetura planejada.
+> A tela inicial e o menu em pixel art têm vento localizado na grama/copas e repouso animado do mascote. O teste provisório de exploração está implementado e a seleção de treinadores conserva suas animações. Os módulos de combate abaixo ainda descrevem a arquitetura planejada.
 
 ## Estrutura de pastas
 
@@ -26,6 +26,47 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `src/game.c` | Controlar as telas, os modos de jogo, o início das partidas e o reinício. |
 
 O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalhes das telas devem ficar nos respectivos módulos.
+
+### Menu e teste de exploração
+
+| Arquivos | Responsabilidade |
+|---|---|
+| `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial/menu em pixel art e relógios contínuos de grama e mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. Desenha painel/cursor em código e devolve ações de Campanha/Sair. Versus local permanece desabilitado. Protege as trocas título/menu até soltar entradas. |
+| `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões e controles geométricos em pixel art sobre `TrainerBackgroundAssets`, retratos v2, repousos com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa limites corporais gerados para igualar altura/pés sem medir o halo. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
+| `include/name_entry_screen.h`, `src/name_entry_screen.c` | Rascunho UTF-8 de até 12 codepoints, foco, edição e transição reversível de 0,6 s; reutiliza o cartão/retrato e os relógios da seleção. |
+| `include/selection_ui.h`, `src/selection_ui.c` | Paleta e geometria em degraus compartilhadas entre seleção e nome, centralização de texto e descarte de entrada. |
+| `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
+| `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
+| `include/world.h`, `src/world.c` | Área provisória, grade, limites e restrição da caixa dos pés (16 × 8 pixels). |
+| `tools/prepare_trainers.py` | Limpeza e normalização dos sprites, sem alterar as fontes; gera atlas de execução e prévias de inspeção. |
+| `tools/prepare_trainer_walk6.py` | Experimento isolado de extração e normalização de seis poses masculinas; gera outro atlas, máscaras e prévias A/B. |
+| `tools/prepare_trainer_portraits.py` | Regenera os retratos detalhados de fallback estático; não gera mais a respiração procedural antiga. Não altera fontes nem atlas de caminhada. |
+| `tools/check_selection_scene.c`, `tools/preview_selection_scene.py` | Verificação opcional com eventos raylib e OpenGL; montagem de prévias temporais. Diagnósticos ficam em `build/selection_preview/`. |
+| `tools/check_menu_screen.c` | Verificação opcional de composição, grama, repouso do mascote, entradas e fluxo completo do menu. Gera capturas OpenGL em `build/menu_v2_preview/` e `build/menu_mascot_preview/`. |
+| `tools/prepare_menu_trees.py`, `include/menu_tree_data.h` | Extração de quatro copas grandes e oito distantes; poses com ligações fixas, reaproveitamento da curva da grama e reconstrução somente dos contornos expostos. Diagnósticos em `build/menu_tree_preview/`. |
+| `tools/prepare_menu_grass.py`, `include/menu_grass_data.h` | Extração de 17 touceiras, reconstrução localizada do fundo e atlas de vento. Máscaras, relatório, contatos e GIFs ficam em `build/menu_grass_preview/`. |
+| `tools/prepare_menu_mascot.py`, `include/menu_mascot_data.h` | Extrai partes e gera oito quadros do mascote na resolução original, sem criar cores; metadados compartilhados com a execução. Máscaras e GIFs ficam em `build/menu_mascot_preview/`. |
+| `include/trainer_background.h`, `src/trainer_background.c` | Composição do fundo da seleção normal e da prévia F7: atlas de vento ancorado, nuvens com wrap e fallback estático completo. Usa o relógio da seleção, sem modificar estado durante o desenho. |
+| `tools/prepare_trainer_selection_background.py`, `include/trainer_background_data.h` | Extração e reconstrução local da nova fonte; poses e fases próprias, sem alterar recursos do menu aprovado. |
+| `tools/check_trainer_background.c`, `tools/preview_trainer_selection_background.py` | Capturas OpenGL do ciclo completo, verificação da prévia e montagem de GIF/contatos em `build/trainer_selection_preview/`. Consulte [os detalhes do fundo](TRAINER_SELECTION_BACKGROUND.md). |
+
+`Game` mantém os estados de menu, seleção, entrada de nome e exploração, além de `CampaignSession` com personagem e nome confirmado somente em memória. A confirmação da seleção abre a entrada de nome; um nome válido inicia a exploração. `NameEntryScreen` mantém o rascunho ao voltar, enquanto `TrainerSelectScreen` continua avançando fundo e repousos. Consulte [CAMPAIGN_NAME_ENTRY.md](CAMPAIGN_NAME_ENTRY.md). `game.c` faz todas as transições e cancela ativações pendentes. Após cada transição, aguarda a soltura das teclas de navegação/confirmação e do mouse, sem bloquear o loop da janela. ESC na exploração ou seleção retorna ao menu aberto.
+
+Os atlas de caminhada são carregados uma vez em `game_init` e liberados em `game_shutdown`, usados somente pelo jogador na exploração. Recursos ausentes ou com dimensões incorretas recebem diagnóstico e marcador substituto. A posição representa os pés: o desenho usa o mesmo pivô em todas as poses, escala uniforme 0,30 e filtro pontual. A colisão ignora chapéu e mochila.
+
+`TrainerSelectAssets` carrega retratos v2 e os atlas opcionais de repouso com halos estáticos separados, todos com filtro pontual e enquadramento corporal gerado por `tools/prepare_selection_portraits_v2.py`. A textura completa preserva o halo e as margens, enquanto somente o corpo determina escala e alinhamento dos pés. Se um derivado v2 faltar, usa o retrato detalhado anterior, também estático. Nenhum atlas ou máscara de respiração anterior é aplicado. `prepare_male_portrait_idle.py` gera as quatro poses alinhadas e seus tempos; o relógio próprio continua ao trocar cartões. Falhas no atlas/halo usam o respectivo retrato estático. A mulher começa com fase de 2,20 s, sem mudar os tempos masculinos. A confirmação e o bloqueio até soltar entradas permanecem coordenados por `game.c`.
+
+`MenuScreen` mantém fundo, logo, mascote estático, atlas opcional, recortes e estado de entrada. As fontes são inspecionadas pelo alfa durante a inicialização, sem modificar arquivos. O fundo cobre 1280 × 720 mantendo proporção; logo e mascote usam escala uniforme e filtro pontual. A composição é fixa, sem renderização global em baixa resolução. O atlas do mascote tem 4096 × 2048, oito células de 1024 × 1024 e reprodução a 6 FPS. Seu relógio usa delta time limitado a 0,1 s e avança antes da entrada, inclusive durante bloqueios; abrir/fechar o menu não reinicia a fase. Margens transparentes são compensadas no destino para preservar escala, sombra e pés. Atlas ausente/inválido usa o mascote estático; cada textura é carregada uma vez e liberada no encerramento. As áreas das opções são constantes. Um bloqueio local protege ENTER/ESC entre título e menu, enquanto `game.c` continua coordenando as transições para outras telas. A confirmação por teclado mantém feedback de cor de 0,12 s sem bloquear a janela. O vento do menu usa 17 touceiras e 12 copas extraídas do fundo, em 32 fases a 8 FPS, com uma transformação e um relógio comuns. O par adicional de copas só é ativado com a grama válida; sua falha mantém árvores estáticas e grama animada. A restauração das copas parte do fundo preparado para a grama e protege suas áreas. O par só é ativado após validar ambas as texturas; qualquer falha preserva o fundo original completo. O relógio da grama também usa delta time e continua entre título/menu. A geração offline e seus limites estão em [MENU_GRASS_WIND.md](MENU_GRASS_WIND.md).
+
+A seleção desenha cartões e controles em código sobre `TrainerBackgroundAssets`.
+Os limites corporais sem halo determinam escala e pés; os repousos usam atlas
+próprios, durações explícitas e filtro pontual. Não carrega nem atualiza a antiga
+floresta em camadas, moldura ou botões de madeira. A auditoria está em
+[SELECTION_CLEANUP.md](SELECTION_CLEANUP.md).
+
+`PlayerAssets` também pode carregar `male_walk6.png` (1920 × 1280). A tecla F6 altera somente a opção local `Player.use_walk6` do Explorador durante a exploração. `player_draw` usa o atlas experimental apenas em movimento, com fallback para o aprovado quando ausente ou inválido. Repouso e personagem feminino na exploração continuam usando os recursos anteriores. O ciclo masculino usa uma duração configurável, independente das quatro ou seis poses; trocar a opção preserva a fase, a velocidade e a posição. A versão aprovada é o padrão em cada entrada na exploração.
+
+O movimento usa delta time, limitado a 0,1 s por quadro para evitar saltos após pausas. A prioridade fixa norte/sul/oeste/leste resolve teclas simultâneas. A animação avança apenas após deslocamento efetivo; contra um limite ou parado, volta à pose neutra da direção mantida. Limitações dos ciclos e parâmetros de preparação estão em [TRAINER_TEST.md](TRAINER_TEST.md).
 
 ### Plantas e equipes
 
@@ -85,7 +126,7 @@ Ela não deve calcular dano, decidir o vencedor ou alterar diretamente a vida da
 
 1. `main.c` abre a janela e inicializa o jogo.
 2. A cada quadro, chama as funções de atualização e desenho de `game.c`.
-3. `game.c` direciona a execução para a tela atual.
+3. `game.c` direciona a execução para menu, seleção ou exploração. Campanha abre o teste de movimento; combate ainda não é acessível pelo menu.
 4. Durante uma batalha, a interface captura a ação do jogador ou a IA escolhe uma ação.
 5. `battle.c` valida e resolve a ação, atualizando o estado da batalha.
 6. A interface desenha o estado atualizado.
@@ -149,7 +190,7 @@ A primeira entrega terá uma batalha completa, com:
 - Identificação do vencedor e opção de reiniciar.
 - Visual provisório, sem depender de sprites finalizados.
 
-Campanha, arenas, recrutamento e evolução serão implementados após a base de combate estar funcionando. Seus módulos serão definidos quando essas funcionalidades entrarem em desenvolvimento.
+O botão Campanha atualmente abre somente o teste provisório de movimento. Campanha completa, arenas, recrutamento e evolução continuam fora deste teste e não foram implementados.
 
 ## Convenções do projeto
 
