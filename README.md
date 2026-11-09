@@ -264,8 +264,8 @@ Painéis, cantos e cursor reutilizam `selection_ui`, com o mesmo pulso da seleç
 A grama do cenário Versus mantém suas 20 touceiras com bases fixas,
 fases próprias e ritmos de 6, 7 ou 8 poses por segundo. As árvores e os arbustos
 recebem vento suave em 13 camadas de folhagem, com fases e ritmos independentes.
-Troncos, raízes e bases dos arbustos permanecem fixos. As nuvens continuam
-estáticas; os pulsos existentes da UI são preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
+Troncos, raízes e bases dos arbustos permanecem fixos; os pulsos existentes da UI
+são preservados. Os derivados `assets/sprites/versus/grass_base.png` e `grass_atlas.png`
 formam um par validado: se faltar ou falhar um deles, o cenário original completo
 é exibido. O par adicional `foliage_base.png`/`foliage_atlas.png` só é ativado
 com a grama válida. Se falhar, árvores e arbustos ficam estáticos e a grama segue
@@ -282,12 +282,23 @@ as ilustrações originais são exibidas. Os recursos aprovados do cenário são
 preservados. Os relógios continuam enquanto entradas mantidas aguardam soltura,
 sem modificar o modo selecionado ou as regras de navegação.
 
+As três nuvens do alto se deslocam lentamente para a direita, em ritmos
+independentes, com filtro pontual e retorno somente quando estão inteiramente
+fora da janela. O relógio próprio não reinicia junto ao ciclo da vegetação.
+A nuvem baixa à direita, sobre o gramado acima de VS PLAYER, foi removida por uma
+correção localizada do fundo. Nenhuma outra nuvem foi removida. Fonte e recursos
+aprovados permanecem intactos; as camadas do céu são desenhadas atrás das folhas.
+Se o atlas falhar, as três nuvens superiores ficam estáticas e a correção baixa
+continua aplicada. O atlas também contém uma cópia da correção para tolerar a
+falha isolada desse recurso.
+
 Para regenerar as camadas e os diagnósticos com o mesmo ambiente de preparação:
 
 ```powershell
 .\build\trainer_tools\Scripts\python tools/prepare_versus_grass.py
 .\build\trainer_tools\Scripts\python tools/prepare_versus_foliage.py
 .\build\trainer_tools\Scripts\python tools/prepare_versus_characters.py
+.\build\trainer_tools\Scripts\python tools/prepare_versus_clouds.py
 ```
 
 Máscaras, contato ampliado, GIF e relatório ficam em `build/versus_grass_preview/`.
@@ -311,6 +322,10 @@ limite de delta time e retorno à ilustração estática. Capturas ficam em
 ```powershell
 .\build\trainer_tools\Scripts\python tools/preview_versus_characters.py
 ```
+
+A verificação das nuvens inspeciona os ciclos longos, as saídas/entradas da janela,
+a remoção permanente no local original e os recursos de fallback. Capturas,
+comparações antes/depois e relatório ficam em `build/versus_cloud_preview/`.
 
 Para verificar a tela e gerar capturas OpenGL em `build/versus_preview/`:
 

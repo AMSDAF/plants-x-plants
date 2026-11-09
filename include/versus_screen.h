@@ -14,6 +14,8 @@ typedef struct {
     Texture2D illustrations;
     Texture2D character_base;
     Texture2D character_atlas;
+    Texture2D cloud_atlas;
+    Texture2D cloud_correction;
 } VersusAssets;
 typedef struct {
     VersusMode selected;
@@ -21,6 +23,7 @@ typedef struct {
     int pressed;
     float elapsed;
     float character_time[4];
+    float cloud_time;
     bool confirmed;
 } VersusScreen;
 
@@ -28,7 +31,7 @@ void versus_assets_load(VersusAssets *assets);
 void versus_assets_unload(VersusAssets *assets);
 void versus_screen_init(VersusScreen *screen, VersusMode selected);
 VersusAction versus_screen_update(VersusScreen *screen, bool accept_input, float dt);
-void versus_background_draw(const VersusAssets *assets, float elapsed);
+void versus_background_draw(const VersusAssets *assets, float elapsed, float cloud_time);
 int versus_character_frame(const VersusScreen *screen, int index);
 void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source);
 #endif

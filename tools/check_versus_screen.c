@@ -3,11 +3,13 @@
 #include "versus_grass_data.h"
 #include "versus_foliage_data.h"
 #include "versus_character_data.h"
+#include "versus_cloud_data.h"
 #include <math.h>
 #undef NDEBUG
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static void input(unsigned int type, int a, int b)
 {
@@ -45,7 +47,7 @@ static void capture(Game *game, RenderTexture2D target, const char *path)
 /* Compara pixels reais: toda alteração do cenário deve ficar junto às lâminas. */
 static Image background_capture(const VersusAssets *assets, RenderTexture2D target, float time)
 {
-    BeginTextureMode(target); versus_background_draw(assets,time); EndTextureMode();
+    BeginTextureMode(target); versus_background_draw(assets,time,0); EndTextureMode();
     Image image=LoadImageFromTexture(target.texture);
     ImageFlipVertical(&image);
     return image;
@@ -400,6 +402,141 @@ static void check_characters(Game *game, RenderTexture2D target)
     puts("PASS: quatro repousos independentes, 256 poses OpenGL, mudancas restritas aos personagens, pes fixos, ciclos, dt limitado, fallback e desenho imutavel.");
 }
 
+static Image cloud_capture(const VersusAssets *assets, RenderTexture2D target, float time)
+{
+    BeginTextureMode(target); versus_background_draw(assets,2,time); EndTextureMode();
+    Image image=LoadImageFromTexture(target.texture); ImageFlipVertical(&image);
+    return image;
+}
+
+static bool corrected_location(int x, int y)
+{
+    float scale=1280.0f/1672, offset=(720-941*scale)/2;
+    const VersusCloudPatch *patch=&VERSUS_CLOUD_CORRECTION;
+    Rectangle bounds={patch->origin.x*scale-1,offset+patch->origin.y*scale-1,
+                      VERSUS_CLOUD_CORRECTION_WIDTH*scale+2,VERSUS_CLOUD_CORRECTION_HEIGHT*scale+2};
+    return CheckCollisionPointRec((Vector2){(float)x,(float)y},bounds);
+}
+
+static void check_removed_cloud(Image image)
+{
+    const Color *pixels=image.data;
+    float scale=1280.0f/1672, offset=(720-941*scale)/2;
+    for (int y=(int)ceilf(offset+228*scale);y<(int)floorf(offset+277*scale);y++)
+        for (int x=(int)ceilf(1357*scale);x<(int)floorf(1515*scale);x++) {
+            Color c=pixels[y*1280+x];
+            assert(!(c.r>220 && c.g>210 && c.b>140));
+        }
+}
+
+static void check_clouds(Game *game, RenderTexture2D target)
+{
+    assert(DirectoryExists("build/versus_cloud_preview") || MakeDirectory("build/versus_cloud_preview")==0);
+    const VersusAssets saved=game->versus_assets;
+    assert(saved.cloud_atlas.id && saved.cloud_correction.id);
+    VersusAssets old=saved; old.cloud_atlas=old.cloud_correction=(Texture2D){0};
+    Image original=cloud_capture(&old,target,0);
+    Image start=cloud_capture(&saved,target,0);
+    const Color *before=original.data,*first=start.data;
+    const float times[]={0,8,32,128,256,512,768,1024,1536,2048,3071.875f,3072};
+    int changes=0;
+    for (unsigned int i=0;i<sizeof(times)/sizeof(times[0]);i++) {
+        Image image=cloud_capture(&saved,target,times[i]);
+        const Color *pixels=image.data;
+        check_removed_cloud(image);
+        for (int y=0;y<720;y++) for (int x=0;x<1280;x++) {
+            if (corrected_location(x,y)) assert(memcmp(&pixels[y*1280+x],&first[y*1280+x],sizeof(Color))==0);
+            if (memcmp(&pixels[y*1280+x],&before[y*1280+x],sizeof(Color))==0) continue;
+            assert(y<=(int)ceilf(VERSUS_CLOUD_SKY_HEIGHT*1280.0f/1672)+1 || corrected_location(x,y));
+            if (i==2) changes++;
+        }
+        if (i==11) assert(memcmp(image.data,start.data,(size_t)1280*720*4)==0);
+        assert(ExportImage(image,TextFormat("build/versus_cloud_preview/background_%02d.png",i)));
+        game->versus.elapsed=2; game->versus.cloud_time=times[i];
+        capture(game,target,TextFormat("build/versus_cloud_preview/screen_%02d.png",i));
+        UnloadImage(image);
+    }
+    assert(changes>1000);
+    for (int i=0;i<VERSUS_CLOUD_COUNT;i++) {
+        const VersusCloud *c=&VERSUS_CLOUDS[i];
+        float seam=(1672-c->origin.x)/(1672+c->source.width)*c->seconds;
+        Image left=cloud_capture(&saved,target,seam-.125f);
+        Image right=cloud_capture(&saved,target,seam+.125f);
+        const Color *a=left.data,*b=right.data;
+        int changed=0;
+        for (int p=0;p<1280*720;p++) {
+            int delta=abs((int)a[p].r-b[p].r)+abs((int)a[p].g-b[p].g)+abs((int)a[p].b-b[p].b);
+            if (delta>64) changed++;
+        }
+        assert(changed<2000); /* Não existe uma nuvem inteira saltando dentro da janela. */
+        assert(ExportImage(left,TextFormat("build/versus_cloud_preview/wrap_%d_before.png",i)));
+        assert(ExportImage(right,TextFormat("build/versus_cloud_preview/wrap_%d_after.png",i)));
+        UnloadImage(left); UnloadImage(right);
+    }
+    VersusAssets fallback=saved; fallback.cloud_atlas=(Texture2D){0};
+    Image still=cloud_capture(&fallback,target,0);
+    Image later=cloud_capture(&fallback,target,1000);
+    assert(memcmp(still.data,later.data,(size_t)1280*720*4)==0);
+    check_removed_cloud(still);
+    const Color *pixels=still.data;
+    for (int y=0;y<720;y++) for (int x=0;x<1280;x++)
+        if (!corrected_location(x,y)) assert(memcmp(&pixels[y*1280+x],&before[y*1280+x],sizeof(Color))==0);
+    assert(ExportImage(still,"build/versus_cloud_preview/fallback_static.png"));
+    UnloadImage(still); UnloadImage(later);
+    fallback=saved; fallback.cloud_correction=(Texture2D){0};
+    later=cloud_capture(&fallback,target,0);
+    assert(memcmp(later.data,start.data,(size_t)1280*720*4)==0);
+    check_removed_cloud(later); UnloadImage(later);
+    UnloadImage(original); UnloadImage(start);
+    VersusScreen clock=game->versus;
+    clock.elapsed=127.99f;clock.cloud_time=500;
+    versus_screen_update(&clock,false,.1f);
+    assert(clock.elapsed<.1f && fabsf(clock.cloud_time-500.1f)<.001f);
+    clock.cloud_time=3071.99f;versus_screen_update(&clock,false,.1f);
+    assert(clock.cloud_time<.11f);
+    puts("PASS: tres nuvens preservadas, nuvem baixa removida, somente ceu/local corrigido muda, ciclos independentes, reinicio fora da janela, fallback corrigido e animacoes anteriores identicas.");
+}
+
+static void check_cloud_loader(RenderTexture2D target)
+{
+    char root[1024]; snprintf(root,sizeof(root),"%s",GetWorkingDirectory());
+    const char *cases[]={"missing_atlas","bad_atlas","bad_correction"};
+    const char *resources[]={"versus_background_generated_v1.png","versus/cloud_correction.png","versus/cloud_atlas.png"};
+    assert(DirectoryExists("build/versus_cloud_preview/fixtures") || MakeDirectory("build/versus_cloud_preview/fixtures")==0);
+    for (int c=0;c<3;c++) {
+        char base[256]; snprintf(base,sizeof(base),"build/versus_cloud_preview/fixtures/%s",cases[c]);
+        const char *suffixes[]={"","/assets","/assets/sprites","/assets/sprites/versus"};
+        for (int i=0;i<4;i++) {
+            const char *dir=TextFormat("%s%s",base,suffixes[i]);
+            assert(DirectoryExists(dir) || MakeDirectory(dir)==0);
+        }
+        for (int i=0;i<3;i++) {
+            if (i==2 && c==0) continue;
+            int size=0;
+            unsigned char *data=LoadFileData(TextFormat("assets/sprites/%s",resources[i]),&size);
+            assert(data && size>0);
+            assert(SaveFileData(TextFormat("%s/assets/sprites/%s",base,resources[i]),data,size));
+            UnloadFileData(data);
+        }
+        if (c>0) {
+            Image invalid=GenImageColor(16,16,WHITE);
+            assert(ExportImage(invalid,TextFormat("%s/assets/sprites/versus/cloud_%s.png",base,c==1 ? "atlas" : "correction")));
+            UnloadImage(invalid);
+        }
+        assert(ChangeDirectory(base));
+        VersusAssets partial; versus_assets_load(&partial);
+        assert(partial.background.id);
+        if (c<2) assert(!partial.cloud_atlas.id && partial.cloud_correction.id);
+        else assert(partial.cloud_atlas.id && !partial.cloud_correction.id);
+        Image image=cloud_capture(&partial,target,600);
+        check_removed_cloud(image); UnloadImage(image);
+        versus_assets_unload(&partial);
+        assert(!partial.cloud_atlas.id && !partial.cloud_correction.id);
+        assert(ChangeDirectory(root));
+    }
+    puts("PASS: atlas ausente/invalido e correcao invalida mantem a nuvem baixa removida usando o recurso valido.");
+}
+
 int main(void)
 {
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
@@ -461,11 +598,14 @@ int main(void)
     check_foliage_loader();
     check_characters(&game,target);
     check_character_loader();
+    check_clouds(&game,target);
+    check_cloud_loader(target);
     UnloadRenderTexture(target); game_shutdown(&game);
     assert(!game.versus_assets.background.id && !game.versus_assets.illustrations.id);
     assert(!game.versus_assets.grass_base.id && !game.versus_assets.grass_atlas.id);
     assert(!game.versus_assets.foliage_base.id && !game.versus_assets.foliage_atlas.id);
     assert(!game.versus_assets.character_base.id && !game.versus_assets.character_atlas.id);
+    assert(!game.versus_assets.cloud_atlas.id && !game.versus_assets.cloud_correction.id);
     CloseWindow();
     puts("PASS: Versus teclado/mouse, entrada mantida, confirmar/voltar, cancelamento de clique, modos em memoria, campanha preservada, fallback, desenho imutavel e recursos liberados.");
     return 0;

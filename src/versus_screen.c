@@ -4,6 +4,7 @@
 #include "versus_grass_data.h"
 #include "versus_foliage_data.h"
 #include "versus_character_data.h"
+#include "versus_cloud_data.h"
 #include <math.h>
 
 #define CONFIRM_CONTROL 2
@@ -54,6 +55,21 @@ void versus_assets_load(VersusAssets *assets)
             TraceLog(LOG_WARNING, "Folhagem do Versus indisponivel; preservando arvores estaticas e grama animada.");
         }
     }
+    if (assets->background.id && assets->background.width == 1672 && assets->background.height == 941) {
+        assets->cloud_correction = load_texture("assets/sprites/versus/cloud_correction.png");
+        if (assets->cloud_correction.id &&
+            (assets->cloud_correction.width != VERSUS_CLOUD_CORRECTION_WIDTH ||
+             assets->cloud_correction.height != VERSUS_CLOUD_CORRECTION_HEIGHT)) {
+            UnloadTexture(assets->cloud_correction);
+            assets->cloud_correction = (Texture2D){0};
+        }
+        assets->cloud_atlas = load_texture("assets/sprites/versus/cloud_atlas.png");
+        if (assets->cloud_atlas.id &&
+            (assets->cloud_atlas.width != 2048 || assets->cloud_atlas.height != VERSUS_CLOUD_ATLAS_HEIGHT)) {
+            UnloadTexture(assets->cloud_atlas);
+            assets->cloud_atlas = (Texture2D){0};
+        }
+    }
     if (!assets->background.id)
         assets->background = load_texture("assets/sprites/versus_background_v1.png");
     assets->illustrations = load_texture("assets/sprites/versus_illustrations_source.png");
@@ -63,7 +79,9 @@ void versus_assets_load(VersusAssets *assets)
         if (!assets->character_base.id || assets->character_base.width != 964 || assets->character_base.height != 244 ||
             !assets->character_atlas.id || assets->character_atlas.width != VERSUS_CHARACTER_ATLAS_WIDTH ||
             assets->character_atlas.height != VERSUS_CHARACTER_ATLAS_HEIGHT) {
-            if (assets->character_base.id) UnloadTexture(assets->character_base);
+            if (assets->cloud_atlas.id) UnloadTexture(assets->cloud_atlas);
+    if (assets->cloud_correction.id) UnloadTexture(assets->cloud_correction);
+    if (assets->character_base.id) UnloadTexture(assets->character_base);
             if (assets->character_atlas.id) UnloadTexture(assets->character_atlas);
             assets->character_base = assets->character_atlas = (Texture2D){0};
             TraceLog(LOG_WARNING, "Repousos do Versus indisponiveis; preservando ilustracoes originais.");
@@ -78,6 +96,8 @@ void versus_assets_unload(VersusAssets *assets)
     if (assets->grass_atlas.id) UnloadTexture(assets->grass_atlas);
     if (assets->foliage_base.id) UnloadTexture(assets->foliage_base);
     if (assets->foliage_atlas.id) UnloadTexture(assets->foliage_atlas);
+    if (assets->cloud_atlas.id) UnloadTexture(assets->cloud_atlas);
+    if (assets->cloud_correction.id) UnloadTexture(assets->cloud_correction);
     if (assets->character_base.id) UnloadTexture(assets->character_base);
     if (assets->character_atlas.id) UnloadTexture(assets->character_atlas);
     if (assets->illustrations.id) UnloadTexture(assets->illustrations);
@@ -95,6 +115,7 @@ VersusAction versus_screen_update(VersusScreen *screen, bool accept_input, float
 {
     float delta = fminf(0.1f, fmaxf(0, dt));
     screen->elapsed = fmodf(screen->elapsed + delta, 128);
+    screen->cloud_time = fmodf(screen->cloud_time + delta, VERSUS_CLOUD_SECONDS);
     for (int i = 0; i < VERSUS_CHARACTER_COUNT; i++) {
         float seconds = VERSUS_CHARACTER_FRAMES/(float)VERSUS_CHARACTER_REGIONS[i].fps;
         screen->character_time[i] = fmodf(screen->character_time[i] + delta, seconds);
@@ -136,7 +157,42 @@ static void panel(Rectangle bounds, bool selected)
                        bounds.width - 2*border, bounds.height - 2*border}, 8, SELECTION_CREAM);
 }
 
-void versus_background_draw(const VersusAssets *assets, float elapsed)
+static void draw_cloud_patch(Texture2D texture, Rectangle source, Vector2 position,
+                             float scale, float x, float y)
+{
+    DrawTexturePro(texture,source,
+                   (Rectangle){x+position.x*scale,y+position.y*scale,source.width*scale,source.height*scale},
+                   (Vector2){0},0,WHITE);
+}
+
+static void draw_clouds(const VersusAssets *assets, float time, bool foliage, float scale, float x, float y)
+{
+    /* A correção baixa continua visível mesmo se o atlas de animação falhar. */
+    const VersusCloudPatch *correction = &VERSUS_CLOUD_CORRECTION;
+    if (assets->cloud_correction.id)
+        draw_cloud_patch(assets->cloud_correction,
+                         (Rectangle){0,0,VERSUS_CLOUD_CORRECTION_WIDTH,VERSUS_CLOUD_CORRECTION_HEIGHT},
+                         correction->origin,scale,x,y);
+    else if (assets->cloud_atlas.id)
+        draw_cloud_patch(assets->cloud_atlas,correction->source,correction->origin,scale,x,y);
+    if (!assets->cloud_atlas.id) return;
+    for (int i = 0; i < VERSUS_CLOUD_COUNT; i++) {
+        const VersusCloudPatch *patch = &VERSUS_CLOUD_PATCHES[i];
+        draw_cloud_patch(assets->cloud_atlas,patch->source,patch->origin,scale,x,y);
+    }
+    for (int i = 0; i < VERSUS_CLOUD_COUNT; i++) {
+        const VersusCloud *cloud = &VERSUS_CLOUDS[i];
+        float span = 1672 + cloud->source.width;
+        float phase = fmodf(fmaxf(0,time),cloud->seconds)/cloud->seconds;
+        /* Reinicia somente após sair completamente; a entrada oposta também começa fora da janela. */
+        float position = roundf(fmodf(cloud->origin.x+cloud->source.width+phase*span,span)-cloud->source.width);
+        draw_cloud_patch(assets->cloud_atlas,cloud->source,(Vector2){position,cloud->origin.y},scale,x,y);
+    }
+    /* A oclusão parte da base escolhida: não reintroduz contornos antigos da folhagem animada. */
+    draw_cloud_patch(assets->cloud_atlas,VERSUS_CLOUD_OCCLUDERS[foliage ? 1 : 0],(Vector2){0},scale,x,y);
+}
+
+void versus_background_draw(const VersusAssets *assets, float elapsed, float cloud_time)
 {
     ClearBackground((Color){142,155,80,255});
     /* O par é indivisível: sem atlas ou base válidos, não remove a grama original. */
@@ -149,6 +205,7 @@ void versus_background_draw(const VersusAssets *assets, float elapsed)
     float y = (720-texture.height*scale)/2;
     DrawTexturePro(texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
                    (Rectangle){x,y,texture.width*scale,texture.height*scale}, (Vector2){0}, 0, WHITE);
+    draw_clouds(assets,cloud_time,foliage,scale,x,y);
     if (!animated) return;
     if (foliage) {
         /* Somente folhas em alfa; o relógio e a composição da grama permanecem iguais. */
@@ -198,7 +255,7 @@ static void draw_characters(const VersusScreen *screen, const VersusAssets *asse
 
 void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source)
 {
-    versus_background_draw(assets,screen->elapsed);
+    versus_background_draw(assets,screen->elapsed,screen->cloud_time);
     if (logo.id && logo_source.height > 0) {
         float scale = fminf(580.0f/logo_source.width, 136.0f/logo_source.height);
         DrawTexturePro(logo,logo_source,
