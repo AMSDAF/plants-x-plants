@@ -42,7 +42,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/selection_ui.h`, `src/selection_ui.c` | Paleta, geometria em degraus, cantos laranja e cursor pulsante compartilhados entre seleção, nome e Versus, centralização de texto e descarte de entrada. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
-| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels) e desenho do cenário e do painel. |
+| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels), câmera suavizada e desenho dos setores e painéis. |
 | `tools/prepare_trainers.py` | Limpeza e normalização dos sprites, sem alterar as fontes; gera atlas de execução e prévias de inspeção. |
 | `tools/prepare_trainer_walk6.py` | Experimento isolado de extração e normalização de seis poses masculinas; gera outro atlas, máscaras e prévias A/B. |
 | `tools/prepare_trainer_portraits.py` | Regenera os retratos detalhados de fallback estático; não gera mais a respiração procedural antiga. Não altera fontes nem atlas de caminhada. |
@@ -202,8 +202,9 @@ O protótipo Versus inclui:
 - Identificação do vencedor e opção de reiniciar.
 - Visual provisório, sem depender de sprites finalizados.
 
-O botão Campanha abre um mapa com câmera, controles distribuídos, encontros
-com guardiões e uma central de relés que valida nove restrições antes da saída.
+O botão Campanha abre um mapa com câmera, fachadas e interiores conectados
+por portas, escotilha e elevador. Guardiões e controles distribuídos liberam
+a central de relés, que valida nove restrições antes da saída.
 A progressão por arenas,
 recrutamento e evolução permanece planejada.
 Consulte [CAMPAIGN_GREENHOUSE.md](CAMPAIGN_GREENHOUSE.md).

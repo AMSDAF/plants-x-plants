@@ -134,6 +134,7 @@ static void leave_encounter(Game *game)
         world_finish_encounter(&game->world, game->encounter);
     } else {
         player_init(&game->player, game->campaign.trainer, world_spawn());
+        world_return_to_courtyard(&game->world, &game->player.feet);
     }
     game->encounter = WORLD_ENCOUNTER_NONE;
     change_screen(game, GAME_EXPLORATION);
@@ -221,8 +222,9 @@ void game_update(Game *game)
             } else if (IsKeyPressed(KEY_ESCAPE) || (game->world.completed && IsKeyPressed(KEY_ENTER))) {
                 change_screen(game, GAME_MENU);
             } else if (!game->world.completed) {
-                player_update(&game->player, &game->world, GetFrameTime());
-                world_update_position(&game->world, game->player.feet);
+                float dt = GetFrameTime();
+                player_update(&game->player, &game->world, dt);
+                world_follow_camera(&game->world, game->player.feet, dt);
                 if (IsKeyPressed(KEY_E)) {
                     WorldEncounter encounter = world_interact(&game->world, &game->player.feet);
                     if (game->world.relay_panel_open) game->player.moving = false;
@@ -269,8 +271,8 @@ void game_draw(const Game *game)
         case GAME_EXPLORATION:
             ClearBackground((Color){24, 49, 43, 255});
             BeginScissorMode(70, 170, 1140, 470);
-            BeginMode2D(world_camera(&game->world, game->player.feet));
-            world_draw(&game->world);
+            BeginMode2D(world_camera(&game->world));
+            world_draw(&game->world, game->player.feet);
             player_draw(&game->player, &game->player_assets);
             EndMode2D();
             EndScissorMode();

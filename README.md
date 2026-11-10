@@ -187,6 +187,7 @@ As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_pr
 Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
+- **Shift na estufa:** correr enquanto se move.
 - **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a central ao se aproximar.
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
 - **ESC no menu:** voltar à tela inicial.
@@ -194,9 +195,13 @@ Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique 
 
 Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continuar. Isso evita confirmações e movimento herdados da tela anterior.
 
-Na estufa, explore o pátio, o subsolo, os canais e o viveiro. A ponte exige
-exatamente um canal aberto. A comporta exige `Água E (Luz OU Chave) E NÃO Alarme`.
-Redirecione a energia para o refletor ou enfrente a Babosa pela chave.
+Na estufa, entre nos prédios com **E**. Derrote a Babosa no depósito para
+obter a chave da escotilha na casa de manutenção. No subsolo, alimente o
+refletor e volte pela escotilha. Na Casa de Controle da Ponte, abra exatamente
+um canal e ajuste o dreno externo para atingir pressão 3.
+A porta do viveiro exige `Água E Luz E NÃO Alarme`.
+Siga os caminhos claros e as placas. O painel indica o setor atual e um
+marcador destaca os objetos ao alcance de **E**.
 Vença o Girassol no viveiro e registre as duas pistas espalhadas pelo mapa.
 Na central, use **1–8** ou clique nos relés e pressione **Enter** para validar
 uma regra por vez. Se uma regra anterior falhar, a central volta para ela.

@@ -1,33 +1,43 @@
 # Estufa Lógica
 
 Abra **Campanha**, escolha o personagem, confirme o nome e explore a estufa.
-Use **WASD** ou **setas** para mover e **E** para interagir com o objeto mais
-próximo. O cenário usa formas da raylib e os sprites de treinador já presentes.
+Use **WASD** ou **setas** para mover, segure **Shift** para correr e pressione
+**E** quando aparecer o marcador de interação. O cenário usa formas da raylib
+e os sprites de treinador já presentes.
 
-## Mapa e comporta
+## Prédios e acesso ao viveiro
 
-A câmera acompanha o personagem entre o pátio, o subsolo, o depósito, os
-canais e o viveiro. A cabine do alarme fica ao sul do pátio e a válvula
-fica do outro lado da ponte, ao norte dos canais. A comporta do viveiro
-avalia `Água E (Luz OU Chave) E NÃO Alarme`.
+A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
+uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
+manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
+O painel indica a região atual.
 
-Para satisfazer o **OU**, há duas rotas. O distribuidor no subsolo pode
-alimentar o refletor em vez do elevador. Nesse caso, use o corredor ao sul
-do pátio para voltar. A alternativa é vencer a Babosa no depósito e
-receber a chave de manutenção. Depois da primeira travessia, a comporta
-fica travada aberta para permitir o retorno.
+1. Entre no depósito e vença a Babosa para receber a **Chave da Manutenção**.
+2. Na casa de manutenção, desative o alarme, registre a pista e abra a
+   escotilha com a chave. A escotilha dá o primeiro acesso ao subsolo.
+3. No subsolo, o distribuidor alimenta o elevador ou o refletor. O elevador
+   vira um atalho após a primeira descida. Quando a energia vai para o
+   refletor, a escotilha continua disponível para voltar.
+4. A válvula da água e a segunda pista ficam do outro lado da ponte. A porta
+   do viveiro abre quando `Água E Luz E NÃO Alarme` vale. Depois da primeira
+   entrada, a porta permanece liberada.
 
 ## Ponte
 
-Cada controle alterna o seu canal. A ponte estende quando exatamente um
-dos canais está aberto. O painel usa `Norte XOR Sul`.
+Os dois canais ficam dentro da **Casa de Controle da Ponte**, ao sul do
+pátio. O norte acrescenta **3** à pressão e o sul acrescenta **5**. O
+dreno externo começa aberto e retira **2** unidades, com mínimo de zero.
+A ponte exige `(Norte XOR Sul) E (Pressão = 3)`.
 
-| Norte | Sul | Ponte |
-| --- | --- | --- |
-| F | F | Recolhida |
-| F | V | Estendida |
-| V | F | Estendida |
-| V | V | Recolhida |
+| Canal único aberto | Dreno | Pressão | Ponte |
+| --- | --- | --- | --- |
+| Norte | Fechado | 3 | Estendida |
+| Norte | Aberto | 1 | Recolhida |
+| Sul | Fechado | 5 | Recolhida |
+| Sul | Aberto | 3 | Estendida |
+
+O painel mostra o XOR e a pressão separadamente. Com os dois canais
+abertos ou os dois fechados, a travessia fica bloqueada.
 
 ## Guardiões e central de relés
 
@@ -52,10 +62,9 @@ do painel. Depois de resolver, **Enter** ou **Esc** retorna ao menu.
 
 ## Implementação e teste
 
-`world.c` calcula as regras da comporta e da ponte a partir do estado dos objetos. As mesmas
-funções determinam o resultado mostrado, a abertura desenhada e a colisão.
-A caixa dos pés só atravessa dentro do vão quando a fórmula correspondente
-é verdadeira. A central valida as nove restrições sobre a configuração atual
+`world.c` mantém a região ativa, as transições por proximidade, a colisão
+das fachadas e da ponte e as regras de acesso. A central valida as nove
+restrições sobre a configuração atual
 dos relés antes de concluir a missão. O desenho consulta o estado. `game.c`
 coordena a câmera e as transições entre exploração e combate, e aplica a
 recompensa do encontro depois de uma vitória.
@@ -67,9 +76,10 @@ cmake --build build --target plants_x_plants name_entry_check
 .\build\name_entry_check.exe
 ```
 
-O teste percorre a missão pela rota da chave depois de confirmar o nome.
-Verifica as tabelas de verdade, os guardiões, o retorno com progresso, a
-distribuição de energia, a coleta das pistas, as colisões e a solução única
-entre as 256 configurações da central. Também verifica o avanço guiado,
-o retorno a uma regra quebrada, a rejeição na última etapa e a conclusão.
+O teste percorre a missão depois de confirmar o nome. Verifica a colisão
+das fachadas e paredes, as oito combinações da ponte e suas duas soluções,
+a escotilha e o elevador antes e depois da chave, o retorno
+com progresso após derrota, o acesso ao viveiro e a coleta de pistas.
+Também valida a solução única entre as 256 configurações da central, o
+avanço guiado, o retorno a uma regra quebrada e a conclusão.
 As capturas ficam em `build/name_entry_preview/`.

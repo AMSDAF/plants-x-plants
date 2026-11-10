@@ -124,6 +124,7 @@ static void walk_axis(Game *game, bool horizontal, float target)
     for (int i = 0; i < 400 && (forward ? *position < target : *position > target); i++) {
         float before = *position;
         player_update(&game->player, &game->world, 1.0f / 60.0f);
+        world_follow_camera(&game->world, game->player.feet, 1.0f / 60.0f);
         if (*position == before) break;
     }
     input(1, code, 0);
@@ -166,17 +167,59 @@ static void lose_guardian(Game *game)
     assert(game->screen == GAME_EXPLORATION);
 }
 
+static void interact_at(Game *game, float x, float y)
+{
+    walk_axis(game, true, x);
+    walk_axis(game, false, y);
+    key(game, KEY_E);
+}
+
+static void enter_bridge_control(Game *game)
+{
+    walk_axis(game, false, 420);
+    walk_axis(game, true, 730);
+    walk_axis(game, false, 692);
+    interact_at(game, 580, 692);
+    assert(game->world.location == WORLD_BRIDGE_CONTROL);
+}
+
 static void check_greenhouse(Game *game)
 {
     World *world = &game->world;
-    for (int row = 0; row < 16; row++) {
-        World sample = {.alarm = (row & 8) != 0, .water = (row & 4) != 0,
-                        .light = (row & 2) != 0, .key_collected = (row & 1) != 0};
-        assert(world_gate_rule(&sample) == (row >= 5 && row <= 7));
+    World camera_test;
+    world_init(&camera_test);
+    Vector2 far_corner = {2300, 1000};
+    world_follow_camera(&camera_test, far_corner, 0.05f);
+    Vector2 partial = world_camera(&camera_test).target;
+    world_snap_camera(&camera_test, far_corner);
+    Vector2 limit = world_camera(&camera_test).target;
+    assert(partial.x > 0 && partial.x < limit.x && partial.y > 0 && partial.y < limit.y);
+    assert(limit.x == world->bounds.width - 1140 && limit.y == world->bounds.height - 470);
+
+    Player walking, running;
+    player_init(&walking, TRAINER_MALE, (Vector2){730, 420});
+    player_init(&running, TRAINER_MALE, walking.feet);
+    input(2, KEY_D, 0);
+    player_update(&walking, world, 0.1f);
+    input(2, KEY_LEFT_SHIFT, 0);
+    player_update(&running, world, 0.1f);
+    assert(running.feet.x > walking.feet.x && running.walk_time > walking.walk_time);
+    for (int i = 0; i < 10; i++) player_update(&running, world, 0.1f);
+    assert(running.feet.x < 785); /* A corrida respeita a ponte fechada. */
+    input(1, KEY_LEFT_SHIFT, 0);
+    input(1, KEY_D, 0);
+    tick(game);
+    for (int row = 0; row < 8; row++) {
+        World sample = {.alarm = (row & 4) != 0, .water = (row & 2) != 0,
+                        .light = (row & 1) != 0, .maintenance_key = true};
+        assert(world_gate_rule(&sample) == (row == 3));
     }
-    for (int row = 0; row < 4; row++) {
-        World sample = {.north_channel = (row & 2) != 0, .south_channel = (row & 1) != 0};
-        assert(world_bridge_open(&sample) == (row == 1 || row == 2));
+    const int pressures[] = {0, 0, 5, 3, 3, 1, 8, 6};
+    for (int row = 0; row < 8; row++) {
+        World sample = {.north_channel = (row & 4) != 0, .south_channel = (row & 2) != 0,
+                        .drain_open = (row & 1) != 0};
+        assert(world_bridge_pressure(&sample) == pressures[row]);
+        assert(world_bridge_open(&sample) == (row == 3 || row == 4));
     }
     const unsigned int solution = (1u << 1) | (1u << 4) | (1u << 6) | (1u << 7);
     int solutions = 0;
@@ -188,100 +231,95 @@ static void check_greenhouse(Game *game)
     }
     assert(solutions == 1 && !world_relays_match(solution | (1u << WORLD_RELAY_COUNT)));
 
-    World power_route;
-    world_init(&power_route);
-    Vector2 alarm = {230, 580}, power = {250, 890}, valve = {1070, 305};
-    world_interact(&power_route, &alarm);
-    world_interact(&power_route, &power);
-    world_interact(&power_route, &valve);
-    assert(world_gate_open(&power_route) && !power_route.key_collected);
-    world_update_position(&power_route, (Vector2){1620, 420});
-    world_interact(&power_route, &power);
-    assert(!world_gate_rule(&power_route) && world_gate_open(&power_route));
-
     RenderTexture2D target = LoadRenderTexture(1280, 720);
     capture(game, target, "build/name_entry_preview/greenhouse_start.png");
     walk_axis(game, true, 960);
     assert(game->player.feet.x < 785);
-    walk_axis(game, true, 230);
-    walk_axis(game, false, 580);
-    key(game, KEY_E);
-    walk_axis(game, true, 420);
-    key(game, KEY_E);
+    interact_at(game, 190, 625);
+    assert(world->location == WORLD_EXTERIOR && !world->basement_visited);
+    interact_at(game, 290, 420);
+    assert(world->location == WORLD_MAINTENANCE);
+    assert(world_camera(world).target.x == 0 && world_camera(world).target.y == 0);
+    walk_axis(game, false, 205);
+    assert(game->player.feet.y >= world->bounds.y + 4);
+    interact_at(game, 826, 320);
+    assert(world->location == WORLD_MAINTENANCE && !world->basement_visited);
+    capture(game, target, "build/name_entry_preview/greenhouse_maintenance.png");
+    interact_at(game, 445, 320);
+    interact_at(game, 445, 460);
     assert(!world->alarm && world->alarm_note);
-    walk_axis(game, true, 535);
-    walk_axis(game, false, 300);
-    key(game, KEY_E);
-    assert(game->player.feet.y > 700);
-    walk_axis(game, true, 625);
-    walk_axis(game, false, 888);
-    key(game, KEY_E);
+    interact_at(game, 640, 572);
+    assert(world->location == WORLD_EXTERIOR);
+    interact_at(game, 535, 420);
+    assert(world->location == WORLD_DEPOT);
+    interact_at(game, 640, 320);
     assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_ALOE);
     key(game, KEY_ENTER);
     key(game, KEY_ENTER);
     assert(game->battle_screen.setup_side < 0);
     lose_guardian(game);
-    assert(game->player.feet.x == world_spawn().x);
-    assert(game->campaign.has_team && !world->key_collected && world->alarm_note && !world->alarm);
-    walk_axis(game, true, 535);
-    walk_axis(game, false, 300);
-    key(game, KEY_E);
-    walk_axis(game, true, 625);
-    walk_axis(game, false, 888);
-    key(game, KEY_E);
+    assert(world->location == WORLD_EXTERIOR && game->player.feet.x == world_spawn().x);
+    assert(game->campaign.has_team && !world->maintenance_key && world->alarm_note && !world->alarm);
+    interact_at(game, 535, 420);
+    interact_at(game, 640, 320);
     assert(game->screen == GAME_BATTLE && game->battle_screen.setup_side < 0);
     capture(game, target, "build/name_entry_preview/greenhouse_guard.png");
     win_guardian(game);
-    assert(world->key_collected);
-    walk_axis(game, true, 250);
+    assert(world->location == WORLD_DEPOT && world->maintenance_key && !world->light);
+    interact_at(game, 640, 572);
+    interact_at(game, 290, 420);
+    interact_at(game, 826, 320);
+    assert(world->location == WORLD_BASEMENT && world->basement_visited);
+    capture(game, target, "build/name_entry_preview/greenhouse_basement.png");
+    interact_at(game, 837, 410);
+    assert(world->location == WORLD_EXTERIOR);
     key(game, KEY_E);
+    assert(world->location == WORLD_BASEMENT);
+    interact_at(game, 640, 320);
     assert(world->light);
-    walk_axis(game, true, 535);
-    walk_axis(game, false, 743);
+    interact_at(game, 837, 410);
+    assert(world->location == WORLD_BASEMENT); /* O refletor desligou o elevador. */
+    interact_at(game, 640, 572);
+    assert(world->location == WORLD_MAINTENANCE);
+    interact_at(game, 640, 572);
+    assert(world->location == WORLD_EXTERIOR);
+    enter_bridge_control(game);
+    interact_at(game, 450, 330);
+    assert(world->north_channel && world->drain_open);
+    assert(world_bridge_pressure(world) == 1 && !world_bridge_open(world));
+    capture(game, target, "build/name_entry_preview/greenhouse_bridge_control.png");
+    interact_at(game, 640, 572);
+    interact_at(game, 335, 530);
+    assert(!world->drain_open && world_bridge_open(world));
     key(game, KEY_E);
-    assert(game->player.feet.y > 700);
-    walk_axis(game, false, 888);
-    walk_axis(game, true, 250);
-    key(game, KEY_E);
-    assert(!world->light);
-    walk_axis(game, true, 535);
-    walk_axis(game, false, 743);
-    key(game, KEY_E);
-    assert(game->player.feet.y == 300);
-    walk_axis(game, true, 675);
-    key(game, KEY_E);
-    assert(world_bridge_open(world));
-    walk_axis(game, false, 536);
-    key(game, KEY_E);
-    assert(world->north_channel && world->south_channel && !world_bridge_open(world));
-    walk_axis(game, false, 420);
-    walk_axis(game, true, 960);
-    assert(game->player.feet.x < 785);
-    walk_axis(game, true, 675);
-    walk_axis(game, false, 305);
-    key(game, KEY_E);
+    assert(world->drain_open && !world_bridge_open(world));
+    enter_bridge_control(game);
+    interact_at(game, 830, 330);
+    assert(world->north_channel && world->south_channel && world_bridge_pressure(world) == 6);
+    assert(!world_bridge_open(world));
+    interact_at(game, 450, 330);
     assert(!world->north_channel && world->south_channel && world_bridge_open(world));
+    interact_at(game, 640, 572);
+    walk_axis(game, true, 730);
     walk_axis(game, false, 420);
-    walk_axis(game, true, 1070);
-    walk_axis(game, false, 305);
-    key(game, KEY_E);
+    interact_at(game, 1715, 420);
+    assert(world->location == WORLD_EXTERIOR && !world_gate_open(world));
+    walk_axis(game, false, 310);
+    assert(game->player.feet.y > 381); /* O personagem não atravessa a fachada. */
+    walk_axis(game, false, 420);
+    interact_at(game, 1070, 305);
     assert(world->water && world_gate_rule(world));
-    walk_axis(game, true, 1630);
-    assert(game->player.feet.x < 1515); /* A parede continua sólida fora do vão. */
     walk_axis(game, false, 420);
-    walk_axis(game, true, 1620);
-    assert(world->gate_unlocked && game->player.feet.x > 1547);
+    interact_at(game, 1715, 420);
+    assert(world->location == WORLD_NURSERY && world->gate_unlocked);
     capture(game, target, "build/name_entry_preview/greenhouse_open.png");
-    walk_axis(game, true, 2150);
-    key(game, KEY_E);
+    interact_at(game, 790, 340);
     assert(!world->relay_panel_open);
-    walk_axis(game, true, 1760);
-    key(game, KEY_E);
+    interact_at(game, 515, 340);
     assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_SUNFLOWER);
     win_guardian(game);
     assert(world->guardian_defeated);
-    walk_axis(game, true, 2150);
-    key(game, KEY_E);
+    interact_at(game, 790, 340);
     key(game, KEY_ENTER);
     assert(world->relay_panel_open && world->relay_rejected && world->relay_step == 0);
     click(game, 289, 237); /* B satisfaz o primeiro XOR. */
@@ -292,13 +330,14 @@ static void check_greenhouse(Game *game)
     key(game, KEY_ENTER);
     assert(world->relay_step == 2 && world->relay_attempts == 3); /* Ainda falta a pista. */
     key(game, KEY_ESCAPE);
-    walk_axis(game, true, 1070);
-    walk_axis(game, false, 605);
-    key(game, KEY_E);
+    interact_at(game, 640, 572);
+    assert(world->location == WORLD_EXTERIOR);
+    interact_at(game, 1070, 605);
     assert(world->canal_note);
     walk_axis(game, false, 420);
-    walk_axis(game, true, 2150);
-    key(game, KEY_E);
+    interact_at(game, 1715, 420);
+    assert(world->location == WORLD_NURSERY);
+    interact_at(game, 790, 340);
     assert(world->relay_panel_open && !world->completed && world->relay_step == 2);
     Vector2 before = game->player.feet;
     key(game, KEY_D);
@@ -336,7 +375,7 @@ static void check_greenhouse(Game *game)
     key(game, KEY_ENTER);
     assert(game->screen == GAME_MENU);
     UnloadRenderTexture(target);
-    puts("PASS: mapa, duas rotas, derrota e vitórias, pistas, 256 combinações da central e saída.");
+    puts("PASS: prédios, guardiões, chave, elevador, pressão da ponte, pistas e saída.");
 }
 
 int main(void)

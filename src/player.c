@@ -72,8 +72,9 @@ void player_update(Player *player, const World *world, float dt)
     else requested = false;
     if (dt < 0) dt = 0;
     if (dt > 0.1f) dt = 0.1f;
+    bool running = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     if (requested) {
-        float step = 190.0f * dt;
+        float step = (running ? 300.0f : 190.0f) * dt;
         if (facing == FACING_NORTH) next.y -= step;
         if (facing == FACING_SOUTH) next.y += step;
         if (facing == FACING_WEST) next.x -= step;
@@ -83,7 +84,7 @@ void player_update(Player *player, const World *world, float dt)
     bool moved = next.x != player->feet.x || next.y != player->feet.y;
     if (!moved || facing != player->facing) player->walk_time = 0;
     float cycle = player->trainer == TRAINER_MALE ? PLAYER_MALE_WALK_CYCLE_SECONDS : 0.56f;
-    if (moved) player->walk_time = fmodf(player->walk_time + dt, cycle);
+    if (moved) player->walk_time = fmodf(player->walk_time + dt * (running ? 1.5f : 1.0f), cycle);
     if (requested) player->facing = facing;
     player->feet = next;
     player->moving = moved;
