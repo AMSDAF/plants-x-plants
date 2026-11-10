@@ -202,7 +202,11 @@ O protótipo Versus inclui:
 - Identificação do vencedor e opção de reiniciar.
 - Visual provisório, sem depender de sprites finalizados.
 
-O botão Campanha abre uma missão com comporta, ponte e saída. A progressão por arenas, recrutamento e evolução permanece planejada. Consulte [CAMPAIGN_GREENHOUSE.md](CAMPAIGN_GREENHOUSE.md).
+O botão Campanha abre um mapa com câmera, controles distribuídos, encontros
+com guardiões e uma central de relés que valida nove restrições antes da saída.
+A progressão por arenas,
+recrutamento e evolução permanece planejada.
+Consulte [CAMPAIGN_GREENHOUSE.md](CAMPAIGN_GREENHOUSE.md).
 
 ## Convenções do projeto
 

@@ -187,16 +187,19 @@ As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_pr
 Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
-- **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a saída ao se aproximar.
+- **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a central ao se aproximar.
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
 - **ESC no menu:** voltar à tela inicial.
 - **Sair** no menu ou **X** da janela: encerrar.
 
 Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continuar. Isso evita confirmações e movimento herdados da tela anterior.
 
-Na estufa, abra a comporta com `Água E (Luz OU Chave)`. Depois, deixe
-exatamente um canal aberto para estender a ponte e atravesse até a saída.
-O painel mostra os valores das duas fórmulas durante a exploração.
+Na estufa, explore o pátio, o subsolo, os canais e o viveiro. A ponte exige
+exatamente um canal aberto. A comporta exige `Água E (Luz OU Chave) E NÃO Alarme`.
+Redirecione a energia para o refletor ou enfrente a Babosa pela chave.
+Vença o Girassol no viveiro e registre as duas pistas espalhadas pelo mapa
+para validar os oito relés da central.
+Use **1–8** ou clique nos relés e pressione **Enter** para validar.
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
 Os atlas preparados em `assets/sprites/trainers/` já estão prontos para execução; Python não é necessário para jogar. Execute a partir da raiz para localizar os recursos. Um atlas ausente ou inválido gera diagnóstico no console e um marcador jogável.

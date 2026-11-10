@@ -15,6 +15,7 @@ typedef enum {
 typedef struct {
     BattleState battle;
     bool versus_cpu;
+    bool campaign_battle;
     float cpu_wait;
     int setup_side; /* -1 quando a montagem está concluída. */
     bool choosing_team;

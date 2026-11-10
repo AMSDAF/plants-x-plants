@@ -130,45 +130,125 @@ static void walk_axis(Game *game, bool horizontal, float target)
     tick(game);
 }
 
+static void win_guardian(Game *game)
+{
+    BattleState *battle = &game->battle_screen.battle;
+    for (int i = 0; i < battle->enemy_team.count; i++) {
+        battle->enemy_team.plants[i].current_hp = 1;
+        key(game, KEY_ONE);
+        if (battle->state == BATTLE_STATE_PLAYER_WIN) break;
+        assert(battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 1);
+        assert(Battle_SwitchPlant(battle, i + 1));
+        battle->enemy_team.plants[i + 1].moves[0].accuracy = 0;
+        assert(Battle_ExecuteMove(battle, 0));
+    }
+    assert(battle->state == BATTLE_STATE_PLAYER_WIN);
+    key(game, KEY_ENTER);
+    assert(game->screen == GAME_EXPLORATION);
+}
+
+static void lose_guardian(Game *game)
+{
+    BattleState *battle = &game->battle_screen.battle;
+    for (int i = 0; i < battle->player_team.count; i++) {
+        Plant *plant = &battle->player_team.plants[i];
+        plant->current_hp = 1;
+        int accuracy = plant->moves[0].accuracy;
+        plant->moves[0].accuracy = 0;
+        assert(Battle_ExecuteMove(battle, 0));
+        plant->moves[0].accuracy = accuracy;
+        assert(Battle_ExecuteMove(battle, 0));
+        if (battle->state == BATTLE_STATE_ENEMY_WIN) break;
+        assert(Battle_SwitchPlant(battle, i + 1));
+    }
+    assert(battle->state == BATTLE_STATE_ENEMY_WIN);
+    key(game, KEY_ENTER);
+    assert(game->screen == GAME_EXPLORATION);
+}
+
 static void check_greenhouse(Game *game)
 {
     World *world = &game->world;
-    for (int row = 0; row < 8; row++) {
-        World sample = {.water = (row & 4) != 0, .light = (row & 2) != 0, .key_collected = (row & 1) != 0};
-        assert(world_gate_open(&sample) == (row >= 5));
+    for (int row = 0; row < 16; row++) {
+        World sample = {.alarm = (row & 8) != 0, .water = (row & 4) != 0,
+                        .light = (row & 2) != 0, .key_collected = (row & 1) != 0};
+        assert(world_gate_rule(&sample) == (row >= 5 && row <= 7));
     }
     for (int row = 0; row < 4; row++) {
         World sample = {.north_channel = (row & 2) != 0, .south_channel = (row & 1) != 0};
         assert(world_bridge_open(&sample) == (row == 1 || row == 2));
     }
+    const unsigned int solution = (1u << 1) | (1u << 4) | (1u << 6) | (1u << 7);
+    int solutions = 0;
+    for (unsigned int mask = 0; mask < (1u << WORLD_RELAY_COUNT); mask++) {
+        if (world_relays_match(mask)) {
+            assert(mask == solution);
+            solutions++;
+        }
+    }
+    assert(solutions == 1 && !world_relays_match(solution | (1u << WORLD_RELAY_COUNT)));
+
+    World power_route;
+    world_init(&power_route);
+    Vector2 alarm = {230, 580}, power = {250, 890}, valve = {1070, 305};
+    world_interact(&power_route, &alarm);
+    world_interact(&power_route, &power);
+    world_interact(&power_route, &valve);
+    assert(world_gate_open(&power_route) && !power_route.key_collected);
+    world_update_position(&power_route, (Vector2){1620, 420});
+    world_interact(&power_route, &power);
+    assert(!world_gate_rule(&power_route) && world_gate_open(&power_route));
 
     RenderTexture2D target = LoadRenderTexture(1280, 720);
     capture(game, target, "build/name_entry_preview/greenhouse_start.png");
-    key(game, KEY_E);
-    assert(!world->water && !world->completed);
-    walk_axis(game, true, 585);
-    assert(game->player.feet.x < 520);
-    walk_axis(game, true, 218);
-    walk_axis(game, false, 305);
-    key(game, KEY_E);
-    assert(world->water && !world_gate_open(world));
-    walk_axis(game, true, 397);
-    key(game, KEY_E);
-    assert(world_gate_open(world));
-    walk_axis(game, true, 585);
-    assert(game->player.feet.x < 520); /* A parede continua sólida fora do vão. */
-    walk_axis(game, true, 397);
-    key(game, KEY_E);
-    assert(!world_gate_open(world));
-    walk_axis(game, true, 342);
-    walk_axis(game, false, 536);
-    key(game, KEY_E);
-    assert(world->key_collected && world_gate_open(world));
-    walk_axis(game, false, 420);
     walk_axis(game, true, 960);
-    assert(game->player.feet.x > 552 && game->player.feet.x < 785);
+    assert(game->player.feet.x < 785);
+    walk_axis(game, true, 230);
+    walk_axis(game, false, 580);
+    key(game, KEY_E);
+    walk_axis(game, true, 420);
+    key(game, KEY_E);
+    assert(!world->alarm && world->alarm_note);
+    walk_axis(game, true, 535);
+    walk_axis(game, false, 300);
+    key(game, KEY_E);
+    assert(game->player.feet.y > 700);
+    walk_axis(game, true, 625);
+    walk_axis(game, false, 888);
+    key(game, KEY_E);
+    assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_ALOE);
+    key(game, KEY_ENTER);
+    key(game, KEY_ENTER);
+    assert(game->battle_screen.setup_side < 0);
+    lose_guardian(game);
+    assert(game->player.feet.x == world_spawn().x);
+    assert(game->campaign.has_team && !world->key_collected && world->alarm_note && !world->alarm);
+    walk_axis(game, true, 535);
+    walk_axis(game, false, 300);
+    key(game, KEY_E);
+    walk_axis(game, true, 625);
+    walk_axis(game, false, 888);
+    key(game, KEY_E);
+    assert(game->screen == GAME_BATTLE && game->battle_screen.setup_side < 0);
+    capture(game, target, "build/name_entry_preview/greenhouse_guard.png");
+    win_guardian(game);
+    assert(world->key_collected);
+    walk_axis(game, true, 250);
+    key(game, KEY_E);
+    assert(world->light);
+    walk_axis(game, true, 535);
+    walk_axis(game, false, 743);
+    key(game, KEY_E);
+    assert(game->player.feet.y > 700);
+    walk_axis(game, false, 888);
+    walk_axis(game, true, 250);
+    key(game, KEY_E);
+    assert(!world->light);
+    walk_axis(game, true, 535);
+    walk_axis(game, false, 743);
+    key(game, KEY_E);
+    assert(game->player.feet.y == 300);
     walk_axis(game, true, 675);
-    walk_axis(game, false, 305);
     key(game, KEY_E);
     assert(world_bridge_open(world));
     walk_axis(game, false, 536);
@@ -182,15 +262,61 @@ static void check_greenhouse(Game *game)
     key(game, KEY_E);
     assert(!world->north_channel && world->south_channel && world_bridge_open(world));
     walk_axis(game, false, 420);
-    capture(game, target, "build/name_entry_preview/greenhouse_open.png");
-    walk_axis(game, true, 1080);
+    walk_axis(game, true, 1070);
+    walk_axis(game, false, 305);
     key(game, KEY_E);
+    assert(world->water && world_gate_rule(world));
+    walk_axis(game, true, 1630);
+    assert(game->player.feet.x < 1515); /* A parede continua sólida fora do vão. */
+    walk_axis(game, false, 420);
+    walk_axis(game, true, 1620);
+    assert(world->gate_unlocked && game->player.feet.x > 1547);
+    capture(game, target, "build/name_entry_preview/greenhouse_open.png");
+    walk_axis(game, true, 2150);
+    key(game, KEY_E);
+    assert(!world->relay_panel_open);
+    walk_axis(game, true, 1760);
+    key(game, KEY_E);
+    assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_SUNFLOWER);
+    win_guardian(game);
+    assert(world->guardian_defeated);
+    walk_axis(game, true, 2150);
+    key(game, KEY_E);
+    key(game, KEY_ENTER);
+    assert(world->relay_panel_open && world->relay_attempts == 0);
+    key(game, KEY_ESCAPE);
+    walk_axis(game, true, 1070);
+    walk_axis(game, false, 605);
+    key(game, KEY_E);
+    assert(world->canal_note);
+    walk_axis(game, false, 420);
+    walk_axis(game, true, 2150);
+    key(game, KEY_E);
+    assert(world->relay_panel_open && !world->completed);
+    Vector2 before = game->player.feet;
+    key(game, KEY_D);
+    assert(game->player.feet.x == before.x && game->player.feet.y == before.y);
+    click(game, 289, 237);
+    key(game, KEY_FOUR);
+    key(game, KEY_FIVE);
+    key(game, KEY_SEVEN);
+    key(game, KEY_ENTER);
+    assert(world->relay_attempts == 1 && world->relay_panel_open && !world->completed);
+    capture(game, target, "build/name_entry_preview/greenhouse_relays.png");
+    key(game, KEY_FOUR);
+    key(game, KEY_EIGHT);
+    key(game, KEY_ESCAPE);
+    assert(game->screen == GAME_EXPLORATION && !world->relay_panel_open);
+    key(game, KEY_E);
+    assert(world->relay_panel_open && world->relay_mask == solution && world->relay_attempts == 1);
+    click(game, 232, 615);
     assert(world->completed);
+    assert(!world->relay_panel_open && world->relay_attempts == 2);
     capture(game, target, "build/name_entry_preview/greenhouse_complete.png");
     key(game, KEY_ENTER);
     assert(game->screen == GAME_MENU);
     UnloadRenderTexture(target);
-    puts("PASS: estufa, tabelas-verdade, interações, colisões, soluções da comporta, XOR e saída.");
+    puts("PASS: mapa, duas rotas, derrota e vitórias, pistas, 256 combinações da central e saída.");
 }
 
 int main(void)

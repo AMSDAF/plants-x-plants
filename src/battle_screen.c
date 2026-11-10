@@ -53,6 +53,7 @@ static const char *const operator_rules[LOGIC_OPERATOR_COUNT] = {
 static const char *side_name(const BattleScreen *screen, int side)
 {
     if (side == 0) return "Jogador 1";
+    if (screen->campaign_battle) return "Guardião";
     return screen->versus_cpu ? "Computador" : "Jogador 2";
 }
 
@@ -180,7 +181,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     if (battle_over(battle)) {
         if (activate(restart_button, KEY_ENTER)) return BATTLE_SCREEN_RESTART;
-        if (activate(menu_button, KEY_M)) return BATTLE_SCREEN_MENU;
+        if (!screen->campaign_battle && activate(menu_button, KEY_M)) return BATTLE_SCREEN_MENU;
         return BATTLE_SCREEN_NONE;
     }
 
@@ -228,7 +229,7 @@ static void draw_team_selection(const BattleScreen *screen)
 {
     const Team *team = screen->setup_side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
     DrawText("Monte sua equipe", 64, 42, 40, ink);
-    DrawText("ESC · Menu", 1092, 43, 20, ink);
+    DrawText(screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
     DrawText(TextFormat("%s  ·  %d/%d plantas no grupo", side_name(screen, screen->setup_side),
                         team->count, MAX_TEAM_SIZE),
              64, 104, 26, ink);
@@ -280,7 +281,7 @@ static void draw_setup(const BattleScreen *screen)
     const Move *move = Battle_LogicMove(formula.operator);
 
     DrawText("Monte seu próprio golpe", 64, 42, 40, ink);
-    DrawText("ESC · Menu", 1092, 43, 20, ink);
+    DrawText(screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
     DrawText(TextFormat("Montagem de %s", side_name(screen, screen->setup_side)), 64, 110, 28, ink);
     DrawText("Escolha duas condições diferentes e combine com um operador.", 64, 158, 22, ink);
     DrawText("Condição P", 64, 196, 20, ink);
@@ -297,6 +298,11 @@ static void draw_setup(const BattleScreen *screen)
     DrawText(TextFormat("Com as equipes no início: %s %s %s = %s",
                         truth(value.left), operators[formula.operator], truth(value.right),
                         truth(value.result)), 86, 471, 22, ink);
+    if (screen->campaign_battle) {
+        LogicFormula rival = screen->battle.formulas[1];
+        DrawText(TextFormat("Golpe do guardião: %s %s %s", conditions[rival.left],
+                            operators[rival.operator], conditions[rival.right]), 64, 548, 18, ink);
+    }
     draw_button(setup_confirm, "ENTER  Confirmar fórmula", true);
 }
 
@@ -378,8 +384,8 @@ void battle_screen_draw(const BattleScreen *screen)
     bool ended = battle_over(battle);
     bool cpu = cpu_turn(screen);
 
-    DrawText("Arena Versus", 64, 29, 38, ink);
-    DrawText("ESC · Menu", 1092, 43, 20, ink);
+    DrawText(screen->campaign_battle ? "Batalha na estufa" : "Arena Versus", 64, 29, 38, ink);
+    DrawText(screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
 
     draw_team(&battle->player_team, side_name(screen, 0), 64, !ended && battle->current_turn == 0);
     draw_team(&battle->enemy_team, side_name(screen, 1), 672, !ended && battle->current_turn == 1);
@@ -390,8 +396,8 @@ void battle_screen_draw(const BattleScreen *screen)
     if (ended) {
         int winner = battle->state == BATTLE_STATE_PLAYER_WIN ? 0 : 1;
         DrawText(TextFormat("%s venceu!", side_name(screen, winner)), 64, 511, 30, ink);
-        draw_button(restart_button, "ENTER  Reiniciar", true);
-        draw_button(menu_button, "M  Menu principal", true);
+        draw_button(restart_button, screen->campaign_battle ? "ENTER  Estufa" : "ENTER  Reiniciar", true);
+        if (!screen->campaign_battle) draw_button(menu_button, "M  Menu principal", true);
         return;
     }
 

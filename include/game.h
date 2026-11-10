@@ -29,6 +29,9 @@ typedef struct {
     Trainer trainer;
     char player_name[PLAYER_NAME_CAPACITY];
     bool ready;
+    bool has_team;
+    Team team;
+    LogicFormula formula;
 } CampaignSession;
 
 /* Estado e recursos compartilhados entre as telas. */
@@ -42,6 +45,7 @@ typedef struct {
     TrainerSelectScreen trainer_select;
     NameEntryScreen name_entry;
     CampaignSession campaign;
+    WorldEncounter encounter;
     VersusAssets versus_assets;
     VersusScreen versus;
     VersusMode versus_mode;
