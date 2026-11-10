@@ -3,7 +3,7 @@
 #define WORLD_H
 #include "raylib.h"
 
-enum { WORLD_RELAY_COUNT = 8 };
+enum { WORLD_RELAY_COUNT = 8, WORLD_RELAY_RULE_COUNT = 9 };
 
 typedef enum {
     WORLD_ENCOUNTER_NONE,
@@ -26,6 +26,8 @@ typedef struct {
     bool relay_panel_open;
     unsigned int relay_mask;
     unsigned int relay_attempts;
+    int relay_step;
+    bool relay_rejected;
     bool completed;
 } World;
 

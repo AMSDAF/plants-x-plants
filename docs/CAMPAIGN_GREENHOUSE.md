@@ -36,18 +36,19 @@ Lógico no primeiro encontro. A equipe recupera o HP entre lutas e mantém
 a composição escolhida. Uma derrota ou recuo leva o jogador de volta ao
 pátio, preservando o progresso do mapa.
 
-Vencer o Girassol no viveiro libera a central. Registre uma pista na cabine
-do alarme e outra no lado sul dos canais para consultar as nove regras e
-habilitar a validação. O painel tem oito relés e
+Vencer o Girassol no viveiro libera a central. Uma regra pede a pista dos
+canais e outra pede a pista da cabine do alarme. O painel tem oito relés e
 nove restrições simultâneas. Elas combinam XOR, equivalência, implicação e
 uma contagem exata de relés ligados. Há uma única configuração válida
 entre as 256 possíveis.
 
-Use **1–8** ou clique para alternar um relé. **Enter** envia a configuração
-para validação. Uma tentativa incorreta mostra a rejeição e incrementa o
-contador, sem indicar quais regras falharam. **Esc** fecha a central e
-preserva a configuração e as tentativas. Após validar, **Enter** ou **Esc**
-retorna ao menu. Abrir a campanha novamente reinicia os objetos da estufa.
+Use **1–8** ou clique para alternar um relé. A central mostra uma regra por
+vez. **Enter** valida a configuração até a regra atual e avança quando todas
+essas regras forem verdadeiras. Se uma tentativa falhar, a central mostra
+a primeira regra violada. As nove precisam valer juntas na última etapa.
+Use **seta esquerda** para rever a regra anterior e **Esc** para fechar
+a central. A etapa, a configuração e as tentativas são preservadas ao sair
+do painel. Depois de resolver, **Enter** ou **Esc** retorna ao menu.
 
 ## Implementação e teste
 
@@ -69,6 +70,6 @@ cmake --build build --target plants_x_plants name_entry_check
 O teste percorre a missão pela rota da chave depois de confirmar o nome.
 Verifica as tabelas de verdade, os guardiões, o retorno com progresso, a
 distribuição de energia, a coleta das pistas, as colisões e a solução única
-entre as 256 configurações da central. Também verifica a rejeição de uma
-combinação incorreta e a conclusão pela saída.
+entre as 256 configurações da central. Também verifica o avanço guiado,
+o retorno a uma regra quebrada, a rejeição na última etapa e a conclusão.
 As capturas ficam em `build/name_entry_preview/`.

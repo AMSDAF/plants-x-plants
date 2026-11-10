@@ -45,7 +45,9 @@ static const Color grass = {175, 199, 142, 255};
 static const Color stone = {220, 209, 165, 255};
 static const Color water_color = {58, 145, 164, 255};
 static const Rectangle validate_relays = {82, 596, 350, 48};
-static const Rectangle close_relays = {449, 596, 244, 48};
+static const Rectangle previous_relay_rule = {449, 596, 248, 48};
+static const Rectangle close_relays = {714, 596, 218, 48};
+enum { CANAL_RELAY_RULE = 2, ALARM_RELAY_RULE = 7 };
 
 void world_init(World *world)
 {
@@ -85,24 +87,27 @@ static int active_relays(unsigned int mask)
     return count;
 }
 
-bool world_relays_match(unsigned int mask)
+static int first_failed_relay_rule(unsigned int mask, int last_rule)
 {
-    if (mask >= (1u << WORLD_RELAY_COUNT)) return false;
-
     bool a = relay_on(mask, 0), b = relay_on(mask, 1);
     bool c = relay_on(mask, 2), d = relay_on(mask, 3);
     bool e = relay_on(mask, 4), f = relay_on(mask, 5);
     bool g = relay_on(mask, 6), h = relay_on(mask, 7);
 
-    return (a != b) &&
-           (c == (a && d)) &&
-           (e == (b != f)) &&
-           (g == (c || e)) &&
-           (h == (d != g)) &&
-           (!f || !h) &&
-           (!a || h) &&
-           (!d || c) &&
-           active_relays(mask) == 4;
+    const bool matches[WORLD_RELAY_RULE_COUNT] = {
+        a != b, c == (a && d), e == (b != f),
+        g == (c || e), h == (d != g), !f || !h,
+        !a || h, !d || c, active_relays(mask) == 4
+    };
+    for (int i = 0; i <= last_rule; i++)
+        if (!matches[i]) return i;
+    return -1;
+}
+
+bool world_relays_match(unsigned int mask)
+{
+    return mask < (1u << WORLD_RELAY_COUNT) &&
+           first_failed_relay_rule(mask, WORLD_RELAY_RULE_COUNT - 1) < 0;
 }
 
 static Rectangle relay_button(int index)
@@ -115,6 +120,13 @@ static bool clicked(Rectangle bounds)
     return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), bounds);
 }
 
+static bool relay_clue_available(const World *world)
+{
+    if (world->relay_step == CANAL_RELAY_RULE) return world->canal_note;
+    if (world->relay_step == ALARM_RELAY_RULE) return world->alarm_note;
+    return true;
+}
+
 void world_update_relay_panel(World *world)
 {
     if (!world->relay_panel_open) return;
@@ -122,17 +134,31 @@ void world_update_relay_panel(World *world)
         world->relay_panel_open = false;
         return;
     }
-
-    for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
-        if (IsKeyPressed(KEY_ONE + i) || clicked(relay_button(i)))
-            world->relay_mask ^= 1u << i;
+    if (world->relay_step > 0 &&
+        (IsKeyPressed(KEY_LEFT) || clicked(previous_relay_rule))) {
+        world->relay_step--;
+        world->relay_rejected = false;
+        return;
     }
 
-    if ((IsKeyPressed(KEY_ENTER) || clicked(validate_relays)) && world->canal_note && world->alarm_note) {
+    for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
+        if (IsKeyPressed(KEY_ONE + i) || clicked(relay_button(i))) {
+            world->relay_mask ^= 1u << i;
+            world->relay_rejected = false;
+        }
+    }
+
+    if ((IsKeyPressed(KEY_ENTER) || clicked(validate_relays)) && relay_clue_available(world)) {
         world->relay_attempts++;
-        if (world_relays_match(world->relay_mask)) {
+        int failed = first_failed_relay_rule(world->relay_mask, world->relay_step);
+        world->relay_rejected = failed >= 0;
+        if (world->relay_rejected) {
+            world->relay_step = failed;
+        } else if (world->relay_step == WORLD_RELAY_RULE_COUNT - 1) {
             world->completed = true;
             world->relay_panel_open = false;
+        } else {
+            world->relay_step++;
         }
     }
 }
@@ -346,32 +372,38 @@ static void draw_formula(int x, const char *label, const char *evaluation, const
     DrawText(status, x + 550 - MeasureText(status, 18), 113, 18, open ? DARKGREEN : MAROON);
 }
 
-static void draw_relay_action(Rectangle bounds, const char *label)
+static void draw_relay_action(Rectangle bounds, const char *label, bool enabled)
 {
-    bool hovered = CheckCollisionPointRec(GetMousePosition(), bounds);
-    DrawRectangleRec(bounds, hovered ? GOLD : stone);
+    bool hovered = enabled && CheckCollisionPointRec(GetMousePosition(), bounds);
+    DrawRectangleRec(bounds, enabled ? (hovered ? GOLD : stone) : LIGHTGRAY);
     DrawRectangleLinesEx(bounds, 2, frame);
-    centered_text(label, (int)(bounds.x + bounds.width / 2), (int)bounds.y + 14, 20, ink);
+    centered_text(label, (int)(bounds.x + bounds.width / 2), (int)bounds.y + 14, 20,
+                  enabled ? ink : DARKGRAY);
 }
 
 static void draw_relay_panel(const World *world)
 {
-    static const char *const clues[] = {
-        "01   A XOR B",
-        "02   C SE E SOMENTE SE (A E D)",
-        "03   E SE E SOMENTE SE (B XOR F)",
-        "04   G SE E SOMENTE SE (C OU E)",
-        "05   H SE E SOMENTE SE (D XOR G)",
-        "06   SE F, ENTÃO NÃO H",
-        "07   SE A, ENTÃO H",
-        "08   SE D, ENTÃO C",
-        "09   Exatamente 4 relés ligados"
+    static const struct {
+        const char *formula;
+        const char *guide;
+    } clues[WORLD_RELAY_RULE_COUNT] = {
+        {"A XOR B", "No XOR, exatamente um dos dois relés deve estar ligado."},
+        {"C SE E SOMENTE SE (A E D)", "C deve ter o mesmo valor da expressão entre parênteses."},
+        {"E SE E SOMENTE SE (B XOR F)", "Avalie o XOR entre B e F e compare o resultado com o relé E."},
+        {"G SE E SOMENTE SE (C OU E)", "O OU é verdadeiro com um ou com os dois relés ligados."},
+        {"H SE E SOMENTE SE (D XOR G)", "Compare H com o resultado do XOR entre D e G."},
+        {"SE F, ENTÃO NÃO H", "A regra só falha se a primeira parte for V e a segunda for F."},
+        {"SE A, ENTÃO H", "Se a primeira parte for F, a implicação já está satisfeita."},
+        {"SE D, ENTÃO C", "Verifique a implicação junto com as equivalências que você já passou."},
+        {"Exatamente 4 relés ligados", "Confira o total. As oito regras anteriores ainda precisam valer."}
     };
+    const int step = world->relay_step;
+    const bool available = relay_clue_available(world);
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(ink, 0.88f));
     DrawRectangle(62, 40, 1160, 640, cream);
     DrawRectangleLinesEx((Rectangle){62, 40, 1160, 640}, 4, frame);
     DrawText("Central de relés", 82, 64, 36, ink);
-    DrawText("Configure a saída para satisfazer as nove regras ao mesmo tempo.", 82, 117, 23, ink);
+    DrawText("Valide uma regra por vez. As regras anteriores continuam valendo.", 82, 117, 23, ink);
     DrawText("Use 1 a 8 ou clique nos relés. Ligado = verdadeiro.", 82, 153, 20, ink);
 
     for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
@@ -387,30 +419,31 @@ static void draw_relay_panel(const World *world)
         DrawText(on ? "Ligado" : "Desligado", x + 31, y + 56, 16, ink);
     }
 
-    DrawRectangle(82, 303, 1124, 266, (Color){237, 228, 190, 255});
-    DrawText("Regras de segurança", 104, 320, 23, ink);
-    for (int i = 0; i < (int)(sizeof(clues) / sizeof(clues[0])); i++) {
-        int x = i < 5 ? 104 : 646;
-        int y = 355 + 29 * (i < 5 ? i : i - 5);
-        const char *clue = clues[i];
-        if (i == 2 && !world->canal_note) clue = "03   Pista perdida nos canais";
-        if (i == 7 && !world->alarm_note) clue = "08   Pista perdida na cabine";
-        DrawText(clue, x, y, 19, ink);
+    const Rectangle rule_panel = {82, 303, 1124, 266};
+    DrawRectangleRec(rule_panel, (Color){237, 228, 190, 255});
+    DrawRectangleLinesEx(rule_panel, world->relay_rejected ? 4 : 2, world->relay_rejected ? MAROON : frame);
+    DrawText(TextFormat("Regra %02d de %02d", step + 1, WORLD_RELAY_RULE_COUNT), 104, 324, 23, ink);
+    if (available) {
+        DrawText(clues[step].formula, 104, 378, 31, ink);
+        DrawText(clues[step].guide, 104, 429, 20, ink);
+        if (world->relay_rejected)
+            DrawText("Esta regra falhou. Ajuste os relés e tente novamente.", 104, 505, 22, MAROON);
+        else if (step == WORLD_RELAY_RULE_COUNT - 1)
+            DrawText("Valide para abrir a saída.", 104, 505, 21, ink);
+        else
+            DrawText("Valide para revelar a próxima regra.", 104, 505, 21, ink);
+    } else {
+        DrawText("Pista necessária", 104, 378, 31, ink);
+        DrawText(step == CANAL_RELAY_RULE ? "Registre a pista nos canais para revelar esta regra."
+                                        : "Registre a pista na cabine do alarme para revelar esta regra.",
+                 104, 429, 20, ink);
     }
-    DrawText("XOR: exatamente um.   SE E SOMENTE SE: os dois lados têm o mesmo valor.",
-             104, 509, 17, ink);
-    DrawText("SE... ENTÃO: a regra falha somente quando a primeira parte é V e a segunda é F.",
-             104, 535, 17, ink);
 
-    draw_relay_action(validate_relays, "ENTER  Validar configuração");
-    draw_relay_action(close_relays, "ESC  Voltar");
-    if (!world->canal_note || !world->alarm_note) {
-        DrawText("Recolha as duas pistas para validar", 717, 597, 20, MAROON);
-    } else if (world->relay_attempts > 0) {
-        DrawText("Última configuração rejeitada", 717, 597, 20, MAROON);
-    }
-    DrawText(TextFormat("%d relés ligados  |  %u tentativas", active_relays(world->relay_mask),
-                        world->relay_attempts), 717, 627, 18, ink);
+    draw_relay_action(validate_relays, "ENTER  Validar regra", available);
+    draw_relay_action(previous_relay_rule, "ESQ  Regra anterior", step > 0);
+    draw_relay_action(close_relays, "ESC  Fechar", true);
+    DrawText(TextFormat("Relés ligados: %d", active_relays(world->relay_mask)), 950, 597, 18, ink);
+    DrawText(TextFormat("Tentativas: %u", world->relay_attempts), 950, 625, 18, ink);
 }
 
 void world_draw_interface(const World *world, Vector2 feet)

@@ -197,9 +197,9 @@ Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continua
 Na estufa, explore o pátio, o subsolo, os canais e o viveiro. A ponte exige
 exatamente um canal aberto. A comporta exige `Água E (Luz OU Chave) E NÃO Alarme`.
 Redirecione a energia para o refletor ou enfrente a Babosa pela chave.
-Vença o Girassol no viveiro e registre as duas pistas espalhadas pelo mapa
-para validar os oito relés da central.
-Use **1–8** ou clique nos relés e pressione **Enter** para validar.
+Vença o Girassol no viveiro e registre as duas pistas espalhadas pelo mapa.
+Na central, use **1–8** ou clique nos relés e pressione **Enter** para validar
+uma regra por vez. Se uma regra anterior falhar, a central volta para ela.
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
 Os atlas preparados em `assets/sprites/trainers/` já estão prontos para execução; Python não é necessário para jogar. Execute a partir da raiz para localizar os recursos. Um atlas ausente ou inválido gera diagnóstico no console e um marcador jogável.

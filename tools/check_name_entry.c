@@ -283,7 +283,14 @@ static void check_greenhouse(Game *game)
     walk_axis(game, true, 2150);
     key(game, KEY_E);
     key(game, KEY_ENTER);
-    assert(world->relay_panel_open && world->relay_attempts == 0);
+    assert(world->relay_panel_open && world->relay_rejected && world->relay_step == 0);
+    click(game, 289, 237); /* B satisfaz o primeiro XOR. */
+    key(game, KEY_ENTER);
+    assert(world->relay_step == 1 && !world->relay_rejected);
+    key(game, KEY_ENTER);
+    assert(world->relay_step == 2 && world->relay_attempts == 3);
+    key(game, KEY_ENTER);
+    assert(world->relay_step == 2 && world->relay_attempts == 3); /* Ainda falta a pista. */
     key(game, KEY_ESCAPE);
     walk_axis(game, true, 1070);
     walk_axis(game, false, 605);
@@ -292,26 +299,39 @@ static void check_greenhouse(Game *game)
     walk_axis(game, false, 420);
     walk_axis(game, true, 2150);
     key(game, KEY_E);
-    assert(world->relay_panel_open && !world->completed);
+    assert(world->relay_panel_open && !world->completed && world->relay_step == 2);
     Vector2 before = game->player.feet;
     key(game, KEY_D);
     assert(game->player.feet.x == before.x && game->player.feet.y == before.y);
-    click(game, 289, 237);
-    key(game, KEY_FOUR);
+    key(game, KEY_TWO); /* Quebra a primeira regra enquanto a terceira está visível. */
+    key(game, KEY_ENTER);
+    assert(world->relay_attempts == 4 && world->relay_rejected && world->relay_step == 0);
+    key(game, KEY_TWO);
+    key(game, KEY_SIX); /* B e F satisfazem as oito primeiras regras. */
+    for (int i = 0; i < WORLD_RELAY_RULE_COUNT - 1; i++) {
+        assert(world->relay_step == i && !world->completed);
+        key(game, KEY_ENTER);
+    }
+    key(game, KEY_ENTER);
+    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 1 && world->relay_rejected && !world->completed);
+    capture(game, target, "build/name_entry_preview/greenhouse_relays.png");
+    key(game, KEY_SIX);
     key(game, KEY_FIVE);
     key(game, KEY_SEVEN);
-    key(game, KEY_ENTER);
-    assert(world->relay_attempts == 1 && world->relay_panel_open && !world->completed);
-    capture(game, target, "build/name_entry_preview/greenhouse_relays.png");
-    key(game, KEY_FOUR);
     key(game, KEY_EIGHT);
+    key(game, KEY_LEFT);
+    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 2);
+    unsigned int attempts = world->relay_attempts;
     key(game, KEY_ESCAPE);
     assert(game->screen == GAME_EXPLORATION && !world->relay_panel_open);
     key(game, KEY_E);
-    assert(world->relay_panel_open && world->relay_mask == solution && world->relay_attempts == 1);
+    assert(world->relay_panel_open && world->relay_mask == solution && world->relay_attempts == attempts);
+    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 2);
+    key(game, KEY_ENTER);
+    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 1 && !world->completed);
     click(game, 232, 615);
     assert(world->completed);
-    assert(!world->relay_panel_open && world->relay_attempts == 2);
+    assert(!world->relay_panel_open && world->relay_attempts == attempts + 2);
     capture(game, target, "build/name_entry_preview/greenhouse_complete.png");
     key(game, KEY_ENTER);
     assert(game->screen == GAME_MENU);
