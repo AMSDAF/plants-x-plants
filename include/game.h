@@ -52,6 +52,7 @@ typedef struct {
     BattleScreen battle_screen;
     Player player;
     World world;
+    WorldAssets world_assets;
 } Game;
 
 void game_init(Game *game);

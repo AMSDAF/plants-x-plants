@@ -4,6 +4,9 @@
 #include <math.h>
 #include <stddef.h>
 
+/* Coordenadas do exterior medidas na imagem de referência. */
+enum { MAP_WIDTH = 1672, MAP_HEIGHT = 941 };
+
 typedef enum {
     VALVE,
     POWER,
@@ -34,41 +37,67 @@ typedef struct {
 } MapObject;
 
 static const MapObject objects[OBJECT_COUNT] = {
-    [VALVE] = {{1070, 305}, WORLD_EXTERIOR},
+    [VALVE] = {{1168, 644}, WORLD_EXTERIOR},
     [POWER] = {{640, 320}, WORLD_BASEMENT},
     [ALARM] = {{445, 320}, WORLD_MAINTENANCE},
     [NORTH_CHANNEL] = {{450, 352}, WORLD_BRIDGE_CONTROL},
     [SOUTH_CHANNEL] = {{830, 352}, WORLD_BRIDGE_CONTROL},
-    [DRAIN] = {{335, 530}, WORLD_EXTERIOR},
+    [DRAIN] = {{733, 555}, WORLD_EXTERIOR},
     [ALOE] = {{640, 320}, WORLD_DEPOT},
     [SUNFLOWER] = {{515, 340}, WORLD_NURSERY},
-    [CANAL_NOTE] = {{1070, 605}, WORLD_EXTERIOR},
+    [CANAL_NOTE] = {{1271, 401}, WORLD_EXTERIOR},
     [ALARM_NOTE] = {{445, 460}, WORLD_MAINTENANCE},
-    [MAINTENANCE_DOOR] = {{290, 398}, WORLD_EXTERIOR},
-    [DEPOT_DOOR] = {{535, 398}, WORLD_EXTERIOR},
-    [NURSERY_DOOR] = {{1715, 398}, WORLD_EXTERIOR},
-    [BRIDGE_CONTROL_DOOR] = {{580, 692}, WORLD_EXTERIOR},
+    [MAINTENANCE_DOOR] = {{243, 645}, WORLD_EXTERIOR},
+    [DEPOT_DOOR] = {{278, 379}, WORLD_EXTERIOR},
+    [NURSERY_DOOR] = {{1396, 330}, WORLD_EXTERIOR},
+    [BRIDGE_CONTROL_DOOR] = {{810, 561}, WORLD_EXTERIOR},
     [INTERIOR_DOOR] = {{640, 565}, WORLD_MAINTENANCE},
     [LOCKED_HATCH] = {{826, 320}, WORLD_MAINTENANCE},
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
-    [UPPER_LIFT] = {{190, 625}, WORLD_EXTERIOR},
+    [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
     [LOWER_LIFT] = {{837, 410}, WORLD_BASEMENT},
     [RELAY_PANEL] = {{790, 340}, WORLD_NURSERY}
 };
 
-static const Rectangle exterior = {70, 70, 1900, 860};
-static const Rectangle canal = {785, 70, 128, 860};
-static const Rectangle facades[] = {
-    {187, 229, 206, 152}, {428, 229, 214, 152}, {1532, 229, 366, 152}, {470, 530, 220, 145}
+static const Rectangle exterior = {0, 0, MAP_WIDTH, MAP_HEIGHT};
+static const Rectangle canal = {907, 0, 138, MAP_HEIGHT};
+static const Rectangle bridge_dest = {902, 485, 158, 113};
+
+/* Áreas de circulação que acompanham os caminhos da ilustração. */
+static const Rectangle exterior_paths[] = {
+    {529, 602, 93, 216},   /* Entrada sul, do lado interno do portão. */
+    {399, 444, 355, 186},  /* Pátio e dreno. */
+    {744, 552, 168, 47},
+    {907, 525, 196, 38},  /* Tabuleiro e acesso da margem leste. */
+    {334, 536, 75, 87},
+    {348, 469, 58, 102},
+    {305, 433, 96, 51},
+    {250, 368, 56, 72},   /* Depósito. */
+    {253, 417, 99, 37},
+    {227, 637, 141, 56},  /* Manutenção. */
+    {321, 591, 96, 68},
+    {462, 185, 108, 274}, /* Caminho junto ao pergolado. */
+    {551, 187, 219, 37},
+    {738, 211, 106, 49},
+    {738, 250, 112, 157},
+    {731, 386, 27, 69},
+    {1054, 471, 72, 117},
+    {1070, 432, 143, 54},
+    {1162, 411, 298, 50},
+    {1330, 318, 127, 107}, /* Viveiro. */
+    {1240, 391, 113, 44}, /* Placa com a pista. */
+    {1051, 564, 61, 156},
+    {1081, 600, 142, 52}, /* Registro de água. */
+    {1081, 641, 140, 87},
+    {1205, 700, 360, 33}  /* Frente da estufa menor. */
 };
-static const float passage_top = 365;
-static const float passage_bottom = 475;
+static const float passage_top = 525;
+static const float passage_bottom = 563;
 static const float interaction_radius = 55;
 
 static const Color ink = {24, 49, 43, 255};
 static const Color frame = {39, 74, 60, 255};
 static const Color cream = {249, 240, 205, 255};
-static const Color grass = {175, 199, 142, 255};
 static const Color stone = {220, 209, 165, 255};
 static const Color water_color = {58, 145, 164, 255};
 static const Color path_edge = {139, 123, 87, 255};
@@ -86,9 +115,10 @@ typedef struct {
 } Sector;
 
 static const Sector sectors[] = {
-    {{70, 70, 715, 860}, "Pátio", {165, 191, 141, 255}, {84, 119, 77, 255}},
-    {{913, 70, 575, 860}, "Canais", {152, 191, 177, 255}, {55, 114, 114, 255}},
-    {{1488, 70, 482, 860}, "Jardim do viveiro", {189, 207, 138, 255}, {100, 132, 64, 255}}
+    {{0, 735, 907, 206}, "Jardim de entrada", {165, 191, 141, 255}, {84, 119, 77, 255}},
+    {{0, 0, 907, 735}, "Pátio", {165, 191, 141, 255}, {84, 119, 77, 255}},
+    {{1045, 465, 627, 476}, "Canais", {152, 191, 177, 255}, {55, 114, 114, 255}},
+    {{1045, 0, 627, 465}, "Jardim do viveiro", {189, 207, 138, 255}, {100, 132, 64, 255}}
 };
 
 static const Sector rooms[WORLD_LOCATION_COUNT] = {
@@ -99,12 +129,34 @@ static const Sector rooms[WORLD_LOCATION_COUNT] = {
     [WORLD_BRIDGE_CONTROL] = {{280, 191, 720, 420}, "Controle da ponte", {163, 199, 186, 255}, {59, 114, 109, 255}}
 };
 
-static const Rectangle paths[] = {
-    {70, 397, 1900, 78},
-    {304, 430, 62, 103}, {1039, 300, 62, 310}, {159, 430, 62, 198},
-    {702, 430, 56, 293}, {550, 675, 208, 48},
-    {260, 370, 60, 70}, {505, 370, 60, 70}, {1685, 370, 60, 70}
-};
+static Texture2D load_map_texture(const char *path, int width, int height)
+{
+    if (!FileExists(path)) return (Texture2D){0};
+    Texture2D texture = LoadTexture(path);
+    if (texture.id && (texture.width != width || texture.height != height)) {
+        UnloadTexture(texture);
+        return (Texture2D){0};
+    }
+    if (texture.id) SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+    return texture;
+}
+
+void world_assets_load(WorldAssets *assets)
+{
+    *assets = (WorldAssets){
+        .courtyard = load_map_texture("assets/maps/botanical_courtyard.png", MAP_WIDTH, MAP_HEIGHT),
+        .bridge_open = load_map_texture("assets/maps/botanical_bridge.png", 158, 113),
+        .tiles = load_map_texture("assets/maps/botanical_tiles.png", 512, 512)
+    };
+}
+
+void world_assets_unload(WorldAssets *assets)
+{
+    if (assets->courtyard.id) UnloadTexture(assets->courtyard);
+    if (assets->bridge_open.id) UnloadTexture(assets->bridge_open);
+    if (assets->tiles.id) UnloadTexture(assets->tiles);
+    *assets = (WorldAssets){0};
+}
 
 void world_init(World *world)
 {
@@ -118,7 +170,7 @@ void world_init(World *world)
 
 Vector2 world_spawn(void)
 {
-    return (Vector2){146, 420};
+    return (Vector2){576, 799};
 }
 
 bool world_gate_open(const World *world)
@@ -252,8 +304,9 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     Rectangle box = {feet.x - 8, feet.y - 4, 16, 8};
     if (world->location == WORLD_EXTERIOR) {
         if (blocks(box, canal, world_bridge_open(world))) return previous;
-        for (unsigned int i = 0; i < sizeof(facades) / sizeof(facades[0]); i++)
-            if (CheckCollisionRecs(box, facades[i])) return previous;
+        for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
+            if (CheckCollisionPointRec(feet, exterior_paths[i])) return feet;
+        return previous;
     }
     return feet;
 }
@@ -416,44 +469,6 @@ static void draw_sector(const Sector *sector)
     }
 }
 
-static void draw_paths(void)
-{
-    for (unsigned int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++) {
-        Rectangle p = paths[i];
-        DrawRectangleRec((Rectangle){p.x - 3, p.y - 3, p.width + 6, p.height + 6}, path_edge);
-    }
-    for (unsigned int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
-        DrawRectangleRec(paths[i], stone);
-}
-
-static void draw_sign(const char *label, int x, int y, int font, Color background)
-{
-    int width = MeasureText(label, font) + 26;
-    Rectangle plaque = {x - width / 2, y, width, font + 14};
-    DrawRectangleRec(plaque, background);
-    DrawRectangleLinesEx(plaque, 2, Fade(ink, 0.52f));
-    centered_text(label, x, y + 7, font, cream);
-}
-
-static void draw_floor_details(void)
-{
-    /* Canteiros e drenos são marcas no piso, fora das rotas. */
-    const Color bed = {99, 139, 79, 255};
-    DrawRectangle(92, 549, 55, 51, Fade(bed, 0.75f));
-    DrawRectangle(281, 648, 122, 51, Fade(bed, 0.75f));
-    DrawRectangle(1234, 519, 222, 65, Fade(water_color, 0.48f));
-    DrawRectangle(1234, 643, 222, 65, Fade(water_color, 0.48f));
-    DrawRectangle(1586, 515, 137, 69, Fade(bed, 0.80f));
-    DrawRectangle(1786, 515, 137, 69, Fade(bed, 0.80f));
-    for (int i = 0; i < 4; i++) {
-        DrawRectangle(296 + 26 * i, 667, 16, 10, grass);
-        DrawRectangle(1255 + 52 * i, 545, 27, 6, SKYBLUE);
-        DrawRectangle(1255 + 52 * i, 669, 27, 6, SKYBLUE);
-        DrawRectangle(1598 + 32 * i, 544, 16, 15, grass);
-        DrawRectangle(1798 + 32 * i, 544, 16, 15, grass);
-    }
-}
-
 static void draw_interaction_marker(Object object)
 {
     Vector2 p = objects[object].position;
@@ -503,30 +518,6 @@ static void draw_guard(Object object, const char *name, Color color)
     centered_text(name, x, y + 22, 18, ink);
 }
 
-static void draw_facade(Rectangle b, const char *label, Color roof, bool locked)
-{
-    int x = (int)b.x;
-    int y = (int)b.y;
-    int w = (int)b.width;
-    int bottom = (int)(b.y + b.height);
-    DrawRectangleRec(b, stone);
-    DrawRectangle(x, y, w, (int)b.height - 68, roof);
-    for (int row = y + 12; row < bottom - 72; row += 14)
-        DrawRectangle(x + 4, row, w - 8, 2, Fade(ink, 0.25f));
-    DrawRectangle(x, bottom - 70, w, 8, frame);
-    for (int side = 0; side < 2; side++) {
-        int window = side == 0 ? x + 16 : x + w - 56;
-        DrawRectangle(window, bottom - 51, 40, 28, frame);
-        DrawRectangle(window + 4, bottom - 47, 32, 20, SKYBLUE);
-        DrawRectangle(window + 18, bottom - 47, 3, 20, frame);
-    }
-    DrawRectangle(x + w / 2 - 24, bottom - 58, 48, 58, ink);
-    DrawRectangle(x + w / 2 - 19, bottom - 52, 38, 52, locked ? MAROON : roof);
-    DrawCircle(x + w / 2 + 10, bottom - 22, 3, GOLD);
-    DrawRectangleLinesEx(b, 3, frame);
-    draw_sign(label, x + w / 2, y + 16, 16, frame);
-}
-
 static void draw_room_portal(Object object, const char *label, bool locked)
 {
     Vector2 p = objects[object].position;
@@ -539,50 +530,145 @@ static void draw_room_portal(Object object, const char *label, bool locked)
     else centered_text(label, x, y + 22, 18, ink);
 }
 
-static void draw_bridge(bool open)
+static void draw_ground_tiles(Texture2D tiles, Rectangle source, Rectangle area, int size)
 {
-    DrawRectangleRec(canal, water_color);
-    int x = (int)canal.x;
-    int w = (int)canal.width;
-    for (int y = (int)canal.y + 15; y + 10 <= canal.y + canal.height; y += 30) {
-        DrawRectangle(x + 12, y, 23, 3, SKYBLUE);
-        DrawRectangle(x + 73, y + 7, 36, 3, SKYBLUE);
-    }
-    if (open) {
-        for (int px = x; px < x + w; px += 16) {
-            DrawRectangle(px, (int)passage_top, 15, (int)(passage_bottom - passage_top), BROWN);
-            DrawRectangle(px, (int)passage_top + 4, 14, (int)(passage_bottom - passage_top) - 8,
-                          (Color){174, 128, 77, 255});
+    int left = (int)area.x;
+    int top = (int)area.y;
+    int right = (int)(area.x + area.width);
+    int bottom = (int)(area.y + area.height);
+    for (int y = top; y < bottom;) {
+        int row_offset = y % size;
+        int height = size - row_offset;
+        if (height > bottom - y) height = bottom - y;
+        for (int x = left; x < right;) {
+            int column_offset = x % size;
+            int width = size - column_offset;
+            if (width > right - x) width = right - x;
+            Rectangle part = {source.x + column_offset * source.width / size,
+                              source.y + row_offset * source.height / size,
+                              width * source.width / size, height * source.height / size};
+            DrawTexturePro(tiles, part, (Rectangle){x, y, width, height}, (Vector2){0}, 0, WHITE);
+            x += width;
         }
+        y += height;
     }
 }
 
-static void draw_exterior(const World *world)
+static void draw_map_sprite(Texture2D atlas, Rectangle source, Vector2 base, int center)
 {
-    Rectangle b = world->bounds;
-    DrawRectangleRec(b, grass);
-    for (unsigned int i = 0; i < sizeof(sectors) / sizeof(sectors[0]); i++) {
-        const Sector *s = &sectors[i];
-        draw_sector(s);
-        int label_x = (int)(s->bounds.x + fminf(s->bounds.width / 2, 180));
-        draw_sign(s->name, label_x, 192, 23, s->trim);
+    Rectangle destination = {base.x - 2 * center, base.y - 2 * source.height,
+                             2 * source.width, 2 * source.height};
+    DrawTexturePro(atlas, source, destination, (Vector2){0}, 0, WHITE);
+}
+
+static void draw_canal_banks(Texture2D atlas, int tile_size)
+{
+    const int bank_width = 16;
+    for (int y = 0; y < MAP_HEIGHT; y += tile_size) {
+        int height = MAP_HEIGHT - y < tile_size ? MAP_HEIGHT - y : tile_size;
+        Rectangle source = {48, 0, 8, 16.0f * height / tile_size};
+        Rectangle bank = {canal.x, y, bank_width, height};
+        DrawTexturePro(atlas, source, bank, (Vector2){0}, 0, WHITE);
+        source.width = -source.width;
+        bank.x = canal.x + canal.width - bank_width;
+        DrawTexturePro(atlas, source, bank, (Vector2){0}, 0, WHITE);
     }
-    draw_floor_details();
-    draw_paths();
-    draw_bridge(world_bridge_open(world));
-    draw_facade(facades[0], "Manutenção", (Color){145, 116, 79, 255}, false);
-    draw_facade(facades[1], "Depósito", (Color){159, 101, 73, 255}, false);
-    draw_facade(facades[2], "Viveiro", (Color){83, 143, 106, 255}, !world_gate_open(world));
-    draw_facade(facades[3], "Controle da ponte", (Color){76, 131, 131, 255}, false);
-    draw_sign("Canais >", 706, 427, 16, frame);
-    draw_sign("< Pátio", 979, 427, 16, frame);
-    draw_sign("Viveiro >", 1390, 427, 16, frame);
-    draw_sign("Entrada pelo sul", 580, 496, 16, frame);
-    draw_switch(VALVE, "Válvula da água", world->water);
-    draw_switch(DRAIN, TextFormat("Dreno (-%d)", DRAIN_PRESSURE), world->drain_open);
-    draw_switch(UPPER_LIFT, "Elevador de serviço", world->basement_visited && !world->light);
-    draw_note(CANAL_NOTE, "Pista dos canais", world->canal_note);
-    DrawRectangleLinesEx(b, 3, frame);
+}
+
+static void draw_tiled_exterior(const World *world, Texture2D atlas)
+{
+    enum { TILE_SIZE = 32 };
+    draw_ground_tiles(atlas, (Rectangle){0, 0, 16, 16}, exterior, TILE_SIZE);
+    for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++) {
+        Rectangle path = exterior_paths[i];
+        DrawRectangleRec((Rectangle){path.x - 3, path.y - 3, path.width + 6, path.height + 6}, path_edge);
+    }
+    for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
+        draw_ground_tiles(atlas, (Rectangle){16, 0, 16, 16}, exterior_paths[i], TILE_SIZE);
+    draw_ground_tiles(atlas, (Rectangle){32, 0, 16, 16}, canal, TILE_SIZE);
+    draw_canal_banks(atlas, TILE_SIZE);
+    if (world_bridge_open(world)) {
+        draw_map_sprite(atlas, (Rectangle){0, 254, 79, 50}, (Vector2){976, 588}, 39);
+    } else {
+        draw_map_sprite(atlas, (Rectangle){88, 254, 10, 48}, (Vector2){908, 586}, 5);
+        draw_map_sprite(atlas, (Rectangle){104, 254, 10, 48}, (Vector2){1045, 586}, 5);
+    }
+
+    static const struct {
+        Rectangle source;
+        Vector2 base;
+    } decorations[] = {
+        {{280, 316, 48, 33}, {576, 883}}, /* Portão sul. */
+        {{64, 0, 32, 32}, {582, 568}},    /* Mosaico do pátio. */
+        {{144, 316, 60, 46}, {640, 185}},
+        {{216, 316, 23, 30}, {506, 782}},
+        {{336, 316, 27, 20}, {682, 664}},
+        {{56, 316, 50, 60}, {677, 400}},
+        {{56, 316, 50, 60}, {419, 368}},
+        {{0, 316, 50, 60}, {139, 223}},
+        {{0, 316, 50, 60}, {86, 770}},
+        {{0, 316, 50, 60}, {208, 818}},
+        {{0, 316, 50, 60}, {834, 802}},
+        {{0, 316, 50, 60}, {1135, 345}},
+        {{0, 316, 50, 60}, {1590, 480}},
+        {{0, 316, 50, 60}, {1550, 845}},
+        {{112, 316, 24, 22}, {475, 708}},
+        {{112, 316, 24, 22}, {692, 760}},
+        {{112, 316, 24, 22}, {1142, 402}},
+        {{112, 316, 24, 22}, {1517, 762}},
+        {{208, 136, 107, 96}, {1406, 700}}
+    };
+    for (unsigned int i = 0; i < sizeof(decorations) / sizeof(decorations[0]); i++) {
+        Rectangle source = decorations[i].source;
+        draw_map_sprite(atlas, source, decorations[i].base, (int)source.width / 2);
+    }
+
+    draw_map_sprite(atlas, (Rectangle){0, 32, 101, 91}, (Vector2){243, 637}, 52);
+    draw_map_sprite(atlas, (Rectangle){112, 32, 132, 91}, (Vector2){278, 368}, 66);
+    draw_map_sprite(atlas, (Rectangle){256, 32, 73, 70}, (Vector2){810, 552}, 32);
+    draw_map_sprite(atlas, (Rectangle){0, 136, 188, 103}, (Vector2){1396, 318}, 96);
+    draw_map_sprite(atlas, (Rectangle){216, 316, 23, 30}, objects[CANAL_NOTE].position, 11);
+    draw_map_sprite(atlas, (Rectangle){248, 316, 18, 16}, objects[DRAIN].position, 9);
+    draw_map_sprite(atlas, (Rectangle){376, 316, 25, 20}, objects[VALVE].position, 12);
+    draw_map_sprite(atlas, (Rectangle){408, 316, 19, 23}, objects[UPPER_LIFT].position, 9);
+    Vector2 drain = objects[DRAIN].position;
+    DrawCircle((int)drain.x + 14, (int)drain.y - 27, 4, world->drain_open ? LIME : ORANGE);
+    Vector2 valve = objects[VALVE].position;
+    DrawCircle((int)valve.x + 22, (int)valve.y - 35, 4, world->water ? LIME : ORANGE);
+    Vector2 lift = objects[UPPER_LIFT].position;
+    bool lift_available = world->basement_visited && !world->light;
+    DrawCircle((int)lift.x + 16, (int)lift.y - 37, 4, lift_available ? LIME : ORANGE);
+}
+
+static void draw_exterior(const World *world, const WorldAssets *assets)
+{
+    if (assets->tiles.id) {
+        draw_tiled_exterior(world, assets->tiles);
+        return;
+    }
+    if (assets->courtyard.id) {
+        DrawTexturePro(assets->courtyard, (Rectangle){0, 0, MAP_WIDTH, MAP_HEIGHT},
+                       exterior, (Vector2){0}, 0, WHITE);
+    } else {
+        DrawRectangleRec(exterior, (Color){164, 187, 125, 255});
+        for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
+            DrawRectangleRec(exterior_paths[i], stone);
+        DrawRectangleRec(canal, water_color);
+    }
+
+    if (world_bridge_open(world)) {
+        if (assets->bridge_open.id) {
+            Rectangle source = {0, 0, assets->bridge_open.width, assets->bridge_open.height};
+            DrawTexturePro(assets->bridge_open, source, bridge_dest, (Vector2){0}, 0, WHITE);
+        } else {
+            DrawRectangleRec((Rectangle){canal.x, passage_top, canal.width, passage_bottom - passage_top}, BROWN);
+        }
+    }
+
+    draw_switch(DRAIN, "Dreno", world->drain_open);
+    draw_switch(UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
+    Vector2 valve = objects[VALVE].position;
+    DrawCircle((int)valve.x + 28, (int)valve.y - 24, 6, world->water ? LIME : ORANGE);
 }
 
 static void draw_interior(const World *world)
@@ -634,9 +720,9 @@ static void draw_interior(const World *world)
     if (world->location != WORLD_BASEMENT) draw_room_portal(INTERIOR_DOOR, "Voltar ao pátio", false);
 }
 
-void world_draw(const World *world, Vector2 feet)
+void world_draw(const World *world, const WorldAssets *assets, Vector2 feet)
 {
-    if (world->location == WORLD_EXTERIOR) draw_exterior(world);
+    if (world->location == WORLD_EXTERIOR) draw_exterior(world, assets);
     else draw_interior(world);
 
     Object nearby = nearby_object(world, feet);
@@ -743,9 +829,9 @@ static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
 {
     bool bridge = world->location == WORLD_BRIDGE_CONTROL || object == DRAIN ||
                   object == BRIDGE_CONTROL_DOOR ||
-                  (world->location == WORLD_EXTERIOR && feet.x >= 680 && feet.x <= 1010 &&
-                   feet.y >= 295 && feet.y <= 540);
-    bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1470;
+                  (world->location == WORLD_EXTERIOR && feet.x >= canal.x - 125 && feet.x <= canal.x + canal.width + 125 &&
+                   feet.y >= passage_top - 125 && feet.y <= passage_bottom + 125);
+    bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1270 && feet.y <= 475;
     if (!bridge && !nursery) return (Rectangle){0};
 
     int top = world->location == WORLD_BRIDGE_CONTROL ? 460 : 69;

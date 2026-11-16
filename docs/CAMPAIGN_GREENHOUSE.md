@@ -2,14 +2,17 @@
 
 Abra **Campanha**, escolha o personagem, confirme o nome e explore a estufa.
 Use **WASD** ou **setas** para mover, segure **Shift** para correr e pressione
-**E** quando aparecer o marcador de interação. O cenário usa formas da raylib
-e os sprites de treinador já presentes.
+**E** quando aparecer o marcador de interação.
 
 ## Prédios e acesso ao viveiro
 
 A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
 uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
 manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
+O exterior é montado com peças das folhas de pixel art. Os tiles de chão usam
+16 × 16 pixels no atlas e aparecem com 32 × 32 no jogo. O jogador começa
+do lado interno do portão sul e circula pelos caminhos entre os prédios.
+Os recortes usados pelo jogo ficam em `assets/maps/botanical_tiles.png`.
 O cenário ocupa toda a área do jogo. Sobre ele, o HUD indica o setor, o
 objetivo atual e as pistas reunidas. Ao se aproximar de um objeto, a ação
 aparece junto dele.
@@ -26,8 +29,8 @@ aparece junto dele.
 
 ## Ponte
 
-Os dois canais ficam dentro da **Casa de Controle da Ponte**, ao sul do
-pátio. O norte acrescenta **3** à pressão e o sul acrescenta **5**. O
+Os dois canais ficam dentro da **Casa de Controle da Ponte**, junto à
+margem oeste. O norte acrescenta **3** à pressão e o sul acrescenta **5**. O
 dreno externo começa aberto e retira **2** unidades, com mínimo de zero.
 A ponte exige `(Norte XOR Sul) E (Pressão = 3)`.
 
@@ -42,6 +45,9 @@ Perto da ponte, do dreno ou dentro da casa de controle, um cartão mostra
 o XOR e a pressão separadamente. Com os dois canais abertos ou os dois
 fechados, a travessia fica bloqueada. Um cartão semelhante mostra água,
 luz e alarme ao se aproximar do viveiro.
+
+O canal usa os mesmos tiles de água e margem durante o puzzle. Quando a
+ponte estende, o jogo troca apenas as peças de madeira e libera a passagem.
 
 ## Guardiões e central de relés
 

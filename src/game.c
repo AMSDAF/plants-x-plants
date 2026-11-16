@@ -150,6 +150,7 @@ void game_init(Game *game)
     versus_assets_load(&game->versus_assets);
     versus_screen_init(&game->versus, VERSUS_CPU);
     world_init(&game->world);
+    world_assets_load(&game->world_assets);
     trainer_select_screen_init(&game->trainer_select);
     name_entry_init(&game->name_entry);
     player_init(&game->player, TRAINER_MALE, world_spawn());
@@ -168,6 +169,7 @@ void game_update(Game *game)
             game->campaign.has_team=false;
             world_init(&game->world);
             player_init(&game->player,game->campaign.trainer,world_spawn());
+            world_snap_camera(&game->world, game->player.feet);
             change_screen(game,GAME_EXPLORATION);
         }
         if (!transition_input_down()) game->input_blocked=false;
@@ -272,7 +274,7 @@ void game_draw(const Game *game)
             ClearBackground((Color){24, 49, 43, 255});
             Camera2D camera = world_camera(&game->world);
             BeginMode2D(camera);
-            world_draw(&game->world, game->player.feet);
+            world_draw(&game->world, &game->world_assets, game->player.feet);
             player_draw(&game->player, &game->player_assets, camera);
             EndMode2D();
             world_draw_interface(&game->world, game->player.feet);
@@ -290,6 +292,7 @@ void game_draw(const Game *game)
 
 void game_shutdown(Game *game)
 {
+    world_assets_unload(&game->world_assets);
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);
     versus_assets_unload(&game->versus_assets);

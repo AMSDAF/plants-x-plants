@@ -22,6 +22,12 @@ typedef enum {
 } WorldLocation;
 
 typedef struct {
+    Texture2D courtyard;
+    Texture2D bridge_open;
+    Texture2D tiles;
+} WorldAssets;
+
+typedef struct {
     Rectangle bounds;
     Vector2 camera_position;
     WorldLocation location;
@@ -46,6 +52,8 @@ typedef struct {
 } World;
 
 void world_init(World *world);
+void world_assets_load(WorldAssets *assets);
+void world_assets_unload(WorldAssets *assets);
 Vector2 world_spawn(void);
 bool world_gate_open(const World *world);
 bool world_gate_rule(const World *world);
@@ -60,6 +68,6 @@ void world_follow_camera(World *world, Vector2 feet, float dt);
 void world_snap_camera(World *world, Vector2 feet);
 Camera2D world_camera(const World *world);
 void world_update_relay_panel(World *world);
-void world_draw(const World *world, Vector2 feet);
+void world_draw(const World *world, const WorldAssets *assets, Vector2 feet);
 void world_draw_interface(const World *world, Vector2 feet);
 #endif
