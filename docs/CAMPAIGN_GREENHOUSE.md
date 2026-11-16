@@ -17,6 +17,11 @@ O cenário ocupa toda a área do jogo. Sobre ele, o HUD indica o setor, o
 objetivo atual e as pistas reunidas. Ao se aproximar de um objeto, a ação
 aparece junto dele.
 
+Leia as placas com **E** e fale com a jardineira no pátio, o técnico perto
+da ponte e a pesquisadora no viveiro. As falas acompanham o progresso na
+campanha. Na caixa de diálogo, **E** ou **Enter** avança ou encerra a conversa,
+e **Esc** fecha a caixa.
+
 1. Entre no depósito e vença a Babosa para receber a **Chave da Manutenção**.
 2. Na casa de manutenção, desative o alarme, registre a pista e abra a
    escotilha com a chave. A escotilha dá o primeiro acesso ao subsolo.

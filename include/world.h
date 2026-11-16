@@ -43,6 +43,9 @@ typedef struct {
     bool north_channel;
     bool south_channel;
     bool drain_open;
+    const char *dialogue_title;
+    const char *dialogue_pages[2];
+    int dialogue_page;
     bool relay_panel_open;
     unsigned int relay_mask;
     unsigned int relay_attempts;
@@ -68,6 +71,7 @@ void world_follow_camera(World *world, Vector2 feet, float dt);
 void world_snap_camera(World *world, Vector2 feet);
 Camera2D world_camera(const World *world);
 void world_update_relay_panel(World *world);
+void world_update_dialogue(World *world);
 void world_draw(const World *world, const WorldAssets *assets, Vector2 feet);
 void world_draw_interface(const World *world, Vector2 feet);
 #endif

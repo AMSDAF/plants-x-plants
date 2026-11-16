@@ -28,6 +28,11 @@ typedef enum {
     UPPER_LIFT,
     LOWER_LIFT,
     RELAY_PANEL,
+    ENTRANCE_SIGN,
+    BRIDGE_SIGN,
+    GARDENER,
+    TECHNICIAN,
+    RESEARCHER,
     OBJECT_COUNT
 } Object;
 
@@ -56,7 +61,12 @@ static const MapObject objects[OBJECT_COUNT] = {
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
     [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
     [LOWER_LIFT] = {{837, 410}, WORLD_BASEMENT},
-    [RELAY_PANEL] = {{790, 340}, WORLD_NURSERY}
+    [RELAY_PANEL] = {{790, 340}, WORLD_NURSERY},
+    [ENTRANCE_SIGN] = {{506, 782}, WORLD_EXTERIOR},
+    [BRIDGE_SIGN] = {{770, 615}, WORLD_EXTERIOR},
+    [GARDENER] = {{630, 507}, WORLD_EXTERIOR},
+    [TECHNICIAN] = {{868, 600}, WORLD_EXTERIOR},
+    [RESEARCHER] = {{882, 477}, WORLD_NURSERY}
 };
 
 static const Rectangle exterior = {0, 0, MAP_WIDTH, MAP_HEIGHT};
@@ -302,6 +312,11 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     if (feet.y > b.y + b.height - 4) feet.y = b.y + b.height - 4;
 
     Rectangle box = {feet.x - 8, feet.y - 4, 16, 8};
+    for (Object npc = GARDENER; npc <= RESEARCHER; npc++) {
+        if (objects[npc].location != world->location) continue;
+        Vector2 base = objects[npc].position;
+        if (CheckCollisionRecs(box, (Rectangle){base.x - 8, base.y - 4, 16, 8})) return previous;
+    }
     if (world->location == WORLD_EXTERIOR) {
         if (blocks(box, canal, world_bridge_open(world))) return previous;
         for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
@@ -350,9 +365,77 @@ void world_return_to_courtyard(World *world, Vector2 *feet)
     travel(world, feet, WORLD_EXTERIOR, world_spawn());
 }
 
+static void open_dialogue(World *world, const char *title, const char *first, const char *second)
+{
+    world->dialogue_title = title;
+    world->dialogue_pages[0] = first;
+    world->dialogue_pages[1] = second;
+    world->dialogue_page = 0;
+}
+
+void world_update_dialogue(World *world)
+{
+    if (!world->dialogue_title) return;
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        world->dialogue_title = NULL;
+    } else if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER)) {
+        if (world->dialogue_page == 0 && world->dialogue_pages[1]) world->dialogue_page = 1;
+        else world->dialogue_title = NULL;
+    }
+}
+
+static void talk_to_gardener(World *world)
+{
+    if (!world->maintenance_key) {
+        open_dialogue(world, "Jardineira",
+                      "A Babosa guarda a Chave da Manutenção no depósito.\nÉ o prédio de telhado terracota, a noroeste do pátio.",
+                      "A chave abre a escotilha da casa de telhado verde.\nLá embaixo você pode alimentar o refletor do viveiro.");
+    } else if (!world->light && !world->gate_unlocked) {
+        open_dialogue(world, "Jardineira",
+                      "Com a chave, você pode descer pela escotilha da manutenção.\nNo subsolo, redirecione a energia para o refletor.", NULL);
+    } else if (world->alarm && !world->gate_unlocked) {
+        open_dialogue(world, "Jardineira",
+                      "Ainda falta desligar o alarme.\nO painel fica na casa de manutenção.", NULL);
+    } else {
+        open_dialogue(world, "Jardineira",
+                      "Quando estiver pronto, siga para os canais.\nA válvula da água fica do outro lado da ponte.", NULL);
+    }
+}
+
+static void talk_to_technician(World *world)
+{
+    if (world_bridge_open(world)) {
+        open_dialogue(world, "Técnico",
+                      "Pressão certa. A ponte está pronta para atravessar.", NULL);
+    } else if (world->north_channel == world->south_channel) {
+        open_dialogue(world, "Técnico",
+                      "A ponte precisa de um único canal aberto e pressão 3.\nVocê pode alternar os canais na casa de telhado azul.",
+                      "Cada canal gera uma pressão diferente.\nO dreno, do lado de fora, retira 2 unidades quando aberto.");
+    } else {
+        open_dialogue(world, "Técnico",
+                      "Você já acertou o número de canais. Falta acertar a pressão.\nConfira o dreno ao lado da casa de controle.", NULL);
+    }
+}
+
+static void talk_to_researcher(World *world)
+{
+    const char *hint = "Você já tem as duas pistas. Use o painel para testar os relés.";
+    if (!world->alarm_note && !world->canal_note)
+        hint = "Procure a placa nos canais e o bilhete na casa de manutenção.";
+    else if (!world->alarm_note)
+        hint = "Falta o bilhete perto do alarme, na casa de manutenção.";
+    else if (!world->canal_note)
+        hint = "Falta a pista da placa nos canais, no caminho até aqui.";
+
+    open_dialogue(world, "Pesquisadora",
+                  world->guardian_defeated ? hint : "O Girassol guarda a Central de Relés.\nVença o guardião para liberar o painel.",
+                  world->guardian_defeated ? NULL : hint);
+}
+
 WorldEncounter world_interact(World *world, Vector2 *feet)
 {
-    if (world->completed || world->relay_panel_open) return WORLD_ENCOUNTER_NONE;
+    if (world->completed || world->relay_panel_open || world->dialogue_title) return WORLD_ENCOUNTER_NONE;
     Object object = nearby_object(world, *feet);
     const Vector2 entrance = {640, 533};
     switch (object) {
@@ -364,7 +447,11 @@ WorldEncounter world_interact(World *world, Vector2 *feet)
         case DRAIN: world->drain_open = !world->drain_open; break;
         case ALOE: return WORLD_ENCOUNTER_ALOE;
         case SUNFLOWER: return WORLD_ENCOUNTER_SUNFLOWER;
-        case CANAL_NOTE: world->canal_note = true; break;
+        case CANAL_NOTE:
+            world->canal_note = true;
+            open_dialogue(world, "Placa dos canais",
+                          "Pista registrada. Na central, confira o relé E.\nEle deve ter o mesmo valor de B XOR F.", NULL);
+            break;
         case ALARM_NOTE: world->alarm_note = true; break;
         case MAINTENANCE_DOOR: travel(world, feet, WORLD_MAINTENANCE, entrance); break;
         case DEPOT_DOOR: travel(world, feet, WORLD_DEPOT, entrance); break;
@@ -400,6 +487,18 @@ WorldEncounter world_interact(World *world, Vector2 *feet)
             if (!world->light) travel(world, feet, WORLD_EXTERIOR, objects[UPPER_LIFT].position);
             break;
         case RELAY_PANEL: world->relay_panel_open = world->guardian_defeated; break;
+        case ENTRANCE_SIGN:
+            open_dialogue(world, "Placa do jardim",
+                          "Ao norte, pátio central e depósito.\nA oeste, casa de manutenção. A leste, canais e viveiro.", NULL);
+            break;
+        case BRIDGE_SIGN:
+            open_dialogue(world, "Aviso da ponte",
+                          "Para estender a ponte, abra exatamente um canal\ne regule a pressão para 3.",
+                          "A casa azul controla os canais. O dreno fica do lado de fora.");
+            break;
+        case GARDENER: talk_to_gardener(world); break;
+        case TECHNICIAN: talk_to_technician(world); break;
+        case RESEARCHER: talk_to_researcher(world); break;
         case OBJECT_COUNT: break;
     }
     return WORLD_ENCOUNTER_NONE;
@@ -601,7 +700,6 @@ static void draw_tiled_exterior(const World *world, Texture2D atlas)
         {{280, 316, 48, 33}, {576, 883}}, /* Portão sul. */
         {{64, 0, 32, 32}, {582, 568}},    /* Mosaico do pátio. */
         {{144, 316, 60, 46}, {640, 185}},
-        {{216, 316, 23, 30}, {506, 782}},
         {{336, 316, 27, 20}, {682, 664}},
         {{56, 316, 50, 60}, {677, 400}},
         {{56, 316, 50, 60}, {419, 368}},
@@ -720,13 +818,50 @@ static void draw_interior(const World *world)
     if (world->location != WORLD_BASEMENT) draw_room_portal(INTERIOR_DOOR, "Voltar ao pátio", false);
 }
 
+static void draw_npc(Texture2D atlas, int sprite, Object object, float zoom)
+{
+    Vector2 base = objects[object].position;
+    float scale = 2 / zoom;
+    DrawEllipse((int)base.x, (int)base.y, 9 * scale, 3 * scale, Fade(ink, 0.34f));
+    if (atlas.id) {
+        Rectangle source = {32 * sprite, 384, 24, 25};
+        Rectangle destination = {base.x - 12 * scale, base.y - 25 * scale, 24 * scale, 25 * scale};
+        DrawTexturePro(atlas, source, destination, (Vector2){0}, 0, WHITE);
+    } else {
+        DrawRectangleRec((Rectangle){base.x - 6 * scale, base.y - 13 * scale,
+                                     12 * scale, 13 * scale}, frame);
+        DrawCircleV((Vector2){base.x, base.y - 17 * scale}, 6 * scale, cream);
+    }
+}
+
+static void draw_sign(Texture2D atlas, Object object)
+{
+    Vector2 base = objects[object].position;
+    if (atlas.id) {
+        draw_map_sprite(atlas, (Rectangle){216, 316, 23, 30}, base, 11);
+    } else {
+        DrawRectangleRec((Rectangle){base.x - 3, base.y - 27, 6, 27}, BROWN);
+        DrawRectangleRec((Rectangle){base.x - 17, base.y - 38, 34, 18}, BROWN);
+        DrawRectangleRec((Rectangle){base.x - 14, base.y - 35, 28, 12}, stone);
+    }
+}
+
 void world_draw(const World *world, const WorldAssets *assets, Vector2 feet)
 {
-    if (world->location == WORLD_EXTERIOR) draw_exterior(world, assets);
-    else draw_interior(world);
+    float zoom = world_camera(world).zoom;
+    if (world->location == WORLD_EXTERIOR) {
+        draw_exterior(world, assets);
+        draw_sign(assets->tiles, ENTRANCE_SIGN);
+        draw_sign(assets->tiles, BRIDGE_SIGN);
+        draw_npc(assets->tiles, 0, GARDENER, zoom);
+        draw_npc(assets->tiles, 1, TECHNICIAN, zoom);
+    } else {
+        draw_interior(world);
+        if (world->location == WORLD_NURSERY) draw_npc(assets->tiles, 2, RESEARCHER, zoom);
+    }
 
     Object nearby = nearby_object(world, feet);
-    if (!world->relay_panel_open && !world->completed && nearby != OBJECT_COUNT)
+    if (!world->relay_panel_open && !world->dialogue_title && !world->completed && nearby != OBJECT_COUNT)
         draw_interaction_marker(nearby);
 }
 
@@ -901,7 +1036,12 @@ static const char *interaction_hint(const World *world, Object object)
         [BASEMENT_HATCH] = "[E] Subir pela escotilha",
         [UPPER_LIFT] = "[E] Descer pelo elevador",
         [LOWER_LIFT] = "[E] Subir pelo elevador",
-        [RELAY_PANEL] = "[E] Abrir central de relés"
+        [RELAY_PANEL] = "[E] Abrir central de relés",
+        [ENTRANCE_SIGN] = "[E] Ler placa do jardim",
+        [BRIDGE_SIGN] = "[E] Ler aviso da ponte",
+        [GARDENER] = "[E] Falar com a jardineira",
+        [TECHNICIAN] = "[E] Falar com o técnico",
+        [RESEARCHER] = "[E] Falar com a pesquisadora"
     };
     if (object == DRAIN) return world->drain_open ? "[E] Fechar dreno" : "[E] Abrir dreno";
     if (object == POWER) return world->light ? "[E] Alimentar elevador" : "[E] Alimentar refletor";
@@ -912,7 +1052,7 @@ static const char *interaction_hint(const World *world, Object object)
         return "Escotilha trancada. A Babosa guarda a chave.";
     if (object == NURSERY_DOOR && !world_gate_open(world))
         return "Viveiro fechado. Confira as condições.";
-    if (object == CANAL_NOTE && world->canal_note) return "Pista dos canais registrada";
+    if (object == CANAL_NOTE && world->canal_note) return "[E] Reler a pista dos canais";
     if (object == ALARM_NOTE && world->alarm_note) return "Pista da cabine registrada";
     if (object == RELAY_PANEL && !world->guardian_defeated)
         return "Central bloqueada até você vencer o Girassol.";
@@ -935,8 +1075,27 @@ static void draw_interaction_hint(const World *world, Object object, Rectangle c
     DrawText(hint, (int)card.x + 14, (int)card.y + 8, 18, cream);
 }
 
+static void draw_dialogue(const World *world)
+{
+    Rectangle card = {48, 534, GAME_SCREEN_WIDTH - 96, 160};
+    DrawRectangleRec((Rectangle){card.x + 4, card.y + 5, card.width, card.height}, Fade(ink, 0.46f));
+    DrawRectangleRec(card, cream);
+    DrawRectangleLinesEx(card, 4, frame);
+    DrawText(world->dialogue_title, 72, 551, 26, ink);
+    DrawLine(72, 584, GAME_SCREEN_WIDTH - 72, 584, stone);
+    DrawText(world->dialogue_pages[world->dialogue_page], 72, 594, 22, ink);
+
+    bool has_next = world->dialogue_page == 0 && world->dialogue_pages[1];
+    const char *controls = has_next ? "E / Enter  Próxima     Esc  Fechar" : "E / Enter / Esc  Fechar";
+    DrawText(controls, GAME_SCREEN_WIDTH - 72 - MeasureText(controls, 17), 666, 17, frame);
+}
+
 void world_draw_interface(const World *world, Vector2 feet)
 {
+    if (world->dialogue_title) {
+        draw_dialogue(world);
+        return;
+    }
     if (world->relay_panel_open) {
         draw_relay_panel(world);
         return;

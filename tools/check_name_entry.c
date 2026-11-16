@@ -266,6 +266,24 @@ static void check_greenhouse(Game *game)
     assert(game->world_assets.courtyard.id && game->world_assets.bridge_open.id);
     assert(game->world_assets.tiles.id);
     capture(game, target, "build/name_entry_preview/greenhouse_start.png");
+    interact_at(game, 535, 782);
+    assert(world->dialogue_title && strcmp(world->dialogue_title, "Placa do jardim") == 0);
+    key(game, KEY_ENTER);
+    assert(!world->dialogue_title);
+    walk_axis(game, false, 510);
+    interact_at(game, 600, 507);
+    assert(world->dialogue_title && strcmp(world->dialogue_title, "Jardineira") == 0);
+    assert(world->dialogue_page == 0 && strstr(world->dialogue_pages[0], "Babosa"));
+    Vector2 dialogue_position = game->player.feet;
+    key(game, KEY_D);
+    assert(game->player.feet.x == dialogue_position.x && game->player.feet.y == dialogue_position.y);
+    capture(game, target, "build/name_entry_preview/greenhouse_dialogue.png");
+    key(game, KEY_E);
+    assert(world->dialogue_title && world->dialogue_page == 1);
+    key(game, KEY_ESCAPE);
+    assert(!world->dialogue_title && game->screen == GAME_EXPLORATION);
+    walk_axis(game, true, 630);
+    assert(game->player.feet.x < 622); /* Os pés da jardineira bloqueiam a passagem. */
     walk_axis(game, false, 479);
     interact_at(game, 429, 479);
     assert(world->location == WORLD_EXTERIOR && !world->basement_visited);
@@ -327,6 +345,11 @@ static void check_greenhouse(Game *game)
     assert(world_bridge_pressure(world) == 1 && !world_bridge_open(world));
     capture(game, target, "build/name_entry_preview/greenhouse_bridge_control.png");
     interact_at(game, 640, 572);
+    interact_at(game, 770, 592);
+    assert(world->dialogue_title && strcmp(world->dialogue_title, "Aviso da ponte") == 0);
+    key(game, KEY_E);
+    assert(world->dialogue_page == 1);
+    key(game, KEY_E);
     interact_at(game, 733, 555);
     assert(!world->drain_open && world_bridge_open(world));
     key(game, KEY_E);
@@ -338,6 +361,10 @@ static void check_greenhouse(Game *game)
     interact_at(game, 450, 352);
     assert(!world->north_channel && world->south_channel && world_bridge_open(world));
     interact_at(game, 640, 572);
+    interact_at(game, 868, 578);
+    assert(world->dialogue_title && strcmp(world->dialogue_title, "Técnico") == 0);
+    assert(strstr(world->dialogue_pages[0], "pronta"));
+    key(game, KEY_ENTER);
     walk_axis(game, false, 573);
     walk_axis(game, true, 888);
     walk_axis(game, false, 556);
@@ -358,6 +385,12 @@ static void check_greenhouse(Game *game)
     approach_nursery(game);
     assert(world->location == WORLD_NURSERY && world->gate_unlocked);
     capture(game, target, "build/name_entry_preview/greenhouse_open.png");
+    interact_at(game, 882, 477);
+    assert(world->dialogue_title && strcmp(world->dialogue_title, "Pesquisadora") == 0);
+    assert(strstr(world->dialogue_pages[0], "Girassol"));
+    key(game, KEY_E);
+    assert(strstr(world->dialogue_pages[world->dialogue_page], "placa nos canais"));
+    key(game, KEY_E);
     interact_at(game, 790, 340);
     assert(!world->relay_panel_open);
     interact_at(game, 515, 340);
@@ -379,6 +412,8 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_EXTERIOR);
     walk_axis(game, false, 419);
     interact_at(game, 1271, 401);
+    assert(world->dialogue_title && strcmp(world->dialogue_title, "Placa dos canais") == 0);
+    key(game, KEY_E);
     assert(world->canal_note);
     walk_axis(game, false, 419);
     approach_nursery(game);
@@ -421,7 +456,7 @@ static void check_greenhouse(Game *game)
     key(game, KEY_ENTER);
     assert(game->screen == GAME_MENU);
     UnloadRenderTexture(target);
-    puts("PASS: prédios, guardiões, chave, elevador, pressão da ponte, pistas e saída.");
+    puts("PASS: diálogos, placas, prédios, guardiões, chave, elevador, ponte, pistas e saída.");
 }
 
 int main(void)

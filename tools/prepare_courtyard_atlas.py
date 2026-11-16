@@ -28,6 +28,7 @@ def prepare(sources, output):
     greenhouse = Image.open(sources / "Estufas Pixel Art e Válvulas Industriais.png").convert("RGBA")
     water = Image.open(sources / "Tileset RPG de Água e Pontes.png").convert("RGBA")
     props = Image.open(sources / "Kit de Cenários Pixel Art Retro.png").convert("RGBA")
+    npc_path = sources / "Trio de NPCs da Vila Verde.png"
     atlas = Image.new("RGBA", (512, 512))
 
     # Pisos usam o miolo das peças para evitar contornos repetidos.
@@ -71,6 +72,14 @@ def prepare(sources, output):
     place(atlas, props, (241, 284, 503, 477), (336, 316), (27, 20))
     place(atlas, greenhouse, (326, 669, 585, 875), (376, 316), (25, 20))
     place(atlas, props, (1147, 285, 1307, 479), (408, 316), (19, 23))
+    npcs = Image.open(npc_path).convert("RGBA")
+    for index, (left, right) in enumerate(((0, 820), (820, 1360), (1360, npcs.width))):
+        sprite = npcs.crop((left, 0, right, npcs.height))
+        bounds = sprite.getchannel("A").point(lambda alpha: 255 if alpha >= 185 else 0).getbbox()
+        width = round(25 * (bounds[2] - bounds[0]) / (bounds[3] - bounds[1]))
+        margin = (24 - width) // 2
+        box = (left + bounds[0], bounds[1], left + bounds[2], bounds[3])
+        place(atlas, npcs, box, (32 * index + margin, 384), (width, 25))
     atlas.save(output, optimize=True)
 
 

@@ -219,7 +219,9 @@ void game_update(Game *game)
             break;
         }
         case GAME_EXPLORATION:
-            if (game->world.relay_panel_open) {
+            if (game->world.dialogue_title) {
+                world_update_dialogue(&game->world);
+            } else if (game->world.relay_panel_open) {
                 world_update_relay_panel(&game->world);
             } else if (IsKeyPressed(KEY_ESCAPE) || (game->world.completed && IsKeyPressed(KEY_ENTER))) {
                 change_screen(game, GAME_MENU);
@@ -229,7 +231,8 @@ void game_update(Game *game)
                 world_follow_camera(&game->world, game->player.feet, dt);
                 if (IsKeyPressed(KEY_E)) {
                     WorldEncounter encounter = world_interact(&game->world, &game->player.feet);
-                    if (game->world.relay_panel_open) game->player.moving = false;
+                    if (game->world.relay_panel_open || game->world.dialogue_title)
+                        game->player.moving = false;
                     if (encounter != WORLD_ENCOUNTER_NONE) start_encounter(game, encounter);
                 }
             }
@@ -278,7 +281,7 @@ void game_draw(const Game *game)
             player_draw(&game->player, &game->player_assets, camera);
             EndMode2D();
             world_draw_interface(&game->world, game->player.feet);
-            if (!game->world.completed && !game->world.relay_panel_open &&
+            if (!game->world.completed && !game->world.relay_panel_open && !game->world.dialogue_title &&
                 game->player.trainer == TRAINER_MALE && !game->player_assets.botanical_sheets[TRAINER_MALE].id) {
                 const char *version = game->player.use_walk6 && game->player_assets.male_walk6.id
                     ? "6 poses" : "4 poses";
