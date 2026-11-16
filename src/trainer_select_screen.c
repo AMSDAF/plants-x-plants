@@ -54,6 +54,8 @@ void trainer_select_assets_load(TrainerSelectAssets *assets)
     *assets = (TrainerSelectAssets){0};
     trainer_background_load(&assets->background);
     for (int i = 0; i < TRAINER_COUNT; i++) {
+        assets->botanical_portraits[i] = load_portrait(
+            TextFormat("assets/sprites/trainers/%s_botanical_portrait.png", names[i]), 0, 0);
         assets->portraits[i] = load_portrait(TextFormat("assets/sprites/trainers/%s_portrait_v2.png", names[i]),
                                             SELECTION_PORTRAIT_V2_WIDTH, SELECTION_PORTRAIT_V2_HEIGHT);
         if (assets->portraits[i].id) {
@@ -102,6 +104,7 @@ void trainer_select_assets_unload(TrainerSelectAssets *assets)
     if (assets->female_idle_halo.id) UnloadTexture(assets->female_idle_halo);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         if (assets->portraits[i].id) UnloadTexture(assets->portraits[i]);
+        if (assets->botanical_portraits[i].id) UnloadTexture(assets->botanical_portraits[i]);
     }
     *assets = (TrainerSelectAssets){0};
 }
@@ -175,11 +178,12 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
     return action;
 }
 
-static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle body, int index, Rectangle card, float alpha)
+static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle body, int index,
+                                  Rectangle card, float alpha, float size)
 {
     if (texture.id && body.height > 0 && body.width > 0) {
         /* Escala e pés dependem do corpo; margens e halo não entram na medida. */
-        float scale = fminf(360.0f / body.height, 272.0f / body.width);
+        float scale = fminf(360.0f / body.height, 272.0f / body.width) * size;
         Rectangle dest = {roundf(448 + index*384.0f - (body.x + body.width/2)*scale),
                           roundf(526 - (body.y + body.height)*scale),
                           source.width*scale, source.height*scale};
@@ -194,26 +198,30 @@ static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle
 
 static void draw_portrait(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets, int index, Rectangle card, float alpha)
 {
-    if (index == TRAINER_MALE && assets->male_idle.id && assets->male_idle_halo.id) {
+    Texture2D botanical = assets->botanical_portraits[index];
+    if (botanical.id) {
+        Rectangle bounds = {0, 0, botanical.width, botanical.height};
+        draw_portrait_texture(botanical, bounds, bounds, index, card, alpha, 0.84f);
+    } else if (index == TRAINER_MALE && assets->male_idle.id && assets->male_idle_halo.id) {
         Texture2D halo = assets->male_idle_halo;
         draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
-                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_MALE], index, card, alpha);
+                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_MALE], index, card, alpha, 1.0f);
         int frame = trainer_select_male_idle_frame(screen->male_idle_time);
         Rectangle source = {frame*MALE_PORTRAIT_IDLE_WIDTH,0,
                             MALE_PORTRAIT_IDLE_WIDTH,MALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index, card, alpha);
+        draw_portrait_texture(assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
     } else if (index == TRAINER_FEMALE && assets->female_idle.id && assets->female_idle_halo.id) {
         Texture2D halo = assets->female_idle_halo;
         draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
-                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index, card, alpha);
+                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index, card, alpha, 1.0f);
         int frame = trainer_select_female_idle_frame(screen->female_idle_time);
         Rectangle source = {frame*FEMALE_PORTRAIT_IDLE_WIDTH,0,
                             FEMALE_PORTRAIT_IDLE_WIDTH,FEMALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha);
+        draw_portrait_texture(assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
     } else {
         Texture2D texture = assets->portraits[index];
         draw_portrait_texture(texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
-                              assets->portrait_bounds[index], index, card, alpha);
+                              assets->portrait_bounds[index], index, card, alpha, 1.0f);
     }
 }
 

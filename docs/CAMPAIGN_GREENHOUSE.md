@@ -10,7 +10,9 @@ e os sprites de treinador já presentes.
 A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
 uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
 manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
-O painel indica a região atual.
+O cenário ocupa toda a área do jogo. Sobre ele, o HUD indica o setor, o
+objetivo atual e as pistas reunidas. Ao se aproximar de um objeto, a ação
+aparece junto dele.
 
 1. Entre no depósito e vença a Babosa para receber a **Chave da Manutenção**.
 2. Na casa de manutenção, desative o alarme, registre a pista e abra a
@@ -36,8 +38,10 @@ A ponte exige `(Norte XOR Sul) E (Pressão = 3)`.
 | Sul | Fechado | 5 | Recolhida |
 | Sul | Aberto | 3 | Estendida |
 
-O painel mostra o XOR e a pressão separadamente. Com os dois canais
-abertos ou os dois fechados, a travessia fica bloqueada.
+Perto da ponte, do dreno ou dentro da casa de controle, um cartão mostra
+o XOR e a pressão separadamente. Com os dois canais abertos ou os dois
+fechados, a travessia fica bloqueada. Um cartão semelhante mostra água,
+luz e alarme ao se aproximar do viveiro.
 
 ## Guardiões e central de relés
 

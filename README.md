@@ -156,6 +156,9 @@ A partir da raiz do projeto:
 .\build\plants_x_plants.exe
 ```
 
+Pressione **F11** em qualquer tela para alternar entre janela e tela cheia.
+O jogo preserva a proporção 16:9 e ajusta os cliques à área exibida.
+
 A versão atual abre uma tela inicial em pixel art, com logo flutuando suavemente, aviso intermitente e mascote em repouso animado. Pressione **ENTER** para abrir o menu e escolha **Campanha** com as setas e ENTER ou com o mouse. **Versus local** abre a escolha entre **VS CPU** e **VS PLAYER**. O painel creme, a borda verde e o cursor triangular são desenhados em código. Solte ENTER antes de confirmar uma opção; ESC retorna à tela inicial.
 
 O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. A seta de seleção pulsa discretamente sem alterar as áreas de clique. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção mantém fundo e retratos próprios; seus cartões e controles são desenhados em código. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
@@ -184,7 +187,7 @@ cmake --build build --target menu_screen_check
 
 As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
 
-Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos simplificados preservam proporção e pés alinhados; ambos têm repouso em quatro poses, com relógios independentes.
+Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna ao menu. Os retratos botânicos preservam a proporção e o alinhamento dos pés.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
 - **Shift na estufa:** correr enquanto se move.
@@ -192,6 +195,11 @@ Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique 
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
 - **ESC no menu:** voltar à tela inicial.
 - **Sair** no menu ou **X** da janela: encerrar.
+
+Os exploradores botânicos usam retratos estáticos na seleção e 12 quadros
+de caminhada na exploração, com três poses por direção. Os PNGs preparados
+estão em `assets/sprites/trainers/`. Consulte a preparação dos sprites em
+[TRAINER_TEST.md](docs/TRAINER_TEST.md).
 
 Ao mudar de tela, solte as teclas e o botão esquerdo do mouse antes de continuar. Isso evita confirmações e movimento herdados da tela anterior.
 
@@ -227,7 +235,7 @@ Para preparar o experimento masculino de seis poses, sem sobrescrever os atlas a
 .\build\trainer_tools\Scripts\python tools/prepare_trainer_walk6.py
 ```
 
-O script usa as mesmas dependências e grava `male_walk6.png` separadamente, com máscaras e GIFs A/B em `build/trainer_preview/walk6/`. Na exploração com o **Explorador**, **F6** alterna a caminhada aprovada e a experimental. A versão aprovada continua sendo o padrão; repouso e Exploradora permanecem iguais. Sem o atlas experimental, o jogo usa o aprovado. A duração do ciclo masculino é configurável por `PLAYER_MALE_WALK_CYCLE_SECONDS` em `include/player.h` (padrão: 0,56 s para ambas as versões, independentemente da quantidade de poses).
+O script usa as mesmas dependências e grava `male_walk6.png` separadamente, com máscaras e GIFs A/B em `build/trainer_preview/walk6/`. Ao usar os sprites legados do **Explorador**, **F6** alterna a caminhada aprovada e a experimental. A versão aprovada continua sendo o padrão; repouso e Exploradora permanecem iguais. Sem o atlas experimental, o jogo usa o aprovado. A duração do ciclo masculino é configurável por `PLAYER_MALE_WALK_CYCLE_SECONDS` em `include/player.h` (padrão: 0,56 s para ambas as versões, independentemente da quantidade de poses).
 
 ### Preparar novamente os retratos de seleção (opcional)
 

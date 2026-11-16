@@ -268,22 +268,23 @@ void game_draw(const Game *game)
         case GAME_NAME_ENTRY:
             name_entry_draw(&game->name_entry,&game->trainer_select,&game->trainer_select_assets);
             break;
-        case GAME_EXPLORATION:
+        case GAME_EXPLORATION: {
             ClearBackground((Color){24, 49, 43, 255});
-            BeginScissorMode(70, 170, 1140, 470);
-            BeginMode2D(world_camera(&game->world));
+            Camera2D camera = world_camera(&game->world);
+            BeginMode2D(camera);
             world_draw(&game->world, game->player.feet);
-            player_draw(&game->player, &game->player_assets);
+            player_draw(&game->player, &game->player_assets, camera);
             EndMode2D();
-            EndScissorMode();
             world_draw_interface(&game->world, game->player.feet);
             if (!game->world.completed && !game->world.relay_panel_open &&
-                game->player.trainer == TRAINER_MALE) {
+                game->player.trainer == TRAINER_MALE && !game->player_assets.botanical_sheets[TRAINER_MALE].id) {
                 const char *version = game->player.use_walk6 && game->player_assets.male_walk6.id
                     ? "6 poses" : "4 poses";
-                DrawText(TextFormat("F6: caminhada (%s)", version), 960, 682, 16, LIGHTGRAY);
+                DrawRectangle(1022, 668, 234, 32, Fade(BLACK, 0.82f));
+                DrawText(TextFormat("F6  Caminhada (%s)", version), 1033, 676, 16, RAYWHITE);
             }
             break;
+        }
     }
 }
 

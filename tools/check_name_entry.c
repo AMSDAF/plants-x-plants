@@ -193,8 +193,10 @@ static void check_greenhouse(Game *game)
     Vector2 partial = world_camera(&camera_test).target;
     world_snap_camera(&camera_test, far_corner);
     Vector2 limit = world_camera(&camera_test).target;
-    assert(partial.x > 0 && partial.x < limit.x && partial.y > 0 && partial.y < limit.y);
-    assert(limit.x == world->bounds.width - 1140 && limit.y == world->bounds.height - 470);
+    assert(partial.x > world->bounds.x && partial.x < limit.x);
+    assert(partial.y > world->bounds.y && partial.y < limit.y);
+    assert(limit.x == world->bounds.x + world->bounds.width - GAME_SCREEN_WIDTH);
+    assert(limit.y == world->bounds.y + world->bounds.height - GAME_SCREEN_HEIGHT);
 
     Player walking, running;
     player_init(&walking, TRAINER_MALE, (Vector2){730, 420});
@@ -239,7 +241,9 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_EXTERIOR && !world->basement_visited);
     interact_at(game, 290, 420);
     assert(world->location == WORLD_MAINTENANCE);
-    assert(world_camera(world).target.x == 0 && world_camera(world).target.y == 0);
+    Camera2D room_camera = world_camera(world);
+    assert(room_camera.zoom > 1.0f && room_camera.offset.x == GAME_SCREEN_WIDTH / 2.0f);
+    assert(room_camera.offset.y == GAME_SCREEN_HEIGHT / 2.0f);
     walk_axis(game, false, 205);
     assert(game->player.feet.y >= world->bounds.y + 4);
     interact_at(game, 826, 320);
@@ -284,7 +288,7 @@ static void check_greenhouse(Game *game)
     interact_at(game, 640, 572);
     assert(world->location == WORLD_EXTERIOR);
     enter_bridge_control(game);
-    interact_at(game, 450, 330);
+    interact_at(game, 450, 352);
     assert(world->north_channel && world->drain_open);
     assert(world_bridge_pressure(world) == 1 && !world_bridge_open(world));
     capture(game, target, "build/name_entry_preview/greenhouse_bridge_control.png");
@@ -294,10 +298,10 @@ static void check_greenhouse(Game *game)
     key(game, KEY_E);
     assert(world->drain_open && !world_bridge_open(world));
     enter_bridge_control(game);
-    interact_at(game, 830, 330);
+    interact_at(game, 830, 352);
     assert(world->north_channel && world->south_channel && world_bridge_pressure(world) == 6);
     assert(!world_bridge_open(world));
-    interact_at(game, 450, 330);
+    interact_at(game, 450, 352);
     assert(!world->north_channel && world->south_channel && world_bridge_open(world));
     interact_at(game, 640, 572);
     walk_axis(game, true, 730);

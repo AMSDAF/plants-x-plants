@@ -1,4 +1,27 @@
-# Teste provisório dos treinadores
+# Treinadores da campanha
+
+## Exploradores botânicos
+
+A campanha prioriza `male_botanical.png` e `female_botanical.png`.
+Cada atlas tem 768 × 1024 pixels, com células de 256 × 256 e três poses
+por direção. O recorte preserva as proporções dos quadros originais,
+alinha o chapéu no eixo horizontal e mantém os pés na linha 240.
+O jogo reduz o sprite com filtro pontual e compensa o zoom dos interiores.
+Os retratos botânicos
+estáticos são usados na seleção e na confirmação do nome.
+
+Os quatro PNGs fornecidos são preservados. Para regenerar os derivados
+com as dependências já descritas neste documento, execute na raiz:
+
+```powershell
+.\build\trainer_tools\Scripts\python.exe tools/prepare_botanical_trainers.py folha_masculina.png folha_feminina.png retrato_masculino.png retrato_feminino.png
+```
+
+As folhas devem ter as linhas em ordem frente, costas, esquerda e direita.
+A versão legada continua disponível como reserva se faltar um PNG botânico.
+As seções seguintes descrevem a preparação dos recursos legados.
+
+## Referência legada
 
 O menu Campanha abre a seleção de Explorador/Exploradora e uma área de movimento.
 Este teste não implementa a campanha completa nem altera os módulos de combate.

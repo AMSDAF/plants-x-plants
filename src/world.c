@@ -1,5 +1,6 @@
 /* Desenha a estufa e resolve os obstáculos a partir das proposições do cenário. */
 #include "world.h"
+#include "game_view.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -36,8 +37,8 @@ static const MapObject objects[OBJECT_COUNT] = {
     [VALVE] = {{1070, 305}, WORLD_EXTERIOR},
     [POWER] = {{640, 320}, WORLD_BASEMENT},
     [ALARM] = {{445, 320}, WORLD_MAINTENANCE},
-    [NORTH_CHANNEL] = {{450, 330}, WORLD_BRIDGE_CONTROL},
-    [SOUTH_CHANNEL] = {{830, 330}, WORLD_BRIDGE_CONTROL},
+    [NORTH_CHANNEL] = {{450, 352}, WORLD_BRIDGE_CONTROL},
+    [SOUTH_CHANNEL] = {{830, 352}, WORLD_BRIDGE_CONTROL},
     [DRAIN] = {{335, 530}, WORLD_EXTERIOR},
     [ALOE] = {{640, 320}, WORLD_DEPOT},
     [SUNFLOWER] = {{515, 340}, WORLD_NURSERY},
@@ -55,8 +56,8 @@ static const MapObject objects[OBJECT_COUNT] = {
     [RELAY_PANEL] = {{790, 340}, WORLD_NURSERY}
 };
 
-static const Rectangle exterior = {70, 170, 1900, 640};
-static const Rectangle canal = {785, 170, 128, 640};
+static const Rectangle exterior = {70, 70, 1900, 860};
+static const Rectangle canal = {785, 70, 128, 860};
 static const Rectangle facades[] = {
     {187, 229, 206, 152}, {428, 229, 214, 152}, {1532, 229, 366, 152}, {470, 530, 220, 145}
 };
@@ -85,9 +86,9 @@ typedef struct {
 } Sector;
 
 static const Sector sectors[] = {
-    {{70, 170, 715, 640}, "Pátio", {165, 191, 141, 255}, {84, 119, 77, 255}},
-    {{913, 170, 575, 640}, "Canais", {152, 191, 177, 255}, {55, 114, 114, 255}},
-    {{1488, 170, 482, 640}, "Jardim do viveiro", {189, 207, 138, 255}, {100, 132, 64, 255}}
+    {{70, 70, 715, 860}, "Pátio", {165, 191, 141, 255}, {84, 119, 77, 255}},
+    {{913, 70, 575, 860}, "Canais", {152, 191, 177, 255}, {55, 114, 114, 255}},
+    {{1488, 70, 482, 860}, "Jardim do viveiro", {189, 207, 138, 255}, {100, 132, 64, 255}}
 };
 
 static const Sector rooms[WORLD_LOCATION_COUNT] = {
@@ -107,7 +108,12 @@ static const Rectangle paths[] = {
 
 void world_init(World *world)
 {
-    *world = (World){.bounds = exterior, .alarm = true, .drain_open = true};
+    *world = (World){
+        .bounds = exterior,
+        .camera_position = {exterior.x, exterior.y},
+        .alarm = true,
+        .drain_open = true
+    };
 }
 
 Vector2 world_spawn(void)
@@ -354,15 +360,12 @@ void world_finish_encounter(World *world, WorldEncounter encounter)
 
 static Vector2 camera_target(const World *world, Vector2 feet)
 {
-    float x = feet.x - 640;
-    float y = feet.y - 420;
-    float max_x = fmaxf(0.0f, world->bounds.width - 1140);
-    float max_y = fmaxf(0.0f, world->bounds.height - 470);
-    if (x < 0) x = 0;
-    if (x > max_x) x = max_x;
-    if (y < 0) y = 0;
-    if (y > max_y) y = max_y;
-    return (Vector2){x, y};
+    if (world->location != WORLD_EXTERIOR) return (Vector2){0};
+    Rectangle b = world->bounds;
+    return (Vector2){
+        fminf(fmaxf(feet.x - GAME_SCREEN_WIDTH / 2.0f, b.x), b.x + b.width - GAME_SCREEN_WIDTH),
+        fminf(fmaxf(feet.y - GAME_SCREEN_HEIGHT / 2.0f, b.y), b.y + b.height - GAME_SCREEN_HEIGHT)
+    };
 }
 
 void world_follow_camera(World *world, Vector2 feet, float dt)
@@ -380,6 +383,14 @@ void world_snap_camera(World *world, Vector2 feet)
 
 Camera2D world_camera(const World *world)
 {
+    if (world->location != WORLD_EXTERIOR) {
+        Rectangle room = rooms[world->location].bounds;
+        return (Camera2D){
+            .offset = {GAME_SCREEN_WIDTH / 2.0f, GAME_SCREEN_HEIGHT / 2.0f},
+            .target = {room.x + room.width / 2, room.y + room.height / 2},
+            .zoom = fmaxf(GAME_SCREEN_WIDTH / room.width, GAME_SCREEN_HEIGHT / room.height)
+        };
+    }
     return (Camera2D){
         .target = {roundf(world->camera_position.x), roundf(world->camera_position.y)},
         .zoom = 1.0f
@@ -448,8 +459,6 @@ static void draw_interaction_marker(Object object)
     Vector2 p = objects[object].position;
     DrawCircleLines((int)p.x, (int)p.y, 36, GOLD);
     DrawCircleLines((int)p.x, (int)p.y, 37, GOLD);
-    DrawRectangle((int)p.x + 31, (int)p.y - 57, 24, 22, ink);
-    centered_text("E", (int)p.x + 43, (int)p.y - 54, 16, cream);
 }
 
 static const Sector *sector_at(Vector2 feet)
@@ -525,7 +534,9 @@ static void draw_room_portal(Object object, const char *label, bool locked)
     DrawRectangle(x - 31, y - 26, 62, 43, frame);
     DrawRectangle(x - 25, y - 20, 50, 31, locked ? MAROON : path_edge);
     DrawRectangle(x - 12, y - 9, 24, 5, cream);
-    centered_text(label, x, y + 22, 18, ink);
+    if (object == INTERIOR_DOOR || object == BASEMENT_HATCH)
+        centered_text(label, x + 132, y - 11, 16, ink);
+    else centered_text(label, x, y + 22, 18, ink);
 }
 
 static void draw_bridge(bool open)
@@ -554,7 +565,7 @@ static void draw_exterior(const World *world)
         const Sector *s = &sectors[i];
         draw_sector(s);
         int label_x = (int)(s->bounds.x + fminf(s->bounds.width / 2, 180));
-        draw_sign(s->name, label_x, (int)s->bounds.y + 22, 23, s->trim);
+        draw_sign(s->name, label_x, 192, 23, s->trim);
     }
     draw_floor_details();
     draw_paths();
@@ -580,7 +591,7 @@ static void draw_interior(const World *world)
     Rectangle b = room->bounds;
     draw_sector(room);
     DrawRectangleRec((Rectangle){b.x, b.y, b.width, ROOM_HEADER_HEIGHT}, room->trim);
-    centered_text(room->name, 640, 212, 29, cream);
+    DrawRectangle((int)b.x, (int)b.y + ROOM_HEADER_HEIGHT - 5, (int)b.width, 5, Fade(ink, 0.55f));
     DrawRectangle(610, 261, 60, 347, Fade(stone, 0.62f));
 
     switch (world->location) {
@@ -610,13 +621,13 @@ static void draw_interior(const World *world)
             draw_switch(RELAY_PANEL, "Central de relés", world->guardian_defeated);
             break;
         case WORLD_BRIDGE_CONTROL:
-            DrawRectangle(450, 396, 380, 9, frame);
-            DrawRectangle(450, 396, 190, 9, world->north_channel ? water_color : frame);
-            DrawRectangle(640, 396, 190, 9, world->south_channel ? water_color : frame);
+            DrawRectangle(450, 410, 380, 9, frame);
+            DrawRectangle(450, 410, 190, 9, world->north_channel ? water_color : frame);
+            DrawRectangle(640, 410, 190, 9, world->south_channel ? water_color : frame);
             draw_switch(NORTH_CHANNEL, TextFormat("Canal norte (+%d)", NORTH_PRESSURE), world->north_channel);
             draw_switch(SOUTH_CHANNEL, TextFormat("Canal sul (+%d)", SOUTH_PRESSURE), world->south_channel);
             centered_text(TextFormat("Dreno externo %s", world->drain_open ? "aberto" : "fechado"),
-                          640, 435, 20, ink);
+                          640, 443, 20, ink);
             break;
         default: break;
     }
@@ -631,20 +642,6 @@ void world_draw(const World *world, Vector2 feet)
     Object nearby = nearby_object(world, feet);
     if (!world->relay_panel_open && !world->completed && nearby != OBJECT_COUNT)
         draw_interaction_marker(nearby);
-}
-
-static const char *truth(bool value)
-{
-    return value ? "V" : "F";
-}
-
-static void draw_formula(int x, const char *label, const char *evaluation, const char *status, bool open)
-{
-    DrawRectangle(x, 66, 560, 83, cream);
-    DrawRectangle(x, 66, 6, 83, open ? LIME : ORANGE);
-    DrawText(label, x + 15, 77, 20, ink);
-    DrawText(evaluation, x + 15, 112, 20, ink);
-    DrawText(status, x + 550 - MeasureText(status, 18), 113, 18, open ? DARKGREEN : MAROON);
 }
 
 static void draw_relay_action(Rectangle bounds, const char *label, bool enabled)
@@ -674,7 +671,7 @@ static void draw_relay_panel(const World *world)
     };
     const int step = world->relay_step;
     const bool available = relay_clue_available(world);
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(ink, 0.88f));
+    DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.88f));
     DrawRectangle(62, 40, 1160, 640, cream);
     DrawRectangleLinesEx((Rectangle){62, 40, 1160, 640}, 4, frame);
     DrawText("Central de relés", 82, 64, 36, ink);
@@ -721,96 +718,166 @@ static void draw_relay_panel(const World *world)
     DrawText(TextFormat("Tentativas: %u", world->relay_attempts), 950, 625, 18, ink);
 }
 
-void world_draw_interface(const World *world, Vector2 feet)
+static void hud_card(Rectangle bounds, Color accent)
+{
+    DrawRectangleRec(bounds, Fade(ink, 0.94f));
+    DrawRectangleLinesEx(bounds, 1, Fade(accent, 0.65f));
+    DrawRectangle((int)bounds.x, (int)bounds.y, 4, (int)bounds.height, accent);
+}
+
+static void draw_condition(int y, bool met, const char *label)
+{
+    const int x = 864;
+    Color color = met ? LIME : ORANGE;
+    DrawRectangleLines(x, y + 2, 15, 15, color);
+    if (met) {
+        DrawLine(x + 3, y + 9, x + 6, y + 12, color);
+        DrawLine(x + 6, y + 12, x + 12, y + 5, color);
+    } else {
+        DrawLine(x + 4, y + 9, x + 10, y + 9, color);
+    }
+    DrawText(label, x + 25, y, 18, cream);
+}
+
+static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
+{
+    bool bridge = world->location == WORLD_BRIDGE_CONTROL || object == DRAIN ||
+                  object == BRIDGE_CONTROL_DOOR ||
+                  (world->location == WORLD_EXTERIOR && feet.x >= 680 && feet.x <= 1010 &&
+                   feet.y >= 295 && feet.y <= 540);
+    bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1470;
+    if (!bridge && !nursery) return (Rectangle){0};
+
+    int top = world->location == WORLD_BRIDGE_CONTROL ? 460 : 69;
+    Rectangle card = {846, top, 410, bridge ? 154 : 181};
+    bool open = bridge ? world_bridge_open(world) : world_gate_open(world);
+    hud_card(card, open ? LIME : ORANGE);
+    DrawText(bridge ? "Ponte" : "Porta do viveiro", 863, top + 16, 22, cream);
+    const char *status = bridge ? (open ? "Estendida" : "Recolhida") : (open ? "Aberta" : "Fechada");
+    DrawText(status, 1238 - MeasureText(status, 17), top + 19, 17, open ? LIME : ORANGE);
+
+    if (bridge) {
+        bool one_channel = world->north_channel != world->south_channel;
+        int pressure = world_bridge_pressure(world);
+        const char *channels = one_channel ? (world->north_channel ? "Só o canal norte aberto" : "Só o canal sul aberto")
+            : world->north_channel ? "Dois canais abertos" : "Nenhum canal aberto";
+        const char *level = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
+            : pressure > BRIDGE_TARGET_PRESSURE ? "alta" : "correta";
+        draw_condition(top + 50, one_channel, channels);
+        draw_condition(top + 78, pressure == BRIDGE_TARGET_PRESSURE,
+                       TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, level));
+        DrawText(TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE),
+                 863, top + 121, 16, cream);
+    } else {
+        draw_condition(119, world->water, world->water ? "Água liberada" : "Água fechada");
+        draw_condition(147, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
+        draw_condition(175, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
+        const char *rule = world->gate_unlocked ? "Trava acionada · porta liberada"
+                                              : "Água E Luz E NÃO Alarme";
+        DrawText(rule, 863, 218, 16, cream);
+    }
+    return card;
+}
+
+static const char *current_objective(const World *world)
+{
+    if (!world->maintenance_key) return "Encontre a Chave da Manutenção";
+    if (!world->basement_visited) return "Abra a escotilha da manutenção";
+    if (!world->light && !world->gate_unlocked) return "Alimente o refletor no subsolo";
+    if (world->alarm && !world->gate_unlocked) return "Desligue o alarme na manutenção";
+    if (!world->water && !world->gate_unlocked) return world_bridge_open(world)
+        ? "Atravesse a ponte e libere a água" : "Ajuste os controles da ponte";
+    if (!world->gate_unlocked) return "Entre no viveiro";
+    if (!world->guardian_defeated) return "Vença o Girassol guardião";
+    if (!world->canal_note || !world->alarm_note) return "Reúna as duas pistas dos relés";
+    return "Resolva a Central de Relés";
+}
+
+static const char *interaction_hint(const World *world, Object object)
 {
     static const char *const prompts[OBJECT_COUNT] = {
-        [VALVE] = "E  Alternar água",
-        [POWER] = "E  Alternar energia entre o refletor e o elevador",
-        [ALARM] = "E  Alternar alarme",
-        [NORTH_CHANNEL] = "E  Alternar canal norte",
-        [SOUTH_CHANNEL] = "E  Alternar canal sul",
-        [DRAIN] = "E  Alternar dreno",
-        [ALOE] = "E  Desafiar Babosa pela Chave da Manutenção",
-        [SUNFLOWER] = "E  Desafiar Girassol para liberar a central",
-        [CANAL_NOTE] = "E  Registrar pista dos canais",
-        [ALARM_NOTE] = "E  Registrar pista da cabine",
-        [MAINTENANCE_DOOR] = "E  Entrar na casa de manutenção",
-        [DEPOT_DOOR] = "E  Entrar no depósito",
-        [NURSERY_DOOR] = "E  Entrar no viveiro",
-        [BRIDGE_CONTROL_DOOR] = "E  Entrar no controle da ponte",
-        [INTERIOR_DOOR] = "E  Voltar ao pátio",
-        [LOCKED_HATCH] = "E  Descer pela escotilha",
-        [BASEMENT_HATCH] = "E  Subir pela escotilha",
-        [UPPER_LIFT] = "E  Descer pelo elevador",
-        [LOWER_LIFT] = "E  Subir pelo elevador",
-        [RELAY_PANEL] = "E  Abrir central de relés"
+        [VALVE] = "[E] Alternar água",
+        [POWER] = "[E] Redirecionar energia",
+        [ALARM] = "[E] Alternar alarme",
+        [NORTH_CHANNEL] = "[E] Alternar canal norte",
+        [SOUTH_CHANNEL] = "[E] Alternar canal sul",
+        [DRAIN] = "[E] Alternar dreno",
+        [ALOE] = "[E] Desafiar Babosa pela chave",
+        [SUNFLOWER] = "[E] Desafiar Girassol",
+        [CANAL_NOTE] = "[E] Registrar pista dos canais",
+        [ALARM_NOTE] = "[E] Registrar pista da cabine",
+        [MAINTENANCE_DOOR] = "[E] Entrar na casa de manutenção",
+        [DEPOT_DOOR] = "[E] Entrar no depósito",
+        [NURSERY_DOOR] = "[E] Entrar no viveiro",
+        [BRIDGE_CONTROL_DOOR] = "[E] Entrar no controle da ponte",
+        [INTERIOR_DOOR] = "[E] Voltar ao pátio",
+        [LOCKED_HATCH] = "[E] Descer pela escotilha",
+        [BASEMENT_HATCH] = "[E] Subir pela escotilha",
+        [UPPER_LIFT] = "[E] Descer pelo elevador",
+        [LOWER_LIFT] = "[E] Subir pelo elevador",
+        [RELAY_PANEL] = "[E] Abrir central de relés"
     };
-    bool gate_open = world_gate_open(world);
-    bool bridge_open = world_bridge_open(world);
-    bool one_channel = world->north_channel != world->south_channel;
-    int pressure = world_bridge_pressure(world);
-    const char *bridge_status = "Estendida";
-    if (!one_channel) bridge_status = pressure == BRIDGE_TARGET_PRESSURE ? "XOR falso" : "XOR e pressão";
-    else if (pressure < BRIDGE_TARGET_PRESSURE) bridge_status = "Pressão baixa";
-    else if (pressure > BRIDGE_TARGET_PRESSURE) bridge_status = "Pressão alta";
-    const Sector *sector = world->location == WORLD_EXTERIOR ? sector_at(feet) : &rooms[world->location];
-    DrawText("Estufa lógica", 70, 19, 33, cream);
-    draw_sign(TextFormat("Setor atual  %s", sector ? sector->name : "Travessia"),
-              541, 19, 18, sector ? sector->trim : frame);
-    DrawText(TextFormat("Pistas %d/2   |   Guardião %s", world->canal_note + world->alarm_note,
-                        world->guardian_defeated ? "vencido" : "aguardando"), 826, 29, 18, cream);
-    draw_formula(70, "Viveiro   Água E Luz E NÃO Alarme",
-                 TextFormat("%s E %s E NÃO %s = %s", truth(world->water), truth(world->light),
-                            truth(world->alarm), truth(world_gate_rule(world))),
-                 world->gate_unlocked ? "Travada aberta" : gate_open ? "Aberta" : "Fechada", gate_open);
-    draw_formula(650, TextFormat("Ponte   (Norte XOR Sul) E pressão em %d", BRIDGE_TARGET_PRESSURE),
-                 TextFormat("N %s XOR S %s = %s   |   Pressão %d/%d", truth(world->north_channel),
-                            truth(world->south_channel), truth(one_channel), pressure, BRIDGE_TARGET_PRESSURE),
-                 bridge_status, bridge_open);
+    if (object == DRAIN) return world->drain_open ? "[E] Fechar dreno" : "[E] Abrir dreno";
+    if (object == POWER) return world->light ? "[E] Alimentar elevador" : "[E] Alimentar refletor";
+    if (object == UPPER_LIFT && !world->basement_visited) return "Elevador travado. Use a escotilha primeiro.";
+    if ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light)
+        return "Elevador sem energia. Volte pela escotilha.";
+    if (object == LOCKED_HATCH && !world->maintenance_key)
+        return "Escotilha trancada. A Babosa guarda a chave.";
+    if (object == NURSERY_DOOR && !world_gate_open(world))
+        return "Viveiro fechado. Confira as condições.";
+    if (object == CANAL_NOTE && world->canal_note) return "Pista dos canais registrada";
+    if (object == ALARM_NOTE && world->alarm_note) return "Pista da cabine registrada";
+    if (object == RELAY_PANEL && !world->guardian_defeated)
+        return "Central bloqueada até você vencer o Girassol.";
+    return prompts[object];
+}
 
-    Object object = nearby_object(world, feet);
-    const char *hint = "Pátio: manutenção e depósito ao norte. Controle da ponte ao sul.";
-    if (world->location == WORLD_MAINTENANCE) hint = "Manutenção: alarme e pista à esquerda, escotilha à direita.";
-    if (world->location == WORLD_DEPOT) hint = world->maintenance_key
-        ? "Chave obtida. Use a escotilha na casa de manutenção."
-        : "A Babosa guarda a chave da escotilha.";
-    if (world->location == WORLD_BASEMENT) hint = "Subsolo: distribuidor ao norte e escotilha ao sul.";
-    if (world->location == WORLD_BRIDGE_CONTROL)
-        hint = "Abra um canal e confira a pressão. O dreno fica do lado de fora.";
-    if (world->location == WORLD_NURSERY) hint = world->guardian_defeated
-        ? "Guardião vencido. Use as pistas na Central de Relés."
-        : "Viveiro: vença o Girassol para liberar a central.";
-    if (world->location == WORLD_EXTERIOR && feet.x > canal.x + canal.width)
-        hint = "Canais: válvula ao norte, pista ao sul e viveiro a leste.";
-    if (object != OBJECT_COUNT) {
-        hint = prompts[object];
-        if (object == DRAIN) hint = world->drain_open ? "Dreno aberto. E  Fechar dreno"
-                                                     : "Dreno fechado. E  Abrir dreno";
-        if (object == POWER) hint = world->light
-            ? "Refletor energizado. E  Alimentar elevador" : "Elevador energizado. E  Alimentar refletor";
-        if ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light)
-            hint = "Elevador sem energia. Use a escotilha da casa de manutenção.";
-        if (object == UPPER_LIFT && !world->basement_visited)
-            hint = "Elevador travado. Entre no subsolo pela escotilha primeiro.";
-        if (object == LOCKED_HATCH && !world->maintenance_key)
-            hint = "Escotilha trancada. A Babosa guarda a chave no depósito.";
-        if (object == NURSERY_DOOR && !gate_open)
-            hint = "Viveiro trancado. Confira as condições no painel acima.";
-        if (object == CANAL_NOTE && world->canal_note) hint = "Pista dos canais registrada na central.";
-        if (object == ALARM_NOTE && world->alarm_note) hint = "Pista da cabine registrada na central.";
-        if (object == RELAY_PANEL && !world->guardian_defeated)
-            hint = "Central bloqueada até você vencer o Girassol.";
+static void draw_interaction_hint(const World *world, Object object, Rectangle challenge)
+{
+    const char *hint = interaction_hint(world, object);
+    Vector2 position = GetWorldToScreen2D(objects[object].position, world_camera(world));
+    float width = MeasureText(hint, 18) + 28;
+    float left = position.x < GAME_SCREEN_WIDTH / 2.0f ? position.x + 48 : position.x - width - 48;
+    Rectangle card = {
+        fminf(fmaxf(left, 24), GAME_SCREEN_WIDTH - 24 - width),
+        fminf(fmaxf(position.y - 78, 112), GAME_SCREEN_HEIGHT - 104), width, 36
+    };
+    if (challenge.width > 0 && CheckCollisionRecs(card, challenge))
+        card.y = challenge.y + challenge.height + 10;
+    hud_card(card, hint[0] == '[' ? GOLD : ORANGE);
+    DrawText(hint, (int)card.x + 14, (int)card.y + 8, 18, cream);
+}
+
+void world_draw_interface(const World *world, Vector2 feet)
+{
+    if (world->relay_panel_open) {
+        draw_relay_panel(world);
+        return;
     }
-    DrawText(hint, 70, 650, 21, cream);
-    DrawText("WASD / setas  Mover    SHIFT  Correr    E  Interagir    ESC  Menu", 70, 682, 17, RAYWHITE);
-
-    if (world->relay_panel_open) draw_relay_panel(world);
     if (world->completed) {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(ink, 0.83f));
+        DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.83f));
         DrawRectangle(310, 260, 660, 190, cream);
         DrawRectangleLinesEx((Rectangle){310, 260, 660, 190}, 4, frame);
         centered_text("Estufa concluída!", 640, 291, 36, ink);
         centered_text("Você venceu o guardião e validou os oito relés.", 640, 350, 22, ink);
         centered_text("ENTER ou ESC  Voltar ao menu", 640, 401, 20, ink);
+        return;
     }
+
+    const Sector *sector = world->location == WORLD_EXTERIOR ? sector_at(feet) : &rooms[world->location];
+    hud_card((Rectangle){24, 20, 434, 80}, sector ? sector->floor : stone);
+    DrawText(sector ? sector->name : "Travessia", 42, 31, 25, cream);
+    DrawText(current_objective(world), 42, 66, 19, cream);
+
+    hud_card((Rectangle){1102, 20, 154, 36}, stone);
+    DrawText(TextFormat("Pistas  %d/2", world->canal_note + world->alarm_note), 1118, 28, 18, cream);
+
+    Object object = nearby_object(world, feet);
+    Rectangle challenge = draw_challenge(world, object, feet);
+    if (object != OBJECT_COUNT) draw_interaction_hint(world, object, challenge);
+
+    hud_card((Rectangle){24, 668, 556, 32}, stone);
+    DrawText("WASD / Setas  Mover    SHIFT  Correr    E  Interagir    ESC  Menu",
+             39, 676, 16, cream);
 }

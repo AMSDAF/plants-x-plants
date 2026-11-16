@@ -13,6 +13,7 @@ typedef enum {
 
 typedef struct {
     Texture2D portraits[TRAINER_COUNT];
+    Texture2D botanical_portraits[TRAINER_COUNT];
     Rectangle portrait_bounds[TRAINER_COUNT]; /* Corpo sem halo, usado para escala e pés. */
     Texture2D male_idle;
     Texture2D male_idle_halo;

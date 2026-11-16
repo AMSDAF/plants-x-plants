@@ -2,6 +2,8 @@
 #include "player.h"
 #include <math.h>
 
+enum { BOTANICAL_CELL = 256, BOTANICAL_ANCHOR_Y = 240 };
+
 /* Mesmas sequências documentadas e pré-visualizadas por prepare_trainers.py. */
 static const int WALK[TRAINER_COUNT][4][4] = {
     {{0, 1, 3, 1}, {0, 1, 0, 3}, {0, 1, 0, 3}, {0, 1, 3, 1}},
@@ -13,6 +15,9 @@ void player_assets_load(PlayerAssets *assets)
 {
     const char *paths[TRAINER_COUNT] = {
         "assets/sprites/trainers/male.png", "assets/sprites/trainers/female.png"
+    };
+    const char *botanical_paths[TRAINER_COUNT] = {
+        "assets/sprites/trainers/male_botanical.png", "assets/sprites/trainers/female_botanical.png"
     };
     *assets = (PlayerAssets){0};
     for (int i = 0; i < TRAINER_COUNT; i++) {
@@ -27,6 +32,17 @@ void player_assets_load(PlayerAssets *assets)
             SetTextureFilter(texture, TEXTURE_FILTER_POINT);
         }
         assets->sheets[i] = texture;
+        if (FileExists(botanical_paths[i])) {
+            Texture2D botanical = LoadTexture(botanical_paths[i]);
+            if (botanical.id && (botanical.width != 3 * BOTANICAL_CELL ||
+                                 botanical.height != 4 * BOTANICAL_CELL)) {
+                UnloadTexture(botanical);
+                botanical = (Texture2D){0};
+                TraceLog(LOG_WARNING, "Atlas botânico inválido: %s", botanical_paths[i]);
+            }
+            if (botanical.id) SetTextureFilter(botanical, TEXTURE_FILTER_POINT);
+            assets->botanical_sheets[i] = botanical;
+        }
     }
     const char *experimental_path = "assets/sprites/trainers/male_walk6.png";
     if (FileExists(experimental_path)) {
@@ -45,8 +61,10 @@ void player_assets_load(PlayerAssets *assets)
 
 void player_assets_unload(PlayerAssets *assets)
 {
-    for (int i = 0; i < TRAINER_COUNT; i++)
+    for (int i = 0; i < TRAINER_COUNT; i++) {
         if (assets->sheets[i].id) UnloadTexture(assets->sheets[i]);
+        if (assets->botanical_sheets[i].id) UnloadTexture(assets->botanical_sheets[i]);
+    }
     if (assets->male_walk6.id) UnloadTexture(assets->male_walk6);
     *assets = (PlayerAssets){0};
 }
@@ -90,7 +108,7 @@ void player_update(Player *player, const World *world, float dt)
     player->moving = moved;
 }
 
-void player_draw(const Player *player, const PlayerAssets *assets)
+void player_draw(const Player *player, const PlayerAssets *assets, Camera2D camera)
 {
     Texture2D texture = assets->sheets[player->trainer];
     bool experimental = player->trainer == TRAINER_MALE && player->moving
@@ -98,6 +116,28 @@ void player_draw(const Player *player, const PlayerAssets *assets)
     if (experimental) texture = assets->male_walk6;
     float x = roundf(player->feet.x);
     float y = roundf(player->feet.y);
+    Texture2D botanical = assets->botanical_sheets[player->trainer];
+    if (botanical.id) {
+        static const int front_back[4] = {0, 1, 2, 1};
+        static const int side[4] = {1, 0, 2, 0};
+        bool profile = player->facing == FACING_WEST || player->facing == FACING_EAST;
+        float cycle = player->trainer == TRAINER_MALE ? PLAYER_MALE_WALK_CYCLE_SECONDS : 0.56f;
+        int phase = (int)(player->walk_time / cycle * 4) % 4;
+        int frame = player->moving ? (profile ? side[phase] : front_back[phase]) : (profile ? 0 : 1);
+        Rectangle source = {frame * BOTANICAL_CELL, player->facing * BOTANICAL_CELL,
+                            BOTANICAL_CELL, BOTANICAL_CELL};
+        Vector2 screen_feet = GetWorldToScreen2D(player->feet, camera);
+        Vector2 feet = GetScreenToWorld2D((Vector2){roundf(screen_feet.x), roundf(screen_feet.y)}, camera);
+        /* O zoom dos cômodos não aumenta o personagem na tela. */
+        float scale = 0.23f / camera.zoom;
+        Rectangle destination = {feet.x - BOTANICAL_CELL / 2.0f * scale,
+                                 feet.y - BOTANICAL_ANCHOR_Y * scale,
+                                 BOTANICAL_CELL * scale, BOTANICAL_CELL * scale};
+        DrawEllipse((int)roundf(feet.x), (int)roundf(feet.y), 9 / camera.zoom, 3 / camera.zoom,
+                    Fade(BLACK, 0.22f));
+        DrawTexturePro(botanical, source, destination, (Vector2){0}, 0, WHITE);
+        return;
+    }
     DrawEllipse((int)x, (int)y - 1, 13, 4, Fade(BLACK, 0.22f));
     if (!texture.id) {
         Color color = player->trainer == TRAINER_MALE ? SKYBLUE : ORANGE;

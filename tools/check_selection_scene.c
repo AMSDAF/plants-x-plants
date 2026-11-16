@@ -48,6 +48,47 @@ static void campaign(Game *game)
     assert(game->screen == GAME_TRAINER_SELECT && !game->input_blocked);
 }
 
+static void check_botanical_walk(Game *game)
+{
+    const int keys[] = {KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_UP};
+    Player player = game->player;
+    for (int i = FACING_SOUTH; i <= FACING_NORTH; i++) {
+        input(2, keys[i], 0);
+        player_update(&player, &game->world, 0.05f);
+        assert(player.moving && player.facing == (Facing)i && player.walk_time > 0.0f);
+        input(1, keys[i], 0);
+        player_update(&player, &game->world, 0.05f);
+        assert(!player.moving && player.walk_time == 0.0f);
+    }
+}
+
+static void check_botanical_size(const PlayerAssets *assets)
+{
+    RenderTexture2D target = LoadRenderTexture(128, 128);
+    for (int trainer = 0; trainer < TRAINER_COUNT; trainer++) {
+        Player player;
+        player_init(&player, (Trainer)trainer, (Vector2){500, 300});
+        Rectangle sizes[2];
+        for (int view = 0; view < 2; view++) {
+            Camera2D camera = {.offset = {64, 100}, .target = player.feet,
+                               .zoom = view == 0 ? 1.0f : 1280.0f / 720.0f};
+            BeginTextureMode(target);
+            ClearBackground(BLANK);
+            BeginMode2D(camera);
+            player_draw(&player, assets, camera);
+            EndMode2D();
+            EndTextureMode();
+            Image sprite = LoadImageFromTexture(target.texture);
+            sizes[view] = GetImageAlphaBorder(sprite, 0.5f);
+            UnloadImage(sprite);
+            assert(sizes[view].height >= 48 && sizes[view].height <= 55);
+        }
+        assert(fabsf(sizes[0].width - sizes[1].width) <= 1.0f);
+        assert(fabsf(sizes[0].height - sizes[1].height) <= 1.0f);
+    }
+    UnloadRenderTexture(target);
+}
+
 static void capture(Game *game, RenderTexture2D target, const char *path, bool thumbnail)
 {
     Game before = *game;
@@ -125,6 +166,13 @@ int main(void)
     check_static_fallback_loaders();
     Game game;
     game_init(&game);
+    for (int i = 0; i < TRAINER_COUNT; i++) {
+        Texture2D sheet = game.player_assets.botanical_sheets[i];
+        assert(sheet.id && sheet.width == 768 && sheet.height == 1024);
+        assert(game.trainer_select_assets.botanical_portraits[i].id);
+    }
+    check_botanical_size(&game.player_assets);
+    RenderTexture2D target = LoadRenderTexture(1280, 720);
     assert(game.trainer_select_assets.portraits[0].width == 816);
     assert(game.trainer_select_assets.portraits[1].height == 1072);
     assert(game.trainer_select_assets.male_idle.id && game.trainer_select_assets.male_idle_halo.id);
@@ -179,6 +227,8 @@ int main(void)
     click(&game, 780, 670);
     confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_FEMALE);
+    check_botanical_walk(&game);
+    capture(&game, target, "build/selection_preview/botanical_female_game.png", false);
     key(&game, KEY_ESCAPE);
     campaign(&game);
     input(2, KEY_D, 0);
@@ -212,10 +262,11 @@ int main(void)
     key(&game, KEY_ENTER);
     confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_MALE);
+    check_botanical_walk(&game);
+    capture(&game, target, "build/selection_preview/botanical_male_game.png", false);
     key(&game, KEY_ESCAPE);
     campaign(&game);
 
-    RenderTexture2D target = LoadRenderTexture(1280, 720);
     trainer_select_screen_init(&game.trainer_select);
     game.trainer_select.selected = TRAINER_FEMALE;
     game.trainer_select.male_idle_time = MALE_PORTRAIT_IDLE_SECONDS - .025f;
@@ -226,6 +277,11 @@ int main(void)
     trainer_select_screen_update(&game.trainer_select, false, .1f);
     assert(fabsf(game.trainer_select.female_idle_time - .075f) < .001f);
     trainer_select_screen_init(&game.trainer_select);
+    /* As capturas históricas de repouso exercitam os retratos de reserva. */
+    Texture2D botanical_male = game.trainer_select_assets.botanical_portraits[TRAINER_MALE];
+    Texture2D botanical_female = game.trainer_select_assets.botanical_portraits[TRAINER_FEMALE];
+    game.trainer_select_assets.botanical_portraits[TRAINER_MALE] = (Texture2D){0};
+    game.trainer_select_assets.botanical_portraits[TRAINER_FEMALE] = (Texture2D){0};
     assert(DirectoryExists("build/male_portrait_idle_preview") || MakeDirectory("build/male_portrait_idle_preview") == 0);
     float pose_time = 0;
     for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
@@ -273,6 +329,8 @@ int main(void)
         }
         male_time += MALE_PORTRAIT_IDLE_DURATIONS[m];
     }
+    game.trainer_select_assets.botanical_portraits[TRAINER_MALE] = botanical_male;
+    game.trainer_select_assets.botanical_portraits[TRAINER_FEMALE] = botanical_female;
     trainer_select_screen_init(&game.trainer_select);
     capture(&game, target, "build/selection_preview/selected_male.png", false);
     game.trainer_select.selected = TRAINER_FEMALE;
@@ -289,6 +347,10 @@ int main(void)
     game.trainer_select_assets = saved;
     UnloadRenderTexture(target);
     game_shutdown(&game);
+    for (int i = 0; i < TRAINER_COUNT; i++) {
+        assert(!game.player_assets.botanical_sheets[i].id);
+        assert(!game.trainer_select_assets.botanical_portraits[i].id);
+    }
     assert(!game.trainer_select_assets.female_idle.id && !game.trainer_select_assets.female_idle_halo.id);
     assert(!game.trainer_select_assets.background.base.id && !game.trainer_select_assets.background.atlas.id);
     CloseWindow();

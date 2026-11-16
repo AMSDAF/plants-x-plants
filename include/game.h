@@ -13,9 +13,8 @@
 #include "name_entry_screen.h"
 #include "versus_screen.h"
 #include "battle_screen.h"
+#include "game_view.h"
 
-#define GAME_SCREEN_WIDTH 1280
-#define GAME_SCREEN_HEIGHT 720
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
 

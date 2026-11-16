@@ -1,5 +1,6 @@
 /* Compõe o fundo experimental com vento ancorado, nuvens e fallback completo. */
 #include "trainer_background.h"
+#include "game_view.h"
 #include "trainer_background_data.h"
 #include <math.h>
 
@@ -44,8 +45,8 @@ void trainer_background_draw(const TrainerBackgroundAssets *assets, float elapse
     bool animated = assets->base.id && assets->atlas.id;
     Texture2D base = animated ? assets->base : assets->original;
     if (!base.id) return;
-    float scale = fmaxf(GetScreenWidth()/1672.0f, GetScreenHeight()/941.0f);
-    Rectangle transform = {(GetScreenWidth()-1672*scale)/2, (GetScreenHeight()-941*scale)/2,
+    float scale = fmaxf(GAME_SCREEN_WIDTH/1672.0f, GAME_SCREEN_HEIGHT/941.0f);
+    Rectangle transform = {(GAME_SCREEN_WIDTH-1672*scale)/2, (GAME_SCREEN_HEIGHT-941*scale)/2,
                            1672*scale, 941*scale};
     DrawTexturePro(base, (Rectangle){0,0,1672,941}, transform, (Vector2){0}, 0, WHITE);
     if (!animated) return;

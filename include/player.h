@@ -10,6 +10,7 @@ typedef enum { FACING_SOUTH, FACING_WEST, FACING_EAST, FACING_NORTH } Facing;
 #endif
 typedef struct {
     Texture2D sheets[TRAINER_COUNT];
+    Texture2D botanical_sheets[TRAINER_COUNT];
     Texture2D male_walk6;
 } PlayerAssets;
 typedef struct {
@@ -24,5 +25,5 @@ void player_assets_load(PlayerAssets *assets);
 void player_assets_unload(PlayerAssets *assets);
 void player_init(Player *player, Trainer trainer, Vector2 feet);
 void player_update(Player *player, const World *world, float dt);
-void player_draw(const Player *player, const PlayerAssets *assets);
+void player_draw(const Player *player, const PlayerAssets *assets, Camera2D camera);
 #endif
