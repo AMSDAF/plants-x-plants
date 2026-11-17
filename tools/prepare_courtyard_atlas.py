@@ -75,11 +75,13 @@ def prepare(sources, output):
     npcs = Image.open(npc_path).convert("RGBA")
     for index, (left, right) in enumerate(((0, 820), (820, 1360), (1360, npcs.width))):
         sprite = npcs.crop((left, 0, right, npcs.height))
-        bounds = sprite.getchannel("A").point(lambda alpha: 255 if alpha >= 185 else 0).getbbox()
-        width = round(25 * (bounds[2] - bounds[0]) / (bounds[3] - bounds[1]))
-        margin = (24 - width) // 2
-        box = (left + bounds[0], bounds[1], left + bounds[2], bounds[3])
-        place(atlas, npcs, box, (32 * index + margin, 384), (width, 25))
+        bounds = sprite.getchannel("A").point(lambda alpha: 255 if alpha >= 64 else 0).getbbox()
+        sprite = sprite.crop(bounds)
+        # Resolve os detalhes na escala de jogo e reserva três pixels acima e abaixo.
+        width = round(50 * sprite.width / sprite.height)
+        sprite = sprite.resize((width, 50), Image.Resampling.BOX)
+        sprite.putalpha(sprite.getchannel("A").point(lambda alpha: 255 if alpha >= 112 else 0))
+        atlas.paste(sprite, (64 * index + (48 - width) // 2, 387))
     atlas.save(output, optimize=True)
 
 

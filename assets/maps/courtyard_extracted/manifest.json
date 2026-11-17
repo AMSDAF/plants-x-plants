@@ -1,0 +1,2596 @@
+{
+  "source": "assets/maps/botanical_courtyard.png",
+  "source_sha256": "013f480edc08918b7151a6f3bb741354dc5617740824f0115b94be36908ae04a",
+  "source_size": [
+    1672,
+    941
+  ],
+  "method": "original_pixels_manual_polygon_masks",
+  "notes": "Máscaras aproximadas para edição, não hitboxes. Sem reconstrução de partes ocultas. Amostras de terreno não são tiles seamless.",
+  "assets": [
+    {
+      "id": "depot",
+      "label": "Depósito com ferramentas e caixas",
+      "group": "buildings",
+      "file": "cutouts/depot.png",
+      "reference": "references/depot.png",
+      "mask": "masks/depot.png",
+      "source_rect": [
+        87,
+        152,
+        322,
+        242
+      ],
+      "polygon_local": [
+        [
+          0,
+          132
+        ],
+        [
+          33,
+          125
+        ],
+        [
+          33,
+          42
+        ],
+        [
+          81,
+          0
+        ],
+        [
+          278,
+          0
+        ],
+        [
+          321,
+          40
+        ],
+        [
+          321,
+          145
+        ],
+        [
+          312,
+          149
+        ],
+        [
+          320,
+          238
+        ],
+        [
+          233,
+          238
+        ],
+        [
+          215,
+          222
+        ],
+        [
+          137,
+          221
+        ],
+        [
+          137,
+          241
+        ],
+        [
+          77,
+          241
+        ],
+        [
+          77,
+          229
+        ],
+        [
+          32,
+          230
+        ],
+        [
+          32,
+          215
+        ],
+        [
+          0,
+          215
+        ]
+      ],
+      "anchor_local": [
+        161,
+        241
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "maintenance_house",
+      "label": "Casa de manutenção com telhado verde",
+      "group": "buildings",
+      "file": "cutouts/maintenance_house.png",
+      "reference": "references/maintenance_house.png",
+      "mask": "masks/maintenance_house.png",
+      "source_rect": [
+        77,
+        439,
+        252,
+        203
+      ],
+      "polygon_local": [
+        [
+          13,
+          21
+        ],
+        [
+          43,
+          19
+        ],
+        [
+          43,
+          0
+        ],
+        [
+          85,
+          0
+        ],
+        [
+          85,
+          21
+        ],
+        [
+          199,
+          16
+        ],
+        [
+          217,
+          11
+        ],
+        [
+          251,
+          40
+        ],
+        [
+          244,
+          147
+        ],
+        [
+          217,
+          200
+        ],
+        [
+          135,
+          202
+        ],
+        [
+          134,
+          181
+        ],
+        [
+          23,
+          182
+        ],
+        [
+          16,
+          124
+        ],
+        [
+          0,
+          114
+        ]
+      ],
+      "anchor_local": [
+        126,
+        202
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "bridge_control_house",
+      "label": "Casa de controle com dreno",
+      "group": "buildings",
+      "file": "cutouts/bridge_control_house.png",
+      "reference": "references/bridge_control_house.png",
+      "mask": "masks/bridge_control_house.png",
+      "source_rect": [
+        711,
+        405,
+        204,
+        161
+      ],
+      "polygon_local": [
+        [
+          0,
+          130
+        ],
+        [
+          14,
+          130
+        ],
+        [
+          14,
+          99
+        ],
+        [
+          25,
+          85
+        ],
+        [
+          52,
+          85
+        ],
+        [
+          52,
+          46
+        ],
+        [
+          87,
+          7
+        ],
+        [
+          157,
+          0
+        ],
+        [
+          203,
+          34
+        ],
+        [
+          203,
+          147
+        ],
+        [
+          47,
+          147
+        ],
+        [
+          47,
+          160
+        ],
+        [
+          0,
+          160
+        ]
+      ],
+      "anchor_local": [
+        102,
+        160
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "large_greenhouse",
+      "label": "Viveiro de vidro com trepadeiras",
+      "group": "buildings",
+      "file": "cutouts/large_greenhouse.png",
+      "reference": "references/large_greenhouse.png",
+      "mask": "masks/large_greenhouse.png",
+      "source_rect": [
+        1089,
+        0,
+        576,
+        326
+      ],
+      "polygon_local": [
+        [
+          0,
+          186
+        ],
+        [
+          31,
+          149
+        ],
+        [
+          31,
+          131
+        ],
+        [
+          106,
+          46
+        ],
+        [
+          106,
+          13
+        ],
+        [
+          134,
+          3
+        ],
+        [
+          294,
+          3
+        ],
+        [
+          304,
+          0
+        ],
+        [
+          317,
+          3
+        ],
+        [
+          466,
+          3
+        ],
+        [
+          478,
+          32
+        ],
+        [
+          494,
+          36
+        ],
+        [
+          560,
+          111
+        ],
+        [
+          567,
+          195
+        ],
+        [
+          575,
+          198
+        ],
+        [
+          575,
+          213
+        ],
+        [
+          567,
+          213
+        ],
+        [
+          567,
+          300
+        ],
+        [
+          376,
+          300
+        ],
+        [
+          376,
+          325
+        ],
+        [
+          235,
+          325
+        ],
+        [
+          235,
+          306
+        ],
+        [
+          2,
+          306
+        ]
+      ],
+      "anchor_local": [
+        288,
+        325
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "small_greenhouse",
+      "label": "Estufa menor com tubulações",
+      "group": "buildings",
+      "file": "cutouts/small_greenhouse.png",
+      "reference": "references/small_greenhouse.png",
+      "mask": "masks/small_greenhouse.png",
+      "source_rect": [
+        1082,
+        473,
+        553,
+        252
+      ],
+      "polygon_local": [
+        [
+          0,
+          199
+        ],
+        [
+          0,
+          191
+        ],
+        [
+          13,
+          176
+        ],
+        [
+          126,
+          176
+        ],
+        [
+          126,
+          107
+        ],
+        [
+          146,
+          89
+        ],
+        [
+          146,
+          66
+        ],
+        [
+          202,
+          16
+        ],
+        [
+          225,
+          0
+        ],
+        [
+          472,
+          0
+        ],
+        [
+          515,
+          36
+        ],
+        [
+          515,
+          121
+        ],
+        [
+          533,
+          121
+        ],
+        [
+          552,
+          139
+        ],
+        [
+          552,
+          199
+        ],
+        [
+          542,
+          215
+        ],
+        [
+          542,
+          251
+        ],
+        [
+          516,
+          251
+        ],
+        [
+          516,
+          206
+        ],
+        [
+          332,
+          206
+        ],
+        [
+          332,
+          214
+        ],
+        [
+          275,
+          214
+        ],
+        [
+          275,
+          206
+        ],
+        [
+          151,
+          206
+        ],
+        [
+          151,
+          221
+        ],
+        [
+          129,
+          221
+        ],
+        [
+          129,
+          237
+        ],
+        [
+          52,
+          237
+        ],
+        [
+          52,
+          199
+        ],
+        [
+          30,
+          199
+        ],
+        [
+          30,
+          236
+        ],
+        [
+          0,
+          236
+        ]
+      ],
+      "anchor_local": [
+        276,
+        251
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "pergola",
+      "label": "Pergolado com flores pendentes",
+      "group": "structures",
+      "file": "cutouts/pergola.png",
+      "reference": "references/pergola.png",
+      "mask": "masks/pergola.png",
+      "source_rect": [
+        459,
+        69,
+        288,
+        131
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          287,
+          0
+        ],
+        [
+          287,
+          14
+        ],
+        [
+          276,
+          16
+        ],
+        [
+          287,
+          34
+        ],
+        [
+          287,
+          49
+        ],
+        [
+          271,
+          50
+        ],
+        [
+          271,
+          128
+        ],
+        [
+          245,
+          128
+        ],
+        [
+          245,
+          64
+        ],
+        [
+          208,
+          64
+        ],
+        [
+          208,
+          126
+        ],
+        [
+          180,
+          126
+        ],
+        [
+          180,
+          64
+        ],
+        [
+          116,
+          64
+        ],
+        [
+          116,
+          127
+        ],
+        [
+          90,
+          127
+        ],
+        [
+          90,
+          65
+        ],
+        [
+          53,
+          65
+        ],
+        [
+          53,
+          130
+        ],
+        [
+          19,
+          130
+        ],
+        [
+          19,
+          51
+        ],
+        [
+          4,
+          50
+        ],
+        [
+          4,
+          33
+        ],
+        [
+          16,
+          25
+        ],
+        [
+          0,
+          16
+        ]
+      ],
+      "anchor_local": [
+        144,
+        130
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "south_gate",
+      "label": "Portão sul e pilares com lanternas",
+      "group": "structures",
+      "file": "cutouts/south_gate.png",
+      "reference": "references/south_gate.png",
+      "mask": "masks/south_gate.png",
+      "source_rect": [
+        484,
+        799,
+        187,
+        104
+      ],
+      "polygon_local": [
+        [
+          0,
+          1
+        ],
+        [
+          46,
+          1
+        ],
+        [
+          47,
+          26
+        ],
+        [
+          61,
+          26
+        ],
+        [
+          75,
+          18
+        ],
+        [
+          114,
+          18
+        ],
+        [
+          133,
+          29
+        ],
+        [
+          140,
+          0
+        ],
+        [
+          181,
+          0
+        ],
+        [
+          186,
+          103
+        ],
+        [
+          136,
+          103
+        ],
+        [
+          136,
+          91
+        ],
+        [
+          48,
+          91
+        ],
+        [
+          48,
+          103
+        ],
+        [
+          0,
+          103
+        ]
+      ],
+      "anchor_local": [
+        93,
+        103
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "east_gate",
+      "label": "Portão pequeno da estufa",
+      "group": "structures",
+      "file": "cutouts/east_gate.png",
+      "reference": "references/east_gate.png",
+      "mask": "masks/east_gate.png",
+      "source_rect": [
+        1106,
+        533,
+        101,
+        67
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          28,
+          0
+        ],
+        [
+          28,
+          16
+        ],
+        [
+          43,
+          11
+        ],
+        [
+          67,
+          12
+        ],
+        [
+          75,
+          18
+        ],
+        [
+          75,
+          0
+        ],
+        [
+          100,
+          0
+        ],
+        [
+          100,
+          66
+        ],
+        [
+          74,
+          66
+        ],
+        [
+          74,
+          55
+        ],
+        [
+          28,
+          55
+        ],
+        [
+          28,
+          65
+        ],
+        [
+          0,
+          65
+        ]
+      ],
+      "anchor_local": [
+        50,
+        66
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "central_tree_planter",
+      "label": "Árvore central e canteiro amarelo",
+      "group": "vegetation",
+      "file": "cutouts/central_tree_planter.png",
+      "reference": "references/central_tree_planter.png",
+      "mask": "masks/central_tree_planter.png",
+      "source_rect": [
+        574,
+        212,
+        156,
+        192
+      ],
+      "polygon_local": [
+        [
+          5,
+          62
+        ],
+        [
+          17,
+          44
+        ],
+        [
+          19,
+          26
+        ],
+        [
+          42,
+          13
+        ],
+        [
+          56,
+          0
+        ],
+        [
+          83,
+          1
+        ],
+        [
+          96,
+          10
+        ],
+        [
+          118,
+          14
+        ],
+        [
+          127,
+          30
+        ],
+        [
+          136,
+          35
+        ],
+        [
+          141,
+          60
+        ],
+        [
+          132,
+          78
+        ],
+        [
+          118,
+          93
+        ],
+        [
+          107,
+          97
+        ],
+        [
+          149,
+          97
+        ],
+        [
+          155,
+          114
+        ],
+        [
+          155,
+          185
+        ],
+        [
+          147,
+          191
+        ],
+        [
+          5,
+          191
+        ],
+        [
+          0,
+          178
+        ],
+        [
+          0,
+          114
+        ],
+        [
+          9,
+          99
+        ],
+        [
+          40,
+          97
+        ],
+        [
+          20,
+          86
+        ]
+      ],
+      "anchor_local": [
+        78,
+        191
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "tree_southwest",
+      "label": "Árvore do sudoeste",
+      "group": "vegetation",
+      "file": "cutouts/tree_southwest.png",
+      "reference": "references/tree_southwest.png",
+      "mask": "masks/tree_southwest.png",
+      "source_rect": [
+        200,
+        700,
+        124,
+        128
+      ],
+      "polygon_local": [
+        [
+          0,
+          68
+        ],
+        [
+          21,
+          45
+        ],
+        [
+          25,
+          25
+        ],
+        [
+          47,
+          7
+        ],
+        [
+          72,
+          0
+        ],
+        [
+          94,
+          13
+        ],
+        [
+          104,
+          32
+        ],
+        [
+          118,
+          40
+        ],
+        [
+          123,
+          64
+        ],
+        [
+          111,
+          86
+        ],
+        [
+          92,
+          98
+        ],
+        [
+          85,
+          116
+        ],
+        [
+          90,
+          124
+        ],
+        [
+          77,
+          127
+        ],
+        [
+          65,
+          118
+        ],
+        [
+          52,
+          125
+        ],
+        [
+          40,
+          120
+        ],
+        [
+          47,
+          102
+        ],
+        [
+          24,
+          97
+        ],
+        [
+          11,
+          85
+        ]
+      ],
+      "anchor_local": [
+        62,
+        127
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "tree_southeast",
+      "label": "Árvore do sudeste",
+      "group": "vegetation",
+      "file": "cutouts/tree_southeast.png",
+      "reference": "references/tree_southeast.png",
+      "mask": "masks/tree_southeast.png",
+      "source_rect": [
+        1353,
+        721,
+        132,
+        128
+      ],
+      "polygon_local": [
+        [
+          0,
+          54
+        ],
+        [
+          18,
+          30
+        ],
+        [
+          35,
+          25
+        ],
+        [
+          43,
+          8
+        ],
+        [
+          68,
+          0
+        ],
+        [
+          95,
+          10
+        ],
+        [
+          105,
+          25
+        ],
+        [
+          124,
+          36
+        ],
+        [
+          131,
+          62
+        ],
+        [
+          120,
+          82
+        ],
+        [
+          97,
+          98
+        ],
+        [
+          88,
+          102
+        ],
+        [
+          89,
+          115
+        ],
+        [
+          101,
+          122
+        ],
+        [
+          84,
+          126
+        ],
+        [
+          70,
+          119
+        ],
+        [
+          59,
+          127
+        ],
+        [
+          46,
+          119
+        ],
+        [
+          56,
+          105
+        ],
+        [
+          31,
+          99
+        ],
+        [
+          13,
+          83
+        ]
+      ],
+      "anchor_local": [
+        66,
+        127
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "shrub_southwest",
+      "label": "Arbusto junto ao muro sul",
+      "group": "vegetation",
+      "file": "cutouts/shrub_southwest.png",
+      "reference": "references/shrub_southwest.png",
+      "mask": "masks/shrub_southwest.png",
+      "source_rect": [
+        278,
+        864,
+        68,
+        50
+      ],
+      "polygon_local": [
+        [
+          0,
+          30
+        ],
+        [
+          8,
+          14
+        ],
+        [
+          21,
+          5
+        ],
+        [
+          38,
+          0
+        ],
+        [
+          57,
+          9
+        ],
+        [
+          64,
+          24
+        ],
+        [
+          67,
+          40
+        ],
+        [
+          49,
+          49
+        ],
+        [
+          19,
+          49
+        ],
+        [
+          1,
+          43
+        ]
+      ],
+      "anchor_local": [
+        34,
+        49
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "shrub_southeast",
+      "label": "Arbusto junto ao canal sul",
+      "group": "vegetation",
+      "file": "cutouts/shrub_southeast.png",
+      "reference": "references/shrub_southeast.png",
+      "mask": "masks/shrub_southeast.png",
+      "source_rect": [
+        830,
+        873,
+        72,
+        56
+      ],
+      "polygon_local": [
+        [
+          0,
+          23
+        ],
+        [
+          10,
+          10
+        ],
+        [
+          24,
+          0
+        ],
+        [
+          47,
+          0
+        ],
+        [
+          65,
+          11
+        ],
+        [
+          71,
+          29
+        ],
+        [
+          69,
+          45
+        ],
+        [
+          52,
+          55
+        ],
+        [
+          25,
+          55
+        ],
+        [
+          9,
+          44
+        ]
+      ],
+      "anchor_local": [
+        36,
+        55
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "white_flower_bush",
+      "label": "Arbusto de flores brancas",
+      "group": "vegetation",
+      "file": "cutouts/white_flower_bush.png",
+      "reference": "references/white_flower_bush.png",
+      "mask": "masks/white_flower_bush.png",
+      "source_rect": [
+        1507,
+        343,
+        88,
+        68
+      ],
+      "polygon_local": [
+        [
+          0,
+          38
+        ],
+        [
+          8,
+          22
+        ],
+        [
+          21,
+          7
+        ],
+        [
+          41,
+          0
+        ],
+        [
+          63,
+          8
+        ],
+        [
+          80,
+          27
+        ],
+        [
+          87,
+          44
+        ],
+        [
+          78,
+          58
+        ],
+        [
+          60,
+          67
+        ],
+        [
+          25,
+          66
+        ],
+        [
+          6,
+          56
+        ]
+      ],
+      "anchor_local": [
+        44,
+        67
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "pink_flower_bush",
+      "label": "Arbusto de flores rosas",
+      "group": "vegetation",
+      "file": "cutouts/pink_flower_bush.png",
+      "reference": "references/pink_flower_bush.png",
+      "mask": "masks/pink_flower_bush.png",
+      "source_rect": [
+        1468,
+        392,
+        90,
+        72
+      ],
+      "polygon_local": [
+        [
+          0,
+          31
+        ],
+        [
+          12,
+          12
+        ],
+        [
+          30,
+          1
+        ],
+        [
+          52,
+          0
+        ],
+        [
+          75,
+          12
+        ],
+        [
+          89,
+          34
+        ],
+        [
+          85,
+          54
+        ],
+        [
+          68,
+          69
+        ],
+        [
+          40,
+          71
+        ],
+        [
+          15,
+          57
+        ]
+      ],
+      "anchor_local": [
+        45,
+        71
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "flowerbed_southwest",
+      "label": "Canteiro sudoeste com banco",
+      "group": "planters",
+      "file": "cutouts/flowerbed_southwest.png",
+      "reference": "references/flowerbed_southwest.png",
+      "mask": "masks/flowerbed_southwest.png",
+      "source_rect": [
+        391,
+        602,
+        146,
+        110
+      ],
+      "polygon_local": [
+        [
+          0,
+          38
+        ],
+        [
+          9,
+          19
+        ],
+        [
+          29,
+          9
+        ],
+        [
+          41,
+          0
+        ],
+        [
+          62,
+          8
+        ],
+        [
+          77,
+          1
+        ],
+        [
+          104,
+          12
+        ],
+        [
+          123,
+          24
+        ],
+        [
+          142,
+          45
+        ],
+        [
+          145,
+          95
+        ],
+        [
+          130,
+          109
+        ],
+        [
+          0,
+          109
+        ]
+      ],
+      "anchor_local": [
+        73,
+        109
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "flowerbed_southeast",
+      "label": "Canteiro sudeste de flores mistas",
+      "group": "planters",
+      "file": "cutouts/flowerbed_southeast.png",
+      "reference": "references/flowerbed_southeast.png",
+      "mask": "masks/flowerbed_southeast.png",
+      "source_rect": [
+        621,
+        604,
+        213,
+        114
+      ],
+      "polygon_local": [
+        [
+          0,
+          44
+        ],
+        [
+          12,
+          23
+        ],
+        [
+          36,
+          14
+        ],
+        [
+          59,
+          3
+        ],
+        [
+          83,
+          15
+        ],
+        [
+          105,
+          6
+        ],
+        [
+          127,
+          13
+        ],
+        [
+          146,
+          0
+        ],
+        [
+          168,
+          6
+        ],
+        [
+          189,
+          18
+        ],
+        [
+          209,
+          37
+        ],
+        [
+          212,
+          87
+        ],
+        [
+          198,
+          106
+        ],
+        [
+          14,
+          113
+        ],
+        [
+          0,
+          97
+        ]
+      ],
+      "anchor_local": [
+        106,
+        113
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_pink_west",
+      "label": "Floreira rosa oeste",
+      "group": "planters",
+      "file": "cutouts/planter_pink_west.png",
+      "reference": "references/planter_pink_west.png",
+      "mask": "masks/planter_pink_west.png",
+      "source_rect": [
+        432,
+        249,
+        89,
+        97
+      ],
+      "polygon_local": [
+        [
+          0,
+          29
+        ],
+        [
+          10,
+          14
+        ],
+        [
+          24,
+          2
+        ],
+        [
+          46,
+          0
+        ],
+        [
+          65,
+          7
+        ],
+        [
+          80,
+          25
+        ],
+        [
+          88,
+          38
+        ],
+        [
+          88,
+          84
+        ],
+        [
+          77,
+          96
+        ],
+        [
+          16,
+          96
+        ],
+        [
+          7,
+          84
+        ],
+        [
+          0,
+          79
+        ]
+      ],
+      "anchor_local": [
+        44,
+        96
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_pink_east",
+      "label": "Floreira rosa leste",
+      "group": "planters",
+      "file": "cutouts/planter_pink_east.png",
+      "reference": "references/planter_pink_east.png",
+      "mask": "masks/planter_pink_east.png",
+      "source_rect": [
+        779,
+        260,
+        98,
+        91
+      ],
+      "polygon_local": [
+        [
+          0,
+          33
+        ],
+        [
+          10,
+          18
+        ],
+        [
+          29,
+          8
+        ],
+        [
+          52,
+          0
+        ],
+        [
+          75,
+          9
+        ],
+        [
+          90,
+          30
+        ],
+        [
+          97,
+          46
+        ],
+        [
+          97,
+          80
+        ],
+        [
+          82,
+          90
+        ],
+        [
+          17,
+          90
+        ],
+        [
+          8,
+          80
+        ],
+        [
+          0,
+          75
+        ]
+      ],
+      "anchor_local": [
+        49,
+        90
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_gate_left",
+      "label": "Floreira esquerda do portão sul",
+      "group": "planters",
+      "file": "cutouts/planter_gate_left.png",
+      "reference": "references/planter_gate_left.png",
+      "mask": "masks/planter_gate_left.png",
+      "source_rect": [
+        374,
+        849,
+        111,
+        65
+      ],
+      "polygon_local": [
+        [
+          0,
+          32
+        ],
+        [
+          8,
+          15
+        ],
+        [
+          27,
+          6
+        ],
+        [
+          51,
+          0
+        ],
+        [
+          79,
+          7
+        ],
+        [
+          99,
+          21
+        ],
+        [
+          110,
+          35
+        ],
+        [
+          110,
+          64
+        ],
+        [
+          0,
+          64
+        ]
+      ],
+      "anchor_local": [
+        55,
+        64
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_gate_right",
+      "label": "Floreira direita do portão sul",
+      "group": "planters",
+      "file": "cutouts/planter_gate_right.png",
+      "reference": "references/planter_gate_right.png",
+      "mask": "masks/planter_gate_right.png",
+      "source_rect": [
+        669,
+        850,
+        112,
+        66
+      ],
+      "polygon_local": [
+        [
+          0,
+          30
+        ],
+        [
+          11,
+          13
+        ],
+        [
+          36,
+          1
+        ],
+        [
+          62,
+          0
+        ],
+        [
+          84,
+          10
+        ],
+        [
+          103,
+          27
+        ],
+        [
+          111,
+          40
+        ],
+        [
+          111,
+          65
+        ],
+        [
+          0,
+          65
+        ]
+      ],
+      "anchor_local": [
+        56,
+        65
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_greenhouse_left",
+      "label": "Floreira esquerda do viveiro",
+      "group": "planters",
+      "file": "cutouts/planter_greenhouse_left.png",
+      "reference": "references/planter_greenhouse_left.png",
+      "mask": "masks/planter_greenhouse_left.png",
+      "source_rect": [
+        1189,
+        290,
+        100,
+        58
+      ],
+      "polygon_local": [
+        [
+          0,
+          25
+        ],
+        [
+          11,
+          13
+        ],
+        [
+          33,
+          0
+        ],
+        [
+          58,
+          1
+        ],
+        [
+          83,
+          14
+        ],
+        [
+          99,
+          29
+        ],
+        [
+          99,
+          57
+        ],
+        [
+          0,
+          57
+        ]
+      ],
+      "anchor_local": [
+        50,
+        57
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_greenhouse_right",
+      "label": "Floreira direita do viveiro",
+      "group": "planters",
+      "file": "cutouts/planter_greenhouse_right.png",
+      "reference": "references/planter_greenhouse_right.png",
+      "mask": "masks/planter_greenhouse_right.png",
+      "source_rect": [
+        1510,
+        290,
+        105,
+        58
+      ],
+      "polygon_local": [
+        [
+          0,
+          26
+        ],
+        [
+          14,
+          13
+        ],
+        [
+          38,
+          1
+        ],
+        [
+          61,
+          0
+        ],
+        [
+          88,
+          15
+        ],
+        [
+          104,
+          29
+        ],
+        [
+          104,
+          57
+        ],
+        [
+          0,
+          57
+        ]
+      ],
+      "anchor_local": [
+        52,
+        57
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_small_left",
+      "label": "Floreira esquerda da estufa menor",
+      "group": "planters",
+      "file": "cutouts/planter_small_left.png",
+      "reference": "references/planter_small_left.png",
+      "mask": "masks/planter_small_left.png",
+      "source_rect": [
+        1257,
+        660,
+        73,
+        57
+      ],
+      "polygon_local": [
+        [
+          0,
+          26
+        ],
+        [
+          12,
+          12
+        ],
+        [
+          31,
+          0
+        ],
+        [
+          50,
+          7
+        ],
+        [
+          72,
+          22
+        ],
+        [
+          72,
+          56
+        ],
+        [
+          0,
+          56
+        ]
+      ],
+      "anchor_local": [
+        36,
+        56
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "planter_small_right",
+      "label": "Floreira direita da estufa menor",
+      "group": "planters",
+      "file": "cutouts/planter_small_right.png",
+      "reference": "references/planter_small_right.png",
+      "mask": "masks/planter_small_right.png",
+      "source_rect": [
+        1448,
+        658,
+        81,
+        60
+      ],
+      "polygon_local": [
+        [
+          0,
+          26
+        ],
+        [
+          14,
+          11
+        ],
+        [
+          37,
+          0
+        ],
+        [
+          59,
+          10
+        ],
+        [
+          80,
+          27
+        ],
+        [
+          80,
+          59
+        ],
+        [
+          0,
+          59
+        ]
+      ],
+      "anchor_local": [
+        40,
+        59
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "sign_south",
+      "label": "Placa da entrada sul",
+      "group": "props",
+      "file": "cutouts/sign_south.png",
+      "reference": "references/sign_south.png",
+      "mask": "masks/sign_south.png",
+      "source_rect": [
+        456,
+        744,
+        51,
+        52
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          50,
+          0
+        ],
+        [
+          50,
+          31
+        ],
+        [
+          35,
+          31
+        ],
+        [
+          35,
+          51
+        ],
+        [
+          16,
+          51
+        ],
+        [
+          16,
+          31
+        ],
+        [
+          0,
+          31
+        ]
+      ],
+      "anchor_local": [
+        25,
+        51
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "sign_central",
+      "label": "Placa do pátio",
+      "group": "props",
+      "file": "cutouts/sign_central.png",
+      "reference": "references/sign_central.png",
+      "mask": "masks/sign_central.png",
+      "source_rect": [
+        479,
+        398,
+        52,
+        53
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          51,
+          0
+        ],
+        [
+          51,
+          32
+        ],
+        [
+          35,
+          32
+        ],
+        [
+          35,
+          52
+        ],
+        [
+          18,
+          52
+        ],
+        [
+          18,
+          32
+        ],
+        [
+          0,
+          32
+        ]
+      ],
+      "anchor_local": [
+        26,
+        52
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "sign_nursery",
+      "label": "Placa do viveiro",
+      "group": "props",
+      "file": "cutouts/sign_nursery.png",
+      "reference": "references/sign_nursery.png",
+      "mask": "masks/sign_nursery.png",
+      "source_rect": [
+        1246,
+        358,
+        54,
+        49
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          53,
+          0
+        ],
+        [
+          53,
+          32
+        ],
+        [
+          38,
+          32
+        ],
+        [
+          38,
+          48
+        ],
+        [
+          21,
+          48
+        ],
+        [
+          21,
+          32
+        ],
+        [
+          0,
+          32
+        ]
+      ],
+      "anchor_local": [
+        27,
+        48
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "bench_left",
+      "label": "Banco esquerdo da árvore central",
+      "group": "props",
+      "file": "cutouts/bench_left.png",
+      "reference": "references/bench_left.png",
+      "mask": "masks/bench_left.png",
+      "source_rect": [
+        581,
+        393,
+        60,
+        38
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          59,
+          0
+        ],
+        [
+          59,
+          28
+        ],
+        [
+          54,
+          28
+        ],
+        [
+          54,
+          37
+        ],
+        [
+          42,
+          37
+        ],
+        [
+          42,
+          29
+        ],
+        [
+          13,
+          29
+        ],
+        [
+          13,
+          37
+        ],
+        [
+          1,
+          37
+        ]
+      ],
+      "anchor_local": [
+        30,
+        37
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "bench_right",
+      "label": "Banco direito da árvore central",
+      "group": "props",
+      "file": "cutouts/bench_right.png",
+      "reference": "references/bench_right.png",
+      "mask": "masks/bench_right.png",
+      "source_rect": [
+        669,
+        393,
+        57,
+        38
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          56,
+          0
+        ],
+        [
+          56,
+          29
+        ],
+        [
+          49,
+          29
+        ],
+        [
+          49,
+          37
+        ],
+        [
+          39,
+          37
+        ],
+        [
+          39,
+          29
+        ],
+        [
+          15,
+          29
+        ],
+        [
+          15,
+          37
+        ],
+        [
+          4,
+          37
+        ],
+        [
+          4,
+          29
+        ],
+        [
+          0,
+          29
+        ]
+      ],
+      "anchor_local": [
+        28,
+        37
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "bench_southwest",
+      "label": "Banco do canteiro sudoeste",
+      "group": "props",
+      "file": "cutouts/bench_southwest.png",
+      "reference": "references/bench_southwest.png",
+      "mask": "masks/bench_southwest.png",
+      "source_rect": [
+        460,
+        690,
+        61,
+        38
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          60,
+          0
+        ],
+        [
+          60,
+          30
+        ],
+        [
+          53,
+          30
+        ],
+        [
+          53,
+          37
+        ],
+        [
+          42,
+          37
+        ],
+        [
+          42,
+          30
+        ],
+        [
+          14,
+          30
+        ],
+        [
+          14,
+          37
+        ],
+        [
+          3,
+          37
+        ]
+      ],
+      "anchor_local": [
+        30,
+        37
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "fence_west",
+      "label": "Trecho de cerca de madeira",
+      "group": "structures",
+      "file": "cutouts/fence_west.png",
+      "reference": "references/fence_west.png",
+      "mask": "masks/fence_west.png",
+      "source_rect": [
+        104,
+        704,
+        111,
+        48
+      ],
+      "polygon_local": [
+        [
+          0,
+          0
+        ],
+        [
+          13,
+          0
+        ],
+        [
+          13,
+          11
+        ],
+        [
+          38,
+          11
+        ],
+        [
+          38,
+          1
+        ],
+        [
+          50,
+          1
+        ],
+        [
+          50,
+          11
+        ],
+        [
+          77,
+          11
+        ],
+        [
+          77,
+          2
+        ],
+        [
+          90,
+          2
+        ],
+        [
+          90,
+          12
+        ],
+        [
+          110,
+          12
+        ],
+        [
+          110,
+          41
+        ],
+        [
+          90,
+          41
+        ],
+        [
+          90,
+          47
+        ],
+        [
+          77,
+          47
+        ],
+        [
+          77,
+          39
+        ],
+        [
+          50,
+          39
+        ],
+        [
+          50,
+          47
+        ],
+        [
+          38,
+          47
+        ],
+        [
+          38,
+          39
+        ],
+        [
+          13,
+          39
+        ],
+        [
+          13,
+          46
+        ],
+        [
+          0,
+          46
+        ]
+      ],
+      "anchor_local": [
+        55,
+        47
+      ],
+      "anchor_kind": "bottom_center_canvas",
+      "mask_quality": "manual_approximate",
+      "collision": null
+    },
+    {
+      "id": "paving",
+      "label": "Amostra do piso do pátio",
+      "group": "terrain",
+      "file": "terrain/paving.png",
+      "source_rect": [
+        520,
+        482,
+        64,
+        64
+      ],
+      "tileable": false,
+      "collision": null
+    },
+    {
+      "id": "grass",
+      "label": "Amostra de grama",
+      "group": "terrain",
+      "file": "terrain/grass.png",
+      "source_rect": [
+        642,
+        728,
+        32,
+        32
+      ],
+      "tileable": false,
+      "collision": null
+    },
+    {
+      "id": "canal_water",
+      "label": "Amostra de água do canal",
+      "group": "terrain",
+      "file": "terrain/canal_water.png",
+      "source_rect": [
+        940,
+        335,
+        56,
+        64
+      ],
+      "tileable": false,
+      "collision": null
+    },
+    {
+      "id": "canal_lilies",
+      "label": "Vitórias-régias com água",
+      "group": "terrain",
+      "file": "terrain/canal_lilies.png",
+      "source_rect": [
+        940,
+        213,
+        53,
+        60
+      ],
+      "tileable": false,
+      "collision": null
+    },
+    {
+      "id": "canal_bank",
+      "label": "Borda oeste do canal",
+      "group": "terrain",
+      "file": "terrain/canal_bank.png",
+      "source_rect": [
+        896,
+        332,
+        35,
+        64
+      ],
+      "tileable": false,
+      "collision": null
+    },
+    {
+      "id": "south_wall",
+      "label": "Trecho do muro sul",
+      "group": "terrain",
+      "file": "terrain/south_wall.png",
+      "source_rect": [
+        685,
+        824,
+        82,
+        26
+      ],
+      "tileable": false,
+      "collision": null
+    }
+  ]
+}

@@ -73,5 +73,6 @@ Camera2D world_camera(const World *world);
 void world_update_relay_panel(World *world);
 void world_update_dialogue(World *world);
 void world_draw(const World *world, const WorldAssets *assets, Vector2 feet);
+void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet, Camera2D camera, bool foreground);
 void world_draw_interface(const World *world, Vector2 feet);
 #endif

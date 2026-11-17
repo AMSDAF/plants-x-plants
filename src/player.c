@@ -80,30 +80,34 @@ void player_update(Player *player, const World *world, float dt)
     if (player->trainer == TRAINER_MALE && IsKeyPressed(KEY_F6))
         player->use_walk6 = !player->use_walk6;
     Vector2 next = player->feet;
-    bool requested = true;
+    int horizontal = (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT));
+    int vertical = (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) - (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP));
     Facing facing = player->facing;
-    /* Prioridade fixa: norte, sul, oeste, leste. Nunca soma eixos. */
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) facing = FACING_NORTH;
-    else if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) facing = FACING_SOUTH;
-    else if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) facing = FACING_WEST;
-    else if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) facing = FACING_EAST;
-    else requested = false;
     if (dt < 0) dt = 0;
     if (dt > 0.1f) dt = 0.1f;
     bool running = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
-    if (requested) {
-        float step = (running ? 300.0f : 190.0f) * dt;
-        if (facing == FACING_NORTH) next.y -= step;
-        if (facing == FACING_SOUTH) next.y += step;
-        if (facing == FACING_WEST) next.x -= step;
-        if (facing == FACING_EAST) next.x += step;
-        next = world_constrain(world, player->feet, next);
+    if (horizontal || vertical) {
+        float distance = (running ? 300.0f : 190.0f) * dt;
+        /* Passos pequenos evitam saltar por cima da colisão em quadros longos. */
+        int steps = 1 + (int)(distance / 5);
+        float step = distance / steps;
+        if (horizontal && vertical) step *= 0.70710678f;
+        for (int i = 0; i < steps; i++) {
+            if (horizontal)
+                next = world_constrain(world, next, (Vector2){next.x + horizontal * step, next.y});
+            if (vertical)
+                next = world_constrain(world, next, (Vector2){next.x, next.y + vertical * step});
+        }
+        if (vertical && (next.y != player->feet.y || next.x == player->feet.x))
+            facing = vertical < 0 ? FACING_NORTH : FACING_SOUTH;
+        else if (horizontal)
+            facing = horizontal < 0 ? FACING_WEST : FACING_EAST;
     }
     bool moved = next.x != player->feet.x || next.y != player->feet.y;
     if (!moved || facing != player->facing) player->walk_time = 0;
     float cycle = player->trainer == TRAINER_MALE ? PLAYER_MALE_WALK_CYCLE_SECONDS : 0.56f;
     if (moved) player->walk_time = fmodf(player->walk_time + dt * (running ? 1.5f : 1.0f), cycle);
-    if (requested) player->facing = facing;
+    player->facing = facing;
     player->feet = next;
     player->moving = moved;
 }

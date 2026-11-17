@@ -71,7 +71,7 @@ floresta em camadas, moldura ou botões de madeira. A auditoria está em
 
 `PlayerAssets` também pode carregar `male_walk6.png` (1920 × 1280). A tecla F6 alterna a opção local `Player.use_walk6` para a caminhada legada do Explorador. `player_draw` usa o atlas experimental apenas em movimento, com fallback para o aprovado quando ausente ou inválido. Repouso e personagem feminino na exploração continuam usando os recursos anteriores. O ciclo masculino usa uma duração configurável, independente das quatro ou seis poses; trocar a opção preserva a fase, a velocidade e a posição. A versão aprovada é o padrão em cada entrada na exploração.
 
-O movimento usa delta time, limitado a 0,1 s por quadro para evitar saltos após pausas. A prioridade fixa norte/sul/oeste/leste resolve teclas simultâneas. A animação avança apenas após deslocamento efetivo; contra um limite ou parado, volta à pose neutra da direção mantida. Limitações dos ciclos e parâmetros de preparação estão em [TRAINER_TEST.md](TRAINER_TEST.md).
+O movimento usa delta time limitado a 0,1 s por quadro. Teclas de eixos diferentes permitem andar na diagonal à mesma velocidade. Passos curtos e colisões por eixo permitem deslizar junto às bordas. A animação avança apenas após deslocamento efetivo. Parado, o treinador volta à pose neutra da direção mantida. Limitações dos ciclos e parâmetros de preparação estão em [TRAINER_TEST.md](TRAINER_TEST.md).
 
 ### Plantas e equipes
 

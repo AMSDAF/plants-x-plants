@@ -278,7 +278,9 @@ void game_draw(const Game *game)
             Camera2D camera = world_camera(&game->world);
             BeginMode2D(camera);
             world_draw(&game->world, &game->world_assets, game->player.feet);
+            world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, false);
             player_draw(&game->player, &game->player_assets, camera);
+            world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, true);
             EndMode2D();
             world_draw_interface(&game->world, game->player.feet);
             if (!game->world.completed && !game->world.relay_panel_open && !game->world.dialogue_title &&

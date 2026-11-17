@@ -182,17 +182,22 @@ static void enter_bridge_control(Game *game)
 
 static void enter_maintenance(Game *game)
 {
-    walk_axis(game, false, 610);
-    walk_axis(game, true, 350);
-    walk_axis(game, false, 645);
+    walk_axis(game, false, 588);
+    walk_axis(game, true, 385);
+    walk_axis(game, false, 629);
+    walk_axis(game, true, 352);
+    walk_axis(game, false, 670);
     interact_at(game, 243, 645);
     assert(game->world.location == WORLD_MAINTENANCE);
 }
 
 static void leave_maintenance_path(Game *game)
 {
-    walk_axis(game, true, 350);
-    walk_axis(game, false, 610);
+    walk_axis(game, false, 670);
+    walk_axis(game, true, 352);
+    walk_axis(game, false, 629);
+    walk_axis(game, true, 385);
+    walk_axis(game, false, 588);
     walk_axis(game, true, 434);
     walk_axis(game, false, 478);
 }
@@ -200,7 +205,7 @@ static void leave_maintenance_path(Game *game)
 static void enter_depot(Game *game)
 {
     walk_axis(game, false, 470);
-    walk_axis(game, true, 370);
+    walk_axis(game, true, 396);
     walk_axis(game, false, 437);
     interact_at(game, 278, 379);
     assert(game->world.location == WORLD_DEPOT);
@@ -208,7 +213,11 @@ static void enter_depot(Game *game)
 
 static void approach_nursery(Game *game)
 {
-    walk_axis(game, false, 447);
+    if (game->player.feet.x < 1160) {
+        walk_axis(game, false, 472);
+        walk_axis(game, true, 1210);
+        walk_axis(game, false, 444);
+    }
     interact_at(game, 1396, 330);
 }
 
@@ -240,6 +249,29 @@ static void check_greenhouse(Game *game)
     input(1, KEY_LEFT_SHIFT, 0);
     input(1, KEY_D, 0);
     tick(game);
+
+    Vector2 initial = {560, 740};
+    Player diagonal, canal_edge;
+    player_init(&diagonal, TRAINER_MALE, initial);
+    player_init(&canal_edge, TRAINER_MALE, (Vector2){899, 550});
+    input(2, KEY_D, 0);
+    input(2, KEY_W, 0);
+    player_update(&diagonal, world, 0.1f);
+    assert(diagonal.feet.x > initial.x && diagonal.feet.y < initial.y);
+    assert(fabsf(hypotf(diagonal.feet.x - initial.x, diagonal.feet.y - initial.y) - 19) < 0.01f);
+    player_update(&canal_edge, world, 0.1f);
+    assert(canal_edge.feet.x == 899 && canal_edge.feet.y < 550);
+    input(1, KEY_W, 0);
+    input(1, KEY_D, 0);
+    tick(game);
+    Vector2 corner = world_constrain(world, initial, (Vector2){524, 817});
+    assert(corner.x == initial.x && corner.y == initial.y);
+    for (int y = 311; y <= 431; y++) {
+        Vector2 loop = world_constrain(world, initial, (Vector2){759, y});
+        assert(loop.x == 759 && loop.y == y);
+    }
+    Vector2 garden_bed = world_constrain(world, initial, (Vector2){655, 354});
+    assert(garden_bed.x == initial.x && garden_bed.y == initial.y);
     for (int row = 0; row < 8; row++) {
         World sample = {.alarm = (row & 4) != 0, .water = (row & 2) != 0,
                         .light = (row & 1) != 0, .maintenance_key = true};
@@ -270,6 +302,7 @@ static void check_greenhouse(Game *game)
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Placa do jardim") == 0);
     key(game, KEY_ENTER);
     assert(!world->dialogue_title);
+    walk_axis(game, true, 576);
     walk_axis(game, false, 510);
     interact_at(game, 600, 507);
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Jardineira") == 0);
@@ -319,8 +352,9 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_DEPOT && world->maintenance_key && !world->light);
     interact_at(game, 640, 572);
     walk_axis(game, false, 437);
-    walk_axis(game, true, 370);
-    walk_axis(game, false, 610);
+    walk_axis(game, true, 396);
+    walk_axis(game, false, 470);
+    walk_axis(game, true, 429);
     enter_maintenance(game);
     interact_at(game, 826, 320);
     assert(world->location == WORLD_BASEMENT && world->basement_visited);
@@ -364,6 +398,7 @@ static void check_greenhouse(Game *game)
     interact_at(game, 868, 578);
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Técnico") == 0);
     assert(strstr(world->dialogue_pages[0], "pronta"));
+    capture(game, target, "build/name_entry_preview/campaign_technician.png");
     key(game, KEY_ENTER);
     walk_axis(game, false, 573);
     walk_axis(game, true, 888);
@@ -373,21 +408,24 @@ static void check_greenhouse(Game *game)
     assert(game->player.feet.x > 1045);
     approach_nursery(game);
     assert(world->location == WORLD_EXTERIOR && !world_gate_open(world));
+    capture(game, target, "build/name_entry_preview/botanical_nursery_entrance.png");
     walk_axis(game, false, 280);
     assert(game->player.feet.y >= 318); /* A fachada fica fora do caminho. */
     walk_axis(game, false, 444);
+    walk_axis(game, true, 1210);
+    walk_axis(game, false, 472);
     walk_axis(game, true, 1080);
     walk_axis(game, false, 626);
     interact_at(game, 1168, 644);
     assert(world->water && world_gate_rule(world));
     walk_axis(game, true, 1087);
-    walk_axis(game, false, 447);
     approach_nursery(game);
     assert(world->location == WORLD_NURSERY && world->gate_unlocked);
     capture(game, target, "build/name_entry_preview/greenhouse_open.png");
     interact_at(game, 882, 477);
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Pesquisadora") == 0);
     assert(strstr(world->dialogue_pages[0], "Girassol"));
+    capture(game, target, "build/name_entry_preview/campaign_researcher.png");
     key(game, KEY_E);
     assert(strstr(world->dialogue_pages[world->dialogue_page], "placa nos canais"));
     key(game, KEY_E);

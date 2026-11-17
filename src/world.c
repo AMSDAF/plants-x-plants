@@ -62,8 +62,8 @@ static const MapObject objects[OBJECT_COUNT] = {
     [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
     [LOWER_LIFT] = {{837, 410}, WORLD_BASEMENT},
     [RELAY_PANEL] = {{790, 340}, WORLD_NURSERY},
-    [ENTRANCE_SIGN] = {{506, 782}, WORLD_EXTERIOR},
-    [BRIDGE_SIGN] = {{770, 615}, WORLD_EXTERIOR},
+    [ENTRANCE_SIGN] = {{487, 787}, WORLD_EXTERIOR},
+    [BRIDGE_SIGN] = {{770, 625}, WORLD_EXTERIOR},
     [GARDENER] = {{630, 507}, WORLD_EXTERIOR},
     [TECHNICIAN] = {{868, 600}, WORLD_EXTERIOR},
     [RESEARCHER] = {{882, 477}, WORLD_NURSERY}
@@ -73,34 +73,92 @@ static const Rectangle exterior = {0, 0, MAP_WIDTH, MAP_HEIGHT};
 static const Rectangle canal = {907, 0, 138, MAP_HEIGHT};
 static const Rectangle bridge_dest = {902, 485, 158, 113};
 
-/* Áreas de circulação que acompanham os caminhos da ilustração. */
-static const Rectangle exterior_paths[] = {
-    {529, 602, 93, 216},   /* Entrada sul, do lado interno do portão. */
-    {399, 444, 355, 186},  /* Pátio e dreno. */
-    {744, 552, 168, 47},
-    {907, 525, 196, 38},  /* Tabuleiro e acesso da margem leste. */
-    {334, 536, 75, 87},
-    {348, 469, 58, 102},
-    {305, 433, 96, 51},
-    {250, 368, 56, 72},   /* Depósito. */
-    {253, 417, 99, 37},
-    {227, 637, 141, 56},  /* Manutenção. */
-    {321, 591, 96, 68},
+/* Caminhos retangulares para o exterior montado com peças, se faltar a ilustração. */
+static const Rectangle fallback_paths[] = {
+    {523, 600, 106, 218}, /* Entrada sul, do lado interno do portão. */
+    {389, 440, 367, 194}, /* Pátio e dreno. */
+    {730, 548, 190, 55},
+    {888, 522, 222, 44},  /* Tabuleiro e acesso da margem leste. */
+    {328, 530, 90, 98},
+    {340, 464, 79, 113},
+    {298, 430, 110, 58},
+    {244, 365, 68, 81},   /* Depósito. */
+    {249, 410, 113, 50},
+    {221, 632, 150, 66},  /* Manutenção. */
+    {315, 585, 112, 79},
     {462, 185, 108, 274}, /* Caminho junto ao pergolado. */
     {551, 187, 219, 37},
     {738, 211, 106, 49},
     {738, 250, 112, 157},
-    {731, 386, 27, 69},
-    {1054, 471, 72, 117},
-    {1070, 432, 143, 54},
-    {1162, 411, 298, 50},
+    {723, 384, 43, 75},
+    {1049, 462, 86, 131},
+    {1066, 429, 151, 61},
+    {1157, 408, 303, 56},
     {1330, 318, 127, 107}, /* Viveiro. */
     {1240, 391, 113, 44}, /* Placa com a pista. */
-    {1051, 564, 61, 156},
-    {1081, 600, 142, 52}, /* Registro de água. */
-    {1081, 641, 140, 87},
-    {1205, 700, 360, 33}  /* Frente da estufa menor. */
+    {1049, 555, 72, 173},
+    {1076, 596, 152, 61}, /* Registro de água. */
+    {1076, 636, 153, 96},
+    {1199, 692, 366, 46}  /* Frente da estufa menor. */
 };
+
+/* Contornos do piso na arte nativa. Polígonos vizinhos se sobrepõem nas junções. */
+static const Vector2 entry_path[] = {
+    {522, 811}, {531, 781}, {547, 758}, {547, 651}, {538, 627}, {515, 608},
+    {656, 601}, {626, 620}, {605, 648}, {605, 758}, {628, 785}, {634, 811}
+};
+static const Vector2 courtyard_path[] = {
+    {372, 592}, {400, 552}, {400, 493}, {378, 463}, {420, 469}, {460, 448},
+    {470, 404}, {564, 404}, {571, 428}, {729, 428}, {752, 400}, {832, 396},
+    {850, 413}, {771, 448}, {757, 493}, {729, 502}, {709, 550}, {762, 552},
+    {906, 553}, {926, 528}, {926, 566}, {895, 599}, {835, 617}, {673, 607},
+    {637, 629}, {525, 632}, {503, 607}, {420, 607}, {394, 628}, {379, 651},
+    {360, 671}, {365, 629}
+};
+static const Vector2 depot_path[] = {
+    {252, 367}, {301, 367}, {308, 399}, {329, 414}, {395, 418}, {414, 438},
+    {464, 454}, {488, 478}, {401, 501}, {377, 475}, {348, 453}, {278, 445},
+    {259, 427}, {252, 404}
+};
+static const Vector2 maintenance_path[] = {
+    {215, 631}, {266, 631}, {282, 651}, {321, 651}, {341, 631}, {354, 608},
+    {374, 580}, {430, 573}, {413, 623}, {382, 646}, {365, 679}, {348, 697},
+    {244, 697}, {224, 686}, {215, 668}
+};
+static const Vector2 pergola_path[] = {
+    {470, 188}, {755, 188}, {776, 213}, {811, 230}, {810, 263}, {779, 275},
+    {741, 231}, {714, 223}, {694, 209}, {601, 209}, {582, 226}, {573, 308},
+    {563, 322}, {563, 431}, {544, 460}, {468, 468}, {472, 362}, {501, 341},
+    {511, 310}, {510, 274}, {467, 253}
+};
+static const Vector2 garden_loop_path[] = {
+    {716, 217}, {747, 222}, {778, 269}, {777, 331}, {779, 390}, {806, 416},
+    {747, 441}, {729, 412}, {738, 391}, {738, 314}, {725, 284}, {712, 257}
+};
+static const Vector2 east_path[] = {
+    {1028, 524}, {1055, 521}, {1071, 453}, {1149, 449}, {1198, 407},
+    {1284, 403}, {1320, 382}, {1334, 351}, {1334, 323}, {1460, 323},
+    {1461, 436}, {1444, 456}, {1265, 457}, {1229, 475}, {1200, 504},
+    {1117, 507}, {1096, 531}, {1098, 583}, {1061, 589}, {1028, 563}
+};
+static const Vector2 irrigation_path[] = {
+    {1057, 546}, {1095, 540}, {1104, 600}, {1215, 598}, {1215, 640},
+    {1198, 682}, {1215, 714}, {1348, 714}, {1357, 686}, {1414, 686},
+    {1425, 710}, {1568, 708}, {1568, 742}, {1090, 742}, {1070, 723}
+};
+
+#define WALK_AREA(points) {points, sizeof(points) / sizeof(points[0])}
+static const struct {
+    const Vector2 *points;
+    int count;
+} walk_areas[] = {
+    WALK_AREA(entry_path), WALK_AREA(courtyard_path), WALK_AREA(depot_path),
+    WALK_AREA(maintenance_path), WALK_AREA(pergola_path), WALK_AREA(garden_loop_path), WALK_AREA(east_path),
+    WALK_AREA(irrigation_path)
+};
+#undef WALK_AREA
+
+static const Rectangle crossing = {899, 525, 160, 38};
 static const float passage_top = 525;
 static const float passage_bottom = 563;
 static const float interaction_radius = 55;
@@ -319,8 +377,9 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     }
     if (world->location == WORLD_EXTERIOR) {
         if (blocks(box, canal, world_bridge_open(world))) return previous;
-        for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
-            if (CheckCollisionPointRec(feet, exterior_paths[i])) return feet;
+        if (CheckCollisionPointRec(feet, crossing)) return feet;
+        for (unsigned int i = 0; i < sizeof(walk_areas) / sizeof(walk_areas[0]); i++)
+            if (CheckCollisionPointPoly(feet, walk_areas[i].points, walk_areas[i].count)) return feet;
         return previous;
     }
     return feet;
@@ -678,12 +737,12 @@ static void draw_tiled_exterior(const World *world, Texture2D atlas)
 {
     enum { TILE_SIZE = 32 };
     draw_ground_tiles(atlas, (Rectangle){0, 0, 16, 16}, exterior, TILE_SIZE);
-    for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++) {
-        Rectangle path = exterior_paths[i];
+    for (unsigned int i = 0; i < sizeof(fallback_paths) / sizeof(fallback_paths[0]); i++) {
+        Rectangle path = fallback_paths[i];
         DrawRectangleRec((Rectangle){path.x - 3, path.y - 3, path.width + 6, path.height + 6}, path_edge);
     }
-    for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
-        draw_ground_tiles(atlas, (Rectangle){16, 0, 16, 16}, exterior_paths[i], TILE_SIZE);
+    for (unsigned int i = 0; i < sizeof(fallback_paths) / sizeof(fallback_paths[0]); i++)
+        draw_ground_tiles(atlas, (Rectangle){16, 0, 16, 16}, fallback_paths[i], TILE_SIZE);
     draw_ground_tiles(atlas, (Rectangle){32, 0, 16, 16}, canal, TILE_SIZE);
     draw_canal_banks(atlas, TILE_SIZE);
     if (world_bridge_open(world)) {
@@ -740,7 +799,7 @@ static void draw_tiled_exterior(const World *world, Texture2D atlas)
 
 static void draw_exterior(const World *world, const WorldAssets *assets)
 {
-    if (assets->tiles.id) {
+    if (!assets->courtyard.id && assets->tiles.id) {
         draw_tiled_exterior(world, assets->tiles);
         return;
     }
@@ -749,8 +808,8 @@ static void draw_exterior(const World *world, const WorldAssets *assets)
                        exterior, (Vector2){0}, 0, WHITE);
     } else {
         DrawRectangleRec(exterior, (Color){164, 187, 125, 255});
-        for (unsigned int i = 0; i < sizeof(exterior_paths) / sizeof(exterior_paths[0]); i++)
-            DrawRectangleRec(exterior_paths[i], stone);
+        for (unsigned int i = 0; i < sizeof(fallback_paths) / sizeof(fallback_paths[0]); i++)
+            DrawRectangleRec(fallback_paths[i], stone);
         DrawRectangleRec(canal, water_color);
     }
 
@@ -763,10 +822,14 @@ static void draw_exterior(const World *world, const WorldAssets *assets)
         }
     }
 
-    draw_switch(DRAIN, "Dreno", world->drain_open);
-    draw_switch(UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
-    Vector2 valve = objects[VALVE].position;
-    DrawCircle((int)valve.x + 28, (int)valve.y - 24, 6, world->water ? LIME : ORANGE);
+    if (assets->courtyard.id && assets->tiles.id) {
+        draw_map_sprite(assets->tiles, (Rectangle){408, 316, 19, 23}, objects[UPPER_LIFT].position, 9);
+        DrawCircle(744, 538, 3, world->drain_open ? LIME : ORANGE);
+        DrawCircle(1194, 638, 3, world->water ? LIME : ORANGE);
+    } else {
+        draw_switch(DRAIN, "Dreno", world->drain_open);
+        draw_switch(UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
+    }
 }
 
 static void draw_interior(const World *world)
@@ -818,19 +881,32 @@ static void draw_interior(const World *world)
     if (world->location != WORLD_BASEMENT) draw_room_portal(INTERIOR_DOOR, "Voltar ao pátio", false);
 }
 
-static void draw_npc(Texture2D atlas, int sprite, Object object, float zoom)
+static void draw_npc(Texture2D atlas, int sprite, Vector2 base, Camera2D camera)
 {
-    Vector2 base = objects[object].position;
-    float scale = 2 / zoom;
-    DrawEllipse((int)base.x, (int)base.y, 9 * scale, 3 * scale, Fade(ink, 0.34f));
+    Vector2 screen = GetWorldToScreen2D(base, camera);
+    base = GetScreenToWorld2D((Vector2){roundf(screen.x), roundf(screen.y)}, camera);
+    float scale = 1 / camera.zoom;
+    DrawEllipse((int)roundf(base.x), (int)roundf(base.y), 14 * scale, 4 * scale, Fade(ink, 0.28f));
     if (atlas.id) {
-        Rectangle source = {32 * sprite, 384, 24, 25};
-        Rectangle destination = {base.x - 12 * scale, base.y - 25 * scale, 24 * scale, 25 * scale};
+        Rectangle source = {64 * sprite, 384, 48, 56};
+        Rectangle destination = {base.x - 24 * scale, base.y - 53 * scale, 48 * scale, 56 * scale};
         DrawTexturePro(atlas, source, destination, (Vector2){0}, 0, WHITE);
     } else {
-        DrawRectangleRec((Rectangle){base.x - 6 * scale, base.y - 13 * scale,
-                                     12 * scale, 13 * scale}, frame);
-        DrawCircleV((Vector2){base.x, base.y - 17 * scale}, 6 * scale, cream);
+        DrawRectangleRec((Rectangle){base.x - 12 * scale, base.y - 26 * scale,
+                                     24 * scale, 26 * scale}, frame);
+        DrawCircleV((Vector2){base.x, base.y - 34 * scale}, 12 * scale, cream);
+    }
+}
+
+void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet, Camera2D camera, bool foreground)
+{
+    Object speaking = world->dialogue_title ? nearby_object(world, feet) : OBJECT_COUNT;
+    for (Object npc = GARDENER; npc <= RESEARCHER; npc++) {
+        Vector2 base = objects[npc].position;
+        /* Em conversa, o treinador não deve cobrir quem está falando. */
+        bool in_front = npc == speaking || base.y > feet.y;
+        if (objects[npc].location == world->location && in_front == foreground)
+            draw_npc(assets->tiles, npc - GARDENER, base, camera);
     }
 }
 
@@ -848,20 +924,17 @@ static void draw_sign(Texture2D atlas, Object object)
 
 void world_draw(const World *world, const WorldAssets *assets, Vector2 feet)
 {
-    float zoom = world_camera(world).zoom;
     if (world->location == WORLD_EXTERIOR) {
         draw_exterior(world, assets);
-        draw_sign(assets->tiles, ENTRANCE_SIGN);
+        if (!assets->courtyard.id) draw_sign(assets->tiles, ENTRANCE_SIGN);
         draw_sign(assets->tiles, BRIDGE_SIGN);
-        draw_npc(assets->tiles, 0, GARDENER, zoom);
-        draw_npc(assets->tiles, 1, TECHNICIAN, zoom);
     } else {
         draw_interior(world);
-        if (world->location == WORLD_NURSERY) draw_npc(assets->tiles, 2, RESEARCHER, zoom);
     }
 
     Object nearby = nearby_object(world, feet);
-    if (!world->relay_panel_open && !world->dialogue_title && !world->completed && nearby != OBJECT_COUNT)
+    if (world->location != WORLD_EXTERIOR && !world->relay_panel_open && !world->dialogue_title &&
+        !world->completed && nearby != OBJECT_COUNT)
         draw_interaction_marker(nearby);
 }
 
@@ -941,23 +1014,22 @@ static void draw_relay_panel(const World *world)
 
 static void hud_card(Rectangle bounds, Color accent)
 {
-    DrawRectangleRec(bounds, Fade(ink, 0.94f));
-    DrawRectangleLinesEx(bounds, 1, Fade(accent, 0.65f));
-    DrawRectangle((int)bounds.x, (int)bounds.y, 4, (int)bounds.height, accent);
+    DrawRectangleRec((Rectangle){bounds.x + 2, bounds.y + 3, bounds.width, bounds.height}, Fade(ink, 0.25f));
+    DrawRectangleRec(bounds, Fade(ink, 0.92f));
+    DrawRectangleLinesEx(bounds, 1, Fade(accent, 0.45f));
 }
 
-static void draw_condition(int y, bool met, const char *label)
+static void draw_condition(int x, int y, bool met, const char *label)
 {
-    const int x = 864;
-    Color color = met ? LIME : ORANGE;
-    DrawRectangleLines(x, y + 2, 15, 15, color);
+    Color color = met ? (Color){170, 224, 145, 255} : (Color){246, 198, 115, 255};
+    DrawRectangleLines(x, y + 2, 13, 13, color);
     if (met) {
-        DrawLine(x + 3, y + 9, x + 6, y + 12, color);
-        DrawLine(x + 6, y + 12, x + 12, y + 5, color);
+        DrawLine(x + 3, y + 8, x + 5, y + 10, color);
+        DrawLine(x + 5, y + 10, x + 10, y + 5, color);
     } else {
-        DrawLine(x + 4, y + 9, x + 10, y + 9, color);
+        DrawLine(x + 4, y + 8, x + 9, y + 8, color);
     }
-    DrawText(label, x + 25, y, 18, cream);
+    DrawText(label, x + 22, y, 17, cream);
 }
 
 static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
@@ -969,14 +1041,19 @@ static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
     bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1270 && feet.y <= 475;
     if (!bridge && !nursery) return (Rectangle){0};
 
-    int top = world->location == WORLD_BRIDGE_CONTROL ? 460 : 69;
-    Rectangle card = {846, top, 410, bridge ? 154 : 181};
+    int top = 60;
+    Rectangle card = {916, top, 346, bridge ? 119 : 142};
+    int left = (int)card.x + 13;
+    int right = (int)(card.x + card.width) - 13;
     bool open = bridge ? world_bridge_open(world) : world_gate_open(world);
-    hud_card(card, open ? LIME : ORANGE);
-    DrawText(bridge ? "Ponte" : "Porta do viveiro", 863, top + 16, 22, cream);
+    Color status_color = open ? (Color){170, 224, 145, 255} : (Color){246, 198, 115, 255};
+    hud_card(card, status_color);
+    DrawText(bridge ? "Ponte" : "Porta do viveiro", left, top + 10, 21, cream);
     const char *status = bridge ? (open ? "Estendida" : "Recolhida") : (open ? "Aberta" : "Fechada");
-    DrawText(status, 1238 - MeasureText(status, 17), top + 19, 17, open ? LIME : ORANGE);
+    DrawText(status, right - MeasureText(status, 16), top + 13, 16, status_color);
+    DrawLine(left, top + 35, right, top + 35, Fade(stone, 0.26f));
 
+    const char *rule;
     if (bridge) {
         bool one_channel = world->north_channel != world->south_channel;
         int pressure = world_bridge_pressure(world);
@@ -984,19 +1061,17 @@ static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
             : world->north_channel ? "Dois canais abertos" : "Nenhum canal aberto";
         const char *level = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
             : pressure > BRIDGE_TARGET_PRESSURE ? "alta" : "correta";
-        draw_condition(top + 50, one_channel, channels);
-        draw_condition(top + 78, pressure == BRIDGE_TARGET_PRESSURE,
+        draw_condition(left, top + 44, one_channel, channels);
+        draw_condition(left, top + 67, pressure == BRIDGE_TARGET_PRESSURE,
                        TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, level));
-        DrawText(TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE),
-                 863, top + 121, 16, cream);
+        rule = TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE);
     } else {
-        draw_condition(119, world->water, world->water ? "Água liberada" : "Água fechada");
-        draw_condition(147, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
-        draw_condition(175, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
-        const char *rule = world->gate_unlocked ? "Trava acionada · porta liberada"
-                                              : "Água E Luz E NÃO Alarme";
-        DrawText(rule, 863, 218, 16, cream);
+        draw_condition(left, top + 44, world->water, world->water ? "Água liberada" : "Água fechada");
+        draw_condition(left, top + 67, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
+        draw_condition(left, top + 90, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
+        rule = world->gate_unlocked ? "Trava acionada · porta liberada" : "Água E Luz E NÃO Alarme";
     }
+    DrawText(rule, left, top + (int)card.height - 24, 16, stone);
     return card;
 }
 
@@ -1062,17 +1137,23 @@ static const char *interaction_hint(const World *world, Object object)
 static void draw_interaction_hint(const World *world, Object object, Rectangle challenge)
 {
     const char *hint = interaction_hint(world, object);
+    bool actionable = hint[0] == '[';
+    if (actionable) hint += 4; /* Remove o prefixo [E] da mensagem. */
     Vector2 position = GetWorldToScreen2D(objects[object].position, world_camera(world));
-    float width = MeasureText(hint, 18) + 28;
-    float left = position.x < GAME_SCREEN_WIDTH / 2.0f ? position.x + 48 : position.x - width - 48;
+    float width = MeasureText(hint, 17) + (actionable ? 55 : 24);
+    float left = position.x < GAME_SCREEN_WIDTH / 2.0f ? position.x + 42 : position.x - width - 42;
     Rectangle card = {
-        fminf(fmaxf(left, 24), GAME_SCREEN_WIDTH - 24 - width),
-        fminf(fmaxf(position.y - 78, 112), GAME_SCREEN_HEIGHT - 104), width, 36
+        roundf(fminf(fmaxf(left, 18), GAME_SCREEN_WIDTH - 18 - width)),
+        roundf(fminf(fmaxf(position.y - 71, 92), GAME_SCREEN_HEIGHT - 76)), width, 34
     };
     if (challenge.width > 0 && CheckCollisionRecs(card, challenge))
-        card.y = challenge.y + challenge.height + 10;
-    hud_card(card, hint[0] == '[' ? GOLD : ORANGE);
-    DrawText(hint, (int)card.x + 14, (int)card.y + 8, 18, cream);
+        card.x = challenge.x - width - 10;
+    hud_card(card, actionable ? stone : ORANGE);
+    if (actionable) {
+        DrawRectangle((int)card.x + 8, (int)card.y + 6, 23, 22, cream);
+        DrawText("E", (int)card.x + 15, (int)card.y + 9, 16, ink);
+    }
+    DrawText(hint, (int)card.x + (actionable ? 42 : 12), (int)card.y + 8, 17, cream);
 }
 
 static void draw_dialogue(const World *world)
@@ -1111,18 +1192,22 @@ void world_draw_interface(const World *world, Vector2 feet)
     }
 
     const Sector *sector = world->location == WORLD_EXTERIOR ? sector_at(feet) : &rooms[world->location];
-    hud_card((Rectangle){24, 20, 434, 80}, sector ? sector->floor : stone);
-    DrawText(sector ? sector->name : "Travessia", 42, 31, 25, cream);
-    DrawText(current_objective(world), 42, 66, 19, cream);
+    const char *area = sector ? sector->name : "Travessia";
+    const char *objective = current_objective(world);
+    int objective_width = (int)fmaxf(MeasureText(area, 16), MeasureText(objective, 21));
+    hud_card((Rectangle){18, 18, objective_width + 32, 61}, stone);
+    DrawText(area, 34, 27, 16, stone);
+    DrawText(objective, 34, 49, 21, cream);
 
-    hud_card((Rectangle){1102, 20, 154, 36}, stone);
-    DrawText(TextFormat("Pistas  %d/2", world->canal_note + world->alarm_note), 1118, 28, 18, cream);
+    hud_card((Rectangle){1139, 18, 123, 32}, stone);
+    DrawText("Pistas", 1151, 26, 16, stone);
+    DrawText(TextFormat("%d/2", world->canal_note + world->alarm_note), 1220, 25, 18, cream);
 
     Object object = nearby_object(world, feet);
     Rectangle challenge = draw_challenge(world, object, feet);
     if (object != OBJECT_COUNT) draw_interaction_hint(world, object, challenge);
 
-    hud_card((Rectangle){24, 668, 556, 32}, stone);
-    DrawText("WASD / Setas  Mover    SHIFT  Correr    E  Interagir    ESC  Menu",
-             39, 676, 16, cream);
+    const char *controls = "WASD / Setas  Mover   Shift  Correr   E  Interagir   Esc  Menu";
+    hud_card((Rectangle){18, 674, MeasureText(controls, 15) + 24, 28}, stone);
+    DrawText(controls, 30, 681, 15, stone);
 }
