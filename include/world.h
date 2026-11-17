@@ -25,6 +25,7 @@ typedef struct {
     Texture2D courtyard;
     Texture2D bridge_open;
     Texture2D tiles;
+    Texture2D maintenance_interior;
 } WorldAssets;
 
 typedef struct {

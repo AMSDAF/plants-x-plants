@@ -44,20 +44,20 @@ typedef struct {
 static const MapObject objects[OBJECT_COUNT] = {
     [VALVE] = {{1168, 644}, WORLD_EXTERIOR},
     [POWER] = {{640, 320}, WORLD_BASEMENT},
-    [ALARM] = {{445, 320}, WORLD_MAINTENANCE},
+    [ALARM] = {{445, 310}, WORLD_MAINTENANCE},
     [NORTH_CHANNEL] = {{450, 352}, WORLD_BRIDGE_CONTROL},
     [SOUTH_CHANNEL] = {{830, 352}, WORLD_BRIDGE_CONTROL},
     [DRAIN] = {{733, 555}, WORLD_EXTERIOR},
     [ALOE] = {{640, 320}, WORLD_DEPOT},
     [SUNFLOWER] = {{515, 340}, WORLD_NURSERY},
     [CANAL_NOTE] = {{1271, 401}, WORLD_EXTERIOR},
-    [ALARM_NOTE] = {{445, 460}, WORLD_MAINTENANCE},
+    [ALARM_NOTE] = {{537, 281}, WORLD_MAINTENANCE},
     [MAINTENANCE_DOOR] = {{243, 645}, WORLD_EXTERIOR},
     [DEPOT_DOOR] = {{278, 379}, WORLD_EXTERIOR},
     [NURSERY_DOOR] = {{1396, 330}, WORLD_EXTERIOR},
     [BRIDGE_CONTROL_DOOR] = {{810, 561}, WORLD_EXTERIOR},
     [INTERIOR_DOOR] = {{640, 565}, WORLD_MAINTENANCE},
-    [LOCKED_HATCH] = {{826, 320}, WORLD_MAINTENANCE},
+    [LOCKED_HATCH] = {{846, 416}, WORLD_MAINTENANCE},
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
     [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
     [LOWER_LIFT] = {{837, 410}, WORLD_BASEMENT},
@@ -197,6 +197,18 @@ static const Sector rooms[WORLD_LOCATION_COUNT] = {
     [WORLD_BRIDGE_CONTROL] = {{280, 191, 720, 420}, "Controle da ponte", {163, 199, 186, 255}, {59, 114, 109, 255}}
 };
 
+/* Pegadas das mobílias da oficina, alinhadas à ilustração no espaço do mapa. */
+static const Rectangle maintenance_furniture[] = {
+    {307, 260, 56, 91},  /* Armário de vasos à esquerda. */
+    {400, 277, 90, 71},  /* Painel e bancada de parede. */
+    {580, 316, 146, 39}, /* Prateleira central. */
+    {870, 260, 96, 97},  /* Caldeira e tubulações. */
+    {302, 392, 146, 52}, /* Bancada de trabalho. */
+    {361, 449, 38, 41},  /* Banco. */
+    {306, 495, 75, 62},  /* Caixas inferiores. */
+    {917, 423, 58, 132}  /* Estante lateral. */
+};
+
 static Texture2D load_map_texture(const char *path, int width, int height)
 {
     if (!FileExists(path)) return (Texture2D){0};
@@ -214,7 +226,9 @@ void world_assets_load(WorldAssets *assets)
     *assets = (WorldAssets){
         .courtyard = load_map_texture("assets/maps/botanical_courtyard.png", MAP_WIDTH, MAP_HEIGHT),
         .bridge_open = load_map_texture("assets/maps/botanical_bridge.png", 158, 113),
-        .tiles = load_map_texture("assets/maps/botanical_tiles.png", 512, 512)
+        .tiles = load_map_texture("assets/maps/botanical_tiles.png", 512, 512),
+        .maintenance_interior = load_map_texture(
+            "assets/maps/maintenance_house_interior_v2.png", 1672, 941)
     };
 }
 
@@ -223,6 +237,7 @@ void world_assets_unload(WorldAssets *assets)
     if (assets->courtyard.id) UnloadTexture(assets->courtyard);
     if (assets->bridge_open.id) UnloadTexture(assets->bridge_open);
     if (assets->tiles.id) UnloadTexture(assets->tiles);
+    if (assets->maintenance_interior.id) UnloadTexture(assets->maintenance_interior);
     *assets = (WorldAssets){0};
 }
 
@@ -374,6 +389,10 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
         if (objects[npc].location != world->location) continue;
         Vector2 base = objects[npc].position;
         if (CheckCollisionRecs(box, (Rectangle){base.x - 8, base.y - 4, 16, 8})) return previous;
+    }
+    if (world->location == WORLD_MAINTENANCE) {
+        for (unsigned int i = 0; i < sizeof(maintenance_furniture) / sizeof(maintenance_furniture[0]); i++)
+            if (CheckCollisionRecs(box, maintenance_furniture[i])) return previous;
     }
     if (world->location == WORLD_EXTERIOR) {
         if (blocks(box, canal, world_bridge_open(world))) return previous;
@@ -832,21 +851,53 @@ static void draw_exterior(const World *world, const WorldAssets *assets)
     }
 }
 
-static void draw_interior(const World *world)
+static void draw_maintenance_details(const World *world)
+{
+    /* Atualiza os indicadores desenhados sobre o painel e a escotilha da arte. */
+    Color alarm_color = world->alarm ? (Color){207, 68, 48, 255}
+                                     : (Color){91, 190, 78, 255};
+    DrawCircle(433, 267, 7, (Color){45, 57, 48, 255});
+    DrawCircle(433, 267, 4, alarm_color);
+    DrawCircle(432, 266, 1, (Color){255, 238, 178, 255});
+
+    if (world->alarm_note) {
+        DrawCircle(558, 264, 5, (Color){94, 167, 80, 255});
+        DrawCircle(557, 263, 2, (Color){210, 238, 155, 255});
+    }
+
+    Color hatch_color = world->maintenance_key ? (Color){91, 190, 78, 255}
+                                               : (Color){214, 139, 55, 255};
+    DrawCircle(850, 410, 6, (Color){45, 57, 48, 255});
+    DrawCircle(850, 410, 3, hatch_color);
+}
+
+static void draw_interior(const World *world, const WorldAssets *assets)
 {
     const Sector *room = &rooms[world->location];
     Rectangle b = room->bounds;
-    draw_sector(room);
-    DrawRectangleRec((Rectangle){b.x, b.y, b.width, ROOM_HEADER_HEIGHT}, room->trim);
-    DrawRectangle((int)b.x, (int)b.y + ROOM_HEADER_HEIGHT - 5, (int)b.width, 5, Fade(ink, 0.55f));
-    DrawRectangle(610, 261, 60, 347, Fade(stone, 0.62f));
+
+    if (world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id) {
+        /* Recorta a margem preta da referência e enquadra a sala no mapa. */
+        DrawTexturePro(assets->maintenance_interior,
+                       (Rectangle){84, 13, 1504, 907}, b, (Vector2){0}, 0, WHITE);
+        draw_maintenance_details(world);
+    } else {
+        draw_sector(room);
+        DrawRectangleRec((Rectangle){b.x, b.y, b.width, ROOM_HEADER_HEIGHT}, room->trim);
+        DrawRectangle((int)b.x, (int)b.y + ROOM_HEADER_HEIGHT - 5, (int)b.width, 5,
+                      Fade(ink, 0.55f));
+        DrawRectangle(610, 261, 60, 347, Fade(stone, 0.62f));
+    }
 
     switch (world->location) {
         case WORLD_MAINTENANCE:
-            draw_switch(ALARM, "Painel do alarme", world->alarm);
-            draw_note(ALARM_NOTE, "Pista da cabine", world->alarm_note);
-            draw_room_portal(LOCKED_HATCH, world->maintenance_key ? "Escotilha" : "Escotilha trancada",
-                             !world->maintenance_key);
+            if (!assets->maintenance_interior.id) {
+                draw_switch(ALARM, "Painel do alarme", world->alarm);
+                draw_note(ALARM_NOTE, "Pista da cabine", world->alarm_note);
+                draw_room_portal(LOCKED_HATCH,
+                                 world->maintenance_key ? "Escotilha" : "Escotilha trancada",
+                                 !world->maintenance_key);
+            }
             break;
         case WORLD_DEPOT:
             for (int i = 0; i < 3; i++) {
@@ -878,7 +929,9 @@ static void draw_interior(const World *world)
             break;
         default: break;
     }
-    if (world->location != WORLD_BASEMENT) draw_room_portal(INTERIOR_DOOR, "Voltar ao pátio", false);
+    if (world->location != WORLD_BASEMENT &&
+        !(world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id))
+        draw_room_portal(INTERIOR_DOOR, "Voltar ao pátio", false);
 }
 
 static void draw_npc(Texture2D atlas, int sprite, Vector2 base, Camera2D camera)
@@ -929,7 +982,7 @@ void world_draw(const World *world, const WorldAssets *assets, Vector2 feet)
         if (!assets->courtyard.id) draw_sign(assets->tiles, ENTRANCE_SIGN);
         draw_sign(assets->tiles, BRIDGE_SIGN);
     } else {
-        draw_interior(world);
+        draw_interior(world, assets);
     }
 
     Object nearby = nearby_object(world, feet);
