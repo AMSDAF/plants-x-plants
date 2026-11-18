@@ -112,7 +112,7 @@ static void check_states(Game *game)
     assert(blocked.state == HUD_INTERACTION_BLOCKED);
     assert(strcmp(blocked.context, "Escotilha de manutenção") == 0);
     assert(blocked.marker_anchor.x == 846);
-    assert(blocked.marker_anchor.y <= game->player.feet.y-58);
+    assert(blocked.marker_anchor.y <= game->player.feet.y-58/world_camera(world).zoom);
     assert(strstr(blocked.message, "trancada") && !strstr(blocked.message, "[E]"));
     World before = *world;
     world_interact(world, &game->player.feet);
@@ -134,9 +134,9 @@ static void check_states(Game *game)
     check_prompt(&game->ui, none);
 
     world->alarm_note = false;
-    Vector2 shared = {490, 285};
+    Vector2 shared = {495, 310};
     HudInteraction selected = world_interaction_view(world, shared);
-    assert(selected.target.x == 537 && selected.target.y == 281);
+    assert(selected.target.x == 537 && selected.target.y == 300);
     world_interact(world, &shared);
     assert(world->alarm_note && world->alarm); /* E atingiu a mesma pista indicada, não o alarme próximo. */
 
@@ -216,7 +216,7 @@ int main(void)
         {"marker_nursery", WORLD_EXTERIOR, {1396, 330}},
         {"marker_bridge", WORLD_EXTERIOR, {810, 561}},
         {"marker_npc", WORLD_EXTERIOR, {630, 507}},
-        {"marker_guard", WORLD_DEPOT, {640, 320}},
+        {"marker_guard", WORLD_DEPOT, {640, 420}},
         {"marker_power", WORLD_BASEMENT, {640, 320}}
     };
     for (unsigned int i = 0; i < sizeof(marker_samples)/sizeof(marker_samples[0]); i++) {

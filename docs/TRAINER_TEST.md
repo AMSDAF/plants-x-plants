@@ -13,8 +13,8 @@ Somente quatro PNGs de personagem permanecem em `assets/sprites/trainers/`:
 
 Os atlas botânicos têm 768 × 1024 pixels: três poses por direção em células
 de 256 × 256. As linhas são sul, oeste, leste e norte; pés na linha 240.
-A escala de 0,23 e o filtro pontual preservam o tamanho aparente, inclusive
-nos interiores com zoom. Os ciclos e o movimento da exploração foram mantidos.
+A escala visual é 0,23 no exterior e 0,36 nos interiores, conforme a alteração
+de interiores integrada do remoto. O desenho compensa o zoom da câmera e usa filtro pontual. Os ciclos e o movimento da exploração foram mantidos.
 Sem atlas válido, um marcador geométrico preserva a possibilidade de jogar.
 
 Os retratos usam quatro poses, tempos e limites corporais próprios; consulte

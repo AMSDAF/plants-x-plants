@@ -112,3 +112,20 @@ com progresso após derrota, o acesso ao viveiro e a coleta de pistas.
 Também valida a solução única entre as 256 configurações da central, o
 avanço guiado, o retorno a uma regra quebrada e a conclusão.
 As capturas ficam em `build/name_entry_preview/`.
+
+## Integração dos interiores
+
+O commit de interiores introduziu colisores e posições próprios para cada sala,
+com personagens em escala visual 0,36 e enquadramento reduzido. O exterior
+conserva a caixa dos pés de 16 × 8 pixels; os interiores usam 24 × 14 pixels.
+Os marcadores acompanham as posições atualizadas dos controles, pistas e guardiões.
+
+Os recursos opcionais `depot_interior.png`, `basement_interior.png`,
+`bridge_control_interior.png` e `nursery_interior.png` em `assets/maps/`, e
+`aloe_guard.png` e `sunflower_guard.png` em `assets/sprites/`, são referenciados
+pelo código de interiores, mas não acompanharam o commit remoto integrado.
+Enquanto estiverem ausentes, o jogo desenha as salas e os guardiões com as
+formas de reserva. A manutenção continua usando sua ilustração existente.
+
+A validação usa caminhos livres diante dos móveis sólidos e preserva os testes
+de bloqueio, acesso aos controles, vitória/derrota e progressão dos encontros.

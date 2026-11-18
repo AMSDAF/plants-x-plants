@@ -81,10 +81,10 @@ static void check_botanical_size(const PlayerAssets *assets)
             Image sprite = LoadImageFromTexture(target.texture);
             sizes[view] = GetImageAlphaBorder(sprite, 0.5f);
             UnloadImage(sprite);
-            assert(sizes[view].height >= 48 && sizes[view].height <= 55);
+            assert(sizes[view].height >= (view ? 75 : 48) && sizes[view].height <= (view ? 87 : 55));
         }
-        assert(fabsf(sizes[0].width - sizes[1].width) <= 1.0f);
-        assert(fabsf(sizes[0].height - sizes[1].height) <= 1.0f);
+        assert(fabsf(sizes[0].width * (0.36f / 0.23f) - sizes[1].width) <= 2.0f);
+        assert(fabsf(sizes[0].height * (0.36f / 0.23f) - sizes[1].height) <= 2.0f);
     }
     UnloadRenderTexture(target);
 }

@@ -443,8 +443,10 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     if (feet.y < b.y + edge_margin) feet.y = b.y + edge_margin;
     if (feet.y > b.y + b.height - edge_margin) feet.y = b.y + b.height - edge_margin;
 
-    /* Pega mais a largura real do personagem para nÃ£o atravessar caixas pelo canto. */
-    Rectangle box = {feet.x - 12, feet.y - 7, 24, 14};
+    /* Conserva os pés do exterior; os interiores usam o explorador ampliado. */
+    Rectangle box = world->location == WORLD_EXTERIOR
+        ? (Rectangle){feet.x - 8, feet.y - 4, 16, 8}
+        : (Rectangle){feet.x - 12, feet.y - 7, 24, 14};
     const Rectangle *furniture = NULL;
     size_t furniture_count = 0;
     switch (world->location) {
@@ -1395,15 +1397,15 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
     /* Centro superior visível, independente do ponto usado para alcance e colisão. */
     static const Vector2 marker_anchors[OBJECT_COUNT] = {
         [VALVE]={1168, 615}, [POWER]={640, 301}, [ALARM]={433, 250},
-        [NORTH_CHANNEL]={450, 333}, [SOUTH_CHANNEL]={830, 333}, [DRAIN]={733, 530},
-        [ALOE]={640, 275}, [SUNFLOWER]={515, 295}, [CANAL_NOTE]={1273, 360},
-        [ALARM_NOTE]={540, 254}, [MAINTENANCE_DOOR]={246, 574},
+        [NORTH_CHANNEL]={539, 331}, [SOUTH_CHANNEL]={742, 331}, [DRAIN]={733, 530},
+        [ALOE]={640, 375}, [SUNFLOWER]={640, 375}, [CANAL_NOTE]={1273, 360},
+        [ALARM_NOTE]={540, 273}, [MAINTENANCE_DOOR]={246, 574},
         [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
         [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},
         [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
-        [UPPER_LIFT]={430, 434}, [LOWER_LIFT]={837, 391}, [RELAY_PANEL]={790, 321},
+        [UPPER_LIFT]={430, 434}, [LOWER_LIFT]={900, 426}, [RELAY_PANEL]={782, 296},
         [ENTRANCE_SIGN]={483, 747}, [BRIDGE_SIGN]={771, 565},
-        [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={882, 424}
+        [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
     };
     Vector2 anchor = marker_anchors[object];
     if (object == INTERIOR_DOOR && world->location != WORLD_MAINTENANCE) anchor.y = 539;
