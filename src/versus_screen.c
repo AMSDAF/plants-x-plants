@@ -1,5 +1,6 @@
 /* Apresenta modos Versus sem iniciar seleção de plantas ou combate. */
 #include "versus_screen.h"
+#include "ui_theme.h"
 #include "selection_ui.h"
 #include "versus_grass_data.h"
 #include "versus_foliage_data.h"
@@ -251,7 +252,7 @@ static void draw_characters(const VersusScreen *screen, const VersusAssets *asse
     }
 }
 
-void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source)
+void versus_screen_draw(const UiTheme *ui, const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source)
 {
     versus_background_draw(assets,screen->elapsed,screen->cloud_time);
     if (logo.id && logo_source.height > 0) {
@@ -264,7 +265,7 @@ void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, 
     }
     selection_ui_panel((Rectangle){260,160,760,64},4,SELECTION_INK);
     selection_ui_panel((Rectangle){264,164,752,56},4,SELECTION_CREAM);
-    selection_ui_text("Escolha o modo versus",640,176,36,SELECTION_INK);
+    selection_ui_text(ui, "Escolha o modo versus",640,176,36,SELECTION_INK);
     for (int i = 0; i < 2; i++) {
         Rectangle card = control_bounds(i);
         bool selected = screen->selected == (VersusMode)i;
@@ -281,13 +282,13 @@ void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, 
             source.height *= texture.height/941.0f;
             DrawTexturePro(texture, source, (Rectangle){card.x+24,card.y+32,368,186},
                            (Vector2){0},0,WHITE);
-        } else selection_ui_text(i == 0 ? "Computador" : "Dois jogadores",
+        } else selection_ui_text(ui, i == 0 ? "Computador" : "Dois jogadores",
                                   (int)(card.x+card.width/2),(int)card.y+120,26,SELECTION_INK);
         if (selected) selection_ui_accents(card,1);
         const char *label = i == 0 ? "VS CPU" : "VS PLAYER";
         int center = (int)(card.x+card.width/2);
-        selection_ui_text(label,center,502,30,SELECTION_INK);
-        if (selected) selection_ui_cursor(center-MeasureText(label,30)/2-12,517,screen->elapsed,1);
+        selection_ui_text(ui, label,center,502,30,SELECTION_INK);
+        if (selected) selection_ui_cursor(center-ui_measure(ui, label,30)/2-12,517,screen->elapsed,1);
     }
     for (int i = CONFIRM_CONTROL; i <= BACK_CONTROL; i++) {
         Rectangle bounds = control_bounds(i);
@@ -297,9 +298,9 @@ void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, 
         Color fill = pressed ? (Color){212,211,155,255} : hover ? (Color){232,227,176,255} : SELECTION_CREAM;
         selection_ui_panel((Rectangle){bounds.x+4,bounds.y+4,bounds.width-8,bounds.height-8},4,fill);
         if (hover) DrawRectangle((int)bounds.x+16,(int)bounds.y+12,4,28,SELECTION_ORANGE);
-        selection_ui_text(i == CONFIRM_CONTROL ? "Confirmar" : "Voltar",
+        selection_ui_text(ui, i == CONFIRM_CONTROL ? "Confirmar" : "Voltar",
                           (int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,SELECTION_INK);
     }
     selection_ui_panel((Rectangle){224,688,832,28},4,SELECTION_INK);
-    selection_ui_text("Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar",640,692,20,SELECTION_CREAM);
+    selection_ui_text(ui, "Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar",640,692,20,SELECTION_CREAM);
 }

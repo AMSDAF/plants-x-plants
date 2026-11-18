@@ -217,6 +217,11 @@ Na central, use **1–8** ou clique nos relés e pressione **Enter** para valida
 uma regra por vez. Se uma regra anterior falhar, a central volta para ela.
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
+O HUD de exploração usa painéis creme e uma seta para o alvo. A instrução de
+interação aparece no centro inferior; E só é indicado quando a ação está
+disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
+nas telas, sem instalação no Windows. Detalhes em [HUD_IMPLEMENTATION.md](docs/HUD_IMPLEMENTATION.md).
+
 Os quatro quadrantes melhorados estão integrados ao mapa completo, com
 3010 × 1694 pixels. O background original foi preservado. Veja a resolução real,
 o preparo e as verificações em [COURTYARD_DETAIL.md](docs/COURTYARD_DETAIL.md).

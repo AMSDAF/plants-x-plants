@@ -1,5 +1,6 @@
 /* Desenha a arena provisória e encaminha comandos ao motor de combate. */
 #include "battle_screen.h"
+#include "ui_theme.h"
 
 #include "ai.h"
 #include "plant_data.h"
@@ -216,24 +217,24 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     return BATTLE_SCREEN_NONE;
 }
 
-static void draw_button(Rectangle bounds, const char *label, bool enabled)
+static void draw_button(const UiTheme *ui, Rectangle bounds, const char *label, bool enabled)
 {
     bool hovered = enabled && CheckCollisionPointRec(GetMousePosition(), bounds);
     DrawRectangleRec(bounds, enabled ? (hovered ? GOLD : paper) : LIGHTGRAY);
     DrawRectangleLinesEx(bounds, 2, ink);
-    DrawText(label, (int)bounds.x + 12, (int)bounds.y + ((int)bounds.height - 20) / 2,
+    ui_text(ui, label, (int)bounds.x + 12, (int)bounds.y + ((int)bounds.height - 20) / 2,
              20, enabled ? ink : DARKGRAY);
 }
 
-static void draw_team_selection(const BattleScreen *screen)
+static void draw_team_selection(const UiTheme *ui, const BattleScreen *screen)
 {
     const Team *team = screen->setup_side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
-    DrawText("Monte sua equipe", 64, 42, 40, ink);
-    DrawText(screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
-    DrawText(TextFormat("%s  ·  %d/%d plantas no grupo", side_name(screen, screen->setup_side),
+    ui_text(ui, "Monte sua equipe", 64, 42, 40, ink);
+    ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
+    ui_text(ui, TextFormat("%s  ·  %d/%d plantas no grupo", side_name(screen, screen->setup_side),
                         team->count, MAX_TEAM_SIZE),
              64, 104, 26, ink);
-    DrawText("Escolha uma vaga abaixo, depois clique numa planta ou use as setas e Espaço.",
+    ui_text(ui, "Escolha uma vaga abaixo, depois clique numa planta ou use as setas e Espaço.",
              64, 149, 20, ink);
 
     for (int i = 0; i < SPECIES_COUNT; i++) {
@@ -245,28 +246,28 @@ static void draw_team_selection(const BattleScreen *screen)
         DrawRectangleRec(card, focused ? GOLD : paper);
         DrawRectangleLinesEx(card, focused ? 3 : 2, ink);
         DrawCircle(x + 22, y + 25, 9, species_colors[i]);
-        DrawText(species->name_pt, x + 39, y + 14, 22, ink);
-        DrawText(TextFormat("HP %d  ATQ %d  DEF %d", species->base_hp, species->base_attack,
+        ui_text(ui, species->name_pt, x + 39, y + 14, 22, ink);
+        ui_text(ui, TextFormat("HP %d  ATQ %d  DEF %d", species->base_hp, species->base_attack,
                             species->base_defense), x + 14, y + 48, 17, ink);
         for (int slot = 0; slot < team->count; slot++) {
             if (team->plants[slot].id != i) continue;
             const char *role = slot == 0 ? "ATIVA" : TextFormat("RESERVA %d", slot);
-            DrawText(role, x + 14, y + 72, 15, ink);
+            ui_text(ui, role, x + 14, y + 72, 15, ink);
         }
     }
     for (int i = 0; i < MAX_TEAM_SIZE; i++) {
         const char *name = i < team->count ? team->plants[i].name_pt : "Vaga livre";
         Rectangle bounds = team_slot_button(i);
-        draw_button(bounds, TextFormat("%s  %s", switch_labels[i], name), i <= team->count);
+        draw_button(ui, bounds, TextFormat("%s  %s", switch_labels[i], name), i <= team->count);
         if (i == screen->team_slot) DrawRectangleLinesEx(bounds, 4, ORANGE);
     }
-    draw_button(setup_confirm, "ENTER  Confirmar equipe", true);
-    draw_button(remove_reserve, "BACKSPACE  Remover reserva",
+    draw_button(ui, setup_confirm, "ENTER  Confirmar equipe", true);
+    draw_button(ui, remove_reserve, "BACKSPACE  Remover reserva",
                 team->count > MIN_VERSUS_TEAM_SIZE && screen->team_slot > 0 && screen->team_slot < team->count);
     const char *hint = screen->team_slot == team->count
         ? "Escolha uma espécie que ainda não está no grupo."
         : "A primeira planta começa ativa. As demais ficam na reserva.";
-    DrawText(hint, 64, 676, 19, ink);
+    ui_text(ui, hint, 64, 676, 19, ink);
 }
 
 static const char *truth(int value)
@@ -274,43 +275,43 @@ static const char *truth(int value)
     return value ? "V" : "F";
 }
 
-static void draw_setup(const BattleScreen *screen)
+static void draw_setup(const UiTheme *ui, const BattleScreen *screen)
 {
     LogicFormula formula = screen->draft;
     LogicEvaluation value = Battle_EvaluateFormula(&screen->battle, screen->setup_side, formula);
     const Move *move = Battle_LogicMove(formula.operator);
 
-    DrawText("Monte seu próprio golpe", 64, 42, 40, ink);
-    DrawText(screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
-    DrawText(TextFormat("Montagem de %s", side_name(screen, screen->setup_side)), 64, 110, 28, ink);
-    DrawText("Escolha duas condições diferentes e combine com um operador.", 64, 158, 22, ink);
-    DrawText("Condição P", 64, 196, 20, ink);
-    DrawText("Operador", 480, 196, 20, ink);
-    DrawText("Condição Q", 696, 196, 20, ink);
-    draw_button(setup_left, TextFormat("Q  %s", conditions[formula.left]), true);
-    draw_button(setup_operator, TextFormat("[E]  %s", operators[formula.operator]), true);
-    draw_button(setup_right, TextFormat("W  %s", conditions[formula.right]), true);
+    ui_text(ui, "Monte seu próprio golpe", 64, 42, 40, ink);
+    ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
+    ui_text(ui, TextFormat("Montagem de %s", side_name(screen, screen->setup_side)), 64, 110, 28, ink);
+    ui_text(ui, "Escolha duas condições diferentes e combine com um operador.", 64, 158, 22, ink);
+    ui_text(ui, "Condição P", 64, 196, 20, ink);
+    ui_text(ui, "Operador", 480, 196, 20, ink);
+    ui_text(ui, "Condição Q", 696, 196, 20, ink);
+    draw_button(ui, setup_left, TextFormat("Q  %s", conditions[formula.left]), true);
+    draw_button(ui, setup_operator, TextFormat("[E]  %s", operators[formula.operator]), true);
+    draw_button(ui, setup_right, TextFormat("W  %s", conditions[formula.right]), true);
 
     DrawRectangle(64, 319, 1152, 197, paper);
-    DrawText(TextFormat("P %s Q", operators[formula.operator]), 86, 341, 33, ink);
-    DrawText(operator_rules[formula.operator], 86, 391, 24, ink);
-    DrawText(TextFormat("Poder %d  ·  Precisão %d%%", move->power, move->accuracy), 86, 433, 22, ink);
-    DrawText(TextFormat("Com as equipes no início: %s %s %s = %s",
+    ui_text(ui, TextFormat("P %s Q", operators[formula.operator]), 86, 341, 33, ink);
+    ui_text(ui, operator_rules[formula.operator], 86, 391, 24, ink);
+    ui_text(ui, TextFormat("Poder %d  ·  Precisão %d%%", move->power, move->accuracy), 86, 433, 22, ink);
+    ui_text(ui, TextFormat("Com as equipes no início: %s %s %s = %s",
                         truth(value.left), operators[formula.operator], truth(value.right),
                         truth(value.result)), 86, 471, 22, ink);
     if (screen->campaign_battle) {
         LogicFormula rival = screen->battle.formulas[1];
-        DrawText(TextFormat("Golpe do guardião: %s %s %s", conditions[rival.left],
+        ui_text(ui, TextFormat("Golpe do guardião: %s %s %s", conditions[rival.left],
                             operators[rival.operator], conditions[rival.right]), 64, 548, 18, ink);
     }
-    draw_button(setup_confirm, "ENTER  Confirmar fórmula", true);
+    draw_button(ui, setup_confirm, "ENTER  Confirmar fórmula", true);
 }
 
-static void draw_plant(const Plant *plant, int x, int y)
+static void draw_plant(const UiTheme *ui, const Plant *plant, int x, int y)
 {
     DrawEllipse(x, y + 56, 73, 14, Fade(ink, 0.25f));
     if (!Plant_IsAlive(plant)) {
-        DrawText("Derrotada", x - 49, y + 17, 20, ink);
+        ui_text(ui, "Derrotada", x - 49, y + 17, 20, ink);
         return;
     }
 
@@ -345,37 +346,37 @@ static void draw_plant(const Plant *plant, int x, int y)
     }
 }
 
-static void draw_team(const Team *team, const char *name, int x, bool has_turn)
+static void draw_team(const UiTheme *ui, const Team *team, const char *name, int x, bool has_turn)
 {
     const Plant *active = &team->plants[team->active_index];
     float hp_fraction = (float)active->current_hp / active->max_hp;
     Rectangle panel = {x, 96, 544, 337};
     DrawRectangleRec(panel, paper);
     DrawRectangleLinesEx(panel, has_turn ? 5 : 2, has_turn ? ORANGE : ink);
-    DrawText(name, x + 20, 115, 25, ink);
-    DrawText(TextFormat("%s  |  %d/%d HP", active->name_pt, active->current_hp, active->max_hp),
+    ui_text(ui, name, x + 20, 115, 25, ink);
+    ui_text(ui, TextFormat("%s  |  %d/%d HP", active->name_pt, active->current_hp, active->max_hp),
              x + 20, 151, 20, ink);
     DrawRectangle(x + 20, 182, 504, 12, LIGHTGRAY);
     DrawRectangle(x + 20, 182, (int)(504 * hp_fraction), 12, hp_fraction > 0.25f ? DARKGREEN : RED);
-    draw_plant(active, x + 272, 284);
+    draw_plant(ui, active, x + 272, 284);
 
     for (int i = 0; i < team->count; i++) {
         const Plant *plant = &team->plants[i];
         int slot_x = x + 20 + i * 126;
-        DrawText(plant->name_pt, slot_x, 375, 18, ink);
-        DrawText(TextFormat("%d/%d%s", plant->current_hp, plant->max_hp,
+        ui_text(ui, plant->name_pt, slot_x, 375, 18, ink);
+        ui_text(ui, TextFormat("%d/%d%s", plant->current_hp, plant->max_hp,
                             i == team->active_index ? " · ativa" : ""),
                  slot_x, 399, 16, ink);
     }
 }
 
-void battle_screen_draw(const BattleScreen *screen)
+void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen)
 {
     const BattleState *battle = &screen->battle;
     ClearBackground((Color){210, 232, 195, 255});
     if (screen->setup_side >= 0) {
-        if (screen->choosing_team) draw_team_selection(screen);
-        else draw_setup(screen);
+        if (screen->choosing_team) draw_team_selection(ui, screen);
+        else draw_setup(ui, screen);
         return;
     }
 
@@ -384,46 +385,46 @@ void battle_screen_draw(const BattleScreen *screen)
     bool ended = battle_over(battle);
     bool cpu = cpu_turn(screen);
 
-    DrawText(screen->campaign_battle ? "Batalha na estufa" : "Arena Versus", 64, 29, 38, ink);
-    DrawText(screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
+    ui_text(ui, screen->campaign_battle ? "Batalha na estufa" : "Arena Versus", 64, 29, 38, ink);
+    ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
 
-    draw_team(&battle->player_team, side_name(screen, 0), 64, !ended && battle->current_turn == 0);
-    draw_team(&battle->enemy_team, side_name(screen, 1), 672, !ended && battle->current_turn == 1);
+    draw_team(ui, &battle->player_team, side_name(screen, 0), 64, !ended && battle->current_turn == 0);
+    draw_team(ui, &battle->enemy_team, side_name(screen, 1), 672, !ended && battle->current_turn == 1);
 
     DrawRectangle(64, 450, 1152, 42, ink);
-    DrawText(battle->last_message, 80, 461, 20, paper);
+    ui_text(ui, battle->last_message, 80, 461, 20, paper);
 
     if (ended) {
         int winner = battle->state == BATTLE_STATE_PLAYER_WIN ? 0 : 1;
-        DrawText(TextFormat("%s venceu!", side_name(screen, winner)), 64, 511, 30, ink);
-        draw_button(restart_button, screen->campaign_battle ? "ENTER  Estufa" : "ENTER  Reiniciar", true);
-        if (!screen->campaign_battle) draw_button(menu_button, "M  Menu principal", true);
+        ui_text(ui, TextFormat("%s venceu!", side_name(screen, winner)), 64, 511, 30, ink);
+        draw_button(ui, restart_button, screen->campaign_battle ? "ENTER  Estufa" : "ENTER  Reiniciar", true);
+        if (!screen->campaign_battle) draw_button(ui, menu_button, "M  Menu principal", true);
         return;
     }
 
     const char *side = side_name(screen, battle->current_turn);
     if (battle->state == BATTLE_STATE_REPLACEMENT) {
-        DrawText(TextFormat("%s precisa escolher uma reserva.", side), 64, 511, 26, ink);
+        ui_text(ui, TextFormat("%s precisa escolher uma reserva.", side), 64, 511, 26, ink);
     } else {
-        DrawText(TextFormat("Turno de %s%s", side, cpu ? " · escolhendo..." : ""), 64, 511, 26, ink);
+        ui_text(ui, TextFormat("Turno de %s%s", side, cpu ? " · escolhendo..." : ""), 64, 511, 26, ink);
         for (int i = 0; i < MAX_MOVES; i++) {
             const Move *move = &active->moves[i];
-            draw_button(move_button(i),
+            draw_button(ui, move_button(i),
                         TextFormat("%d  %s  %d%%", i + 1, move->name, move->accuracy), !cpu);
         }
         LogicFormula formula = battle->formulas[battle->current_turn];
         LogicEvaluation value = Battle_EvaluateFormula(battle, battle->current_turn, formula);
         const Move *move = Battle_LogicMove(formula.operator);
-        draw_button(logic_button,
+        draw_button(ui, logic_button,
                     TextFormat("3  %s  ·  Poder %d  ·  %s %s %s = %s", move->name, move->power,
                                truth(value.left), operators[formula.operator], truth(value.right),
                                truth(value.result)), !cpu && value.result);
-        DrawText(TextFormat("P (%s): %s", truth(value.left), conditions[formula.left]), 634, 510, 18, ink);
-        DrawText(TextFormat("Q (%s): %s", truth(value.right), conditions[formula.right]), 634, 534, 18, ink);
+        ui_text(ui, TextFormat("P (%s): %s", truth(value.left), conditions[formula.left]), 634, 510, 18, ink);
+        ui_text(ui, TextFormat("Q (%s): %s", truth(value.right), conditions[formula.right]), 634, 534, 18, ink);
     }
 
     for (int i = 0; i < team->count; i++) {
-        draw_button(switch_button(i),
+        draw_button(ui, switch_button(i),
                     TextFormat("%s  Trocar: %s", switch_labels[i], team->plants[i].name_pt),
                     !cpu && Battle_CanSwitch(battle, i));
     }

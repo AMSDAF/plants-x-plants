@@ -1,5 +1,6 @@
 /* Carrega os atlas preparados e controla o treinador ancorado pelos pés. */
 #include "player.h"
+#include "ui_theme.h"
 #include <math.h>
 
 enum { BOTANICAL_CELL = 256, BOTANICAL_ANCHOR_Y = 240 };
@@ -112,7 +113,7 @@ void player_update(Player *player, const World *world, float dt)
     player->moving = moved;
 }
 
-void player_draw(const Player *player, const PlayerAssets *assets, Camera2D camera)
+void player_draw(const UiTheme *ui, const Player *player, const PlayerAssets *assets, Camera2D camera)
 {
     Texture2D texture = assets->sheets[player->trainer];
     bool experimental = player->trainer == TRAINER_MALE && player->moving
@@ -153,7 +154,7 @@ void player_draw(const Player *player, const PlayerAssets *assets, Camera2D came
         if (player->facing == FACING_NORTH) tip.y -= 20;
         if (player->facing == FACING_SOUTH) tip.y += 20;
         DrawLineEx((Vector2){x, y - 38}, tip, 3, WHITE);
-        DrawText("Sprite indisponivel", (int)x - 72, (int)y + 8, 16, WHITE);
+        ui_text(ui, "Sprite indisponivel", (int)x - 72, (int)y + 8, 16, WHITE);
         return;
     }
     int frame = player->moving ? WALK[player->trainer][player->facing][(int)(player->walk_time / 0.14f) % 4]

@@ -1,5 +1,6 @@
 /* Edita nomes UTF-8 e compõe a transição, sem alterar retratos ou regras do jogo. */
 #include "name_entry_screen.h"
+#include "ui_theme.h"
 #include "selection_ui.h"
 #include "name_unicode_data.h"
 #include "game_canvas.h"
@@ -168,7 +169,7 @@ Rectangle name_entry_transition_bounds(const NameEntryScreen *screen, Trainer tr
                        roundf(from.width+(to.width-from.width)*t),roundf(from.height+(to.height-from.height)*t)};
 }
 
-static void draw_name_ui(const NameEntryScreen *screen)
+static void draw_name_ui(const UiTheme *ui, const NameEntryScreen *screen)
 {
     float alpha=clamp01((screen->progress-.5f)/.5f);
     if (alpha<=0) return;
@@ -177,49 +178,49 @@ static void draw_name_ui(const NameEntryScreen *screen)
     Color orange=Fade(SELECTION_ORANGE,alpha);
     selection_ui_panel((Rectangle){260,28+rise,760,64},4,ink);
     selection_ui_panel((Rectangle){264,32+rise,752,56},4,cream);
-    selection_ui_text("Como você se chama?",640,40+rise,40,ink);
+    selection_ui_text(ui, "Como você se chama?",640,40+rise,40,ink);
     selection_ui_panel((Rectangle){556,190+rise,548,314},8,ink);
     selection_ui_panel((Rectangle){564,198+rise,532,298},8,cream);
-    DrawText("Seu nome",592,232+rise,30,ink);
+    ui_text(ui, "Seu nome",592,232+rise,30,ink);
     Rectangle field=control_bounds(0);
     field.y+=rise;
     selection_ui_panel(field,4,screen->focus==0 ? orange : ink);
     selection_ui_panel((Rectangle){field.x+4,field.y+4,field.width-8,field.height-8},4,
                        Fade((Color){255,249,222,255},alpha));
     game_canvas_begin_scissor((Rectangle){field.x+12, field.y+8, field.width-24, field.height-16});
-    DrawText(screen->draft,(int)field.x+16,(int)field.y+20,30,ink);
+    ui_text(ui, screen->draft,(int)field.x+16,(int)field.y+20,30,ink);
     if (screen->focus==0 && screen->caret_time<.5f) {
-        int x=(int)fminf(field.x+field.width-20,field.x+18+MeasureText(screen->draft,30));
+        int x=(int)fminf(field.x+field.width-20,field.x+18+ui_measure(ui, screen->draft,30));
         DrawRectangle(x,(int)field.y+18,3,34,ink);
     }
     EndScissorMode();
     const char *counter=TextFormat("%d/12",screen->count);
-    DrawText(counter,1068-MeasureText(counter,20),380+rise,20,ink);
-    DrawText("Esse será o seu nome na aventura.",592,420+rise,20,ink);
-    if (screen->error) DrawText("Digite um nome para continuar.",592,458+rise,20,orange);
+    ui_text(ui, counter,1068-ui_measure(ui, counter,20),380+rise,20,ink);
+    ui_text(ui, "Esse será o seu nome na aventura.",592,420+rise,20,ink);
+    if (screen->error) ui_text(ui, "Digite um nome para continuar.",592,458+rise,20,orange);
     for (int i=1;i<3;i++) {
         Rectangle bounds=control_bounds(i);
         bounds.y+=rise;
         selection_ui_panel(bounds,4,screen->focus==i ? orange : ink);
         selection_ui_panel((Rectangle){bounds.x+4,bounds.y+4,bounds.width-8,bounds.height-8},4,cream);
-        selection_ui_text(i==1 ? "Voltar" : "Confirmar",(int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,ink);
+        selection_ui_text(ui, i==1 ? "Voltar" : "Confirmar",(int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,ink);
     }
     selection_ui_panel((Rectangle){208,688+rise,864,28},4,ink);
-    selection_ui_text("Digite seu nome | ENTER: confirmar | ESC: voltar",640,692+rise,20,cream);
+    selection_ui_text(ui, "Digite seu nome | ENTER: confirmar | ESC: voltar",640,692+rise,20,cream);
 }
 
-void name_entry_draw(const NameEntryScreen *screen, const TrainerSelectScreen *selection,
+void name_entry_draw(const UiTheme *ui, const NameEntryScreen *screen, const TrainerSelectScreen *selection,
                      const TrainerSelectAssets *assets)
 {
     trainer_background_draw(&assets->background,selection->background_time);
     float old=1-clamp01(screen->progress/.25f);
     if (old>0) {
-        trainer_select_draw_chrome(selection,old);
+        trainer_select_draw_chrome(ui, selection,old);
         Trainer other=selection->selected==TRAINER_MALE ? TRAINER_FEMALE : TRAINER_MALE;
-        trainer_select_draw_card(selection,assets,other,trainer_select_card_bounds(other),old,false,1);
+        trainer_select_draw_card(ui, selection,assets,other,trainer_select_card_bounds(other),old,false,1);
     }
-    draw_name_ui(screen);
+    draw_name_ui(ui, screen);
     /* O cartão atravessa o painel pela frente; retrato e halo nunca são encobertos. */
-    trainer_select_draw_card(selection,assets,selection->selected,
+    trainer_select_draw_card(ui, selection,assets,selection->selected,
                              name_entry_transition_bounds(screen,selection->selected),1,true,old);
 }

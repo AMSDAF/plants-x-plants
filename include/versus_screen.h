@@ -2,6 +2,7 @@
 #ifndef VERSUS_SCREEN_H
 #define VERSUS_SCREEN_H
 #include "raylib.h"
+#include "ui_theme.h"
 
 typedef enum { VERSUS_CPU, VERSUS_PLAYER } VersusMode;
 typedef enum { VERSUS_NONE, VERSUS_CONFIRM, VERSUS_BACK } VersusAction;
@@ -32,5 +33,5 @@ void versus_screen_init(VersusScreen *screen, VersusMode selected);
 VersusAction versus_screen_update(VersusScreen *screen, bool accept_input, float dt);
 void versus_background_draw(const VersusAssets *assets, float elapsed, float cloud_time);
 int versus_character_frame(const VersusScreen *screen, int index);
-void versus_screen_draw(const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source);
+void versus_screen_draw(const UiTheme *ui, const VersusScreen *screen, const VersusAssets *assets, Texture2D logo, Rectangle logo_source);
 #endif

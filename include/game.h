@@ -14,6 +14,7 @@
 #include "versus_screen.h"
 #include "battle_screen.h"
 #include "game_view.h"
+#include "ui_theme.h"
 
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
@@ -36,6 +37,7 @@ typedef struct {
 /* Estado e recursos compartilhados entre as telas. */
 typedef struct {
     bool exit_requested;
+    UiTheme ui;
     MenuScreen menu;
     GameScreen screen;
     bool input_blocked;

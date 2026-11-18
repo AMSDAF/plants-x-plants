@@ -1,6 +1,7 @@
 /* Define a interface provisória e os comandos de navegação da batalha. */
 #ifndef BATTLE_SCREEN_H
 #define BATTLE_SCREEN_H
+#include "ui_theme.h"
 
 #include <stdbool.h>
 #include "battle.h"
@@ -25,6 +26,6 @@ typedef struct {
 } BattleScreen;
 
 BattleScreenAction battle_screen_update(BattleScreen *screen, float dt);
-void battle_screen_draw(const BattleScreen *screen);
+void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen);
 
 #endif

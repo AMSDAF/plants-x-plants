@@ -1,5 +1,6 @@
 /* Coordena telas, transições e o ciclo de vida dos recursos gráficos. */
 #include "game.h"
+#include "ui_theme.h"
 #include "plant_data.h"
 
 #include <stdlib.h>
@@ -143,6 +144,7 @@ static void leave_encounter(Game *game)
 void game_init(Game *game)
 {
     *game = (Game){0};
+    ui_theme_load(&game->ui);
     srand((unsigned int)time(NULL));
     menu_screen_init(&game->menu);
     player_assets_load(&game->player_assets);
@@ -260,42 +262,31 @@ void game_update(Game *game)
 
 void game_draw(const Game *game)
 {
+    const UiTheme *ui = &game->ui;
     switch (game->screen) {
-        case GAME_MENU: menu_screen_draw(&game->menu); break;
+        case GAME_MENU: menu_screen_draw(ui, &game->menu); break;
         case GAME_VERSUS_SELECT:
-            versus_screen_draw(&game->versus, &game->versus_assets, game->menu.logo, game->menu.logo_source);
+            versus_screen_draw(ui, &game->versus, &game->versus_assets, game->menu.logo, game->menu.logo_source);
             break;
         case GAME_BATTLE:
-            battle_screen_draw(&game->battle_screen);
+            battle_screen_draw(ui, &game->battle_screen);
             break;
         case GAME_TRAINER_SELECT:
-            trainer_select_screen_draw(&game->trainer_select, &game->trainer_select_assets);
+            trainer_select_screen_draw(ui, &game->trainer_select, &game->trainer_select_assets);
             break;
         case GAME_NAME_ENTRY:
-            name_entry_draw(&game->name_entry,&game->trainer_select,&game->trainer_select_assets);
+            name_entry_draw(ui, &game->name_entry,&game->trainer_select,&game->trainer_select_assets);
             break;
         case GAME_EXPLORATION: {
-            ClearBackground((Color){24, 49, 43, 255});
+            ClearBackground(BLACK);
             Camera2D camera = world_camera(&game->world);
             BeginMode2D(camera);
-            world_draw(&game->world, &game->world_assets, game->player.feet);
+            world_draw(ui, &game->world, &game->world_assets);
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, false);
-            player_draw(&game->player, &game->player_assets, camera);
+            player_draw(ui, &game->player, &game->player_assets, camera);
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, true);
             EndMode2D();
-            world_draw_interface(&game->world, game->player.feet);
-            if (game->world.location == WORLD_EXTERIOR && game->world_assets.courtyard_detail.id) {
-                DrawRectangle(1032, 58, 230, 28, Fade(BLACK, 0.82f));
-                DrawText(game->world.detail_enabled ? "F8  Detalhe: ligado" : "F8  Detalhe: desligado",
-                         1042, 64, 16, RAYWHITE);
-            }
-            if (!game->world.completed && !game->world.relay_panel_open && !game->world.dialogue_title &&
-                game->player.trainer == TRAINER_MALE && !game->player_assets.botanical_sheets[TRAINER_MALE].id) {
-                const char *version = game->player.use_walk6 && game->player_assets.male_walk6.id
-                    ? "6 poses" : "4 poses";
-                DrawRectangle(1022, 668, 234, 32, Fade(BLACK, 0.82f));
-                DrawText(TextFormat("F6  Caminhada (%s)", version), 1033, 676, 16, RAYWHITE);
-            }
+            world_draw_interface(ui, &game->world, game->player.feet);
             break;
         }
     }
@@ -303,6 +294,7 @@ void game_draw(const Game *game)
 
 void game_shutdown(Game *game)
 {
+    ui_theme_unload(&game->ui);
     world_assets_unload(&game->world_assets);
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);

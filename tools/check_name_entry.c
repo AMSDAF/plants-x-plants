@@ -347,8 +347,19 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_EXTERIOR && !world->basement_visited);
     enter_maintenance(game);
     Camera2D room_camera = world_camera(world);
-    assert(room_camera.zoom > 1.0f && room_camera.offset.x == GAME_SCREEN_WIDTH / 2.0f);
+    assert(room_camera.zoom == 1.0f && room_camera.offset.x == GAME_SCREEN_WIDTH / 2.0f);
     assert(room_camera.offset.y == GAME_SCREEN_HEIGHT / 2.0f);
+    /* Todas as salas cabem inteiras, com margens, sem ampliar móveis ou piso. */
+    for (int location = WORLD_MAINTENANCE; location < WORLD_LOCATION_COUNT; location++) {
+        World sample = *world;
+        sample.location = (WorldLocation)location;
+        Camera2D camera = world_camera(&sample);
+        Vector2 top_left = GetWorldToScreen2D((Vector2){280, 191}, camera);
+        Vector2 bottom_right = GetWorldToScreen2D((Vector2){1000, 611}, camera);
+        assert(camera.zoom == 1.0f);
+        assert(top_left.x == 280 && top_left.y == 150);
+        assert(bottom_right.x - top_left.x == 720 && bottom_right.y - top_left.y == 420);
+    }
     assert(game->world_assets.maintenance_interior.id);
     Vector2 previous = {780, 380};
     Vector2 blocked = world_constrain(world, previous, (Vector2){650, 335});

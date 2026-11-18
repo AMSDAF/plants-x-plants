@@ -103,7 +103,7 @@ static Image render_world(GameCanvas *canvas, const World *world, const WorldAss
     game_canvas_begin(canvas);
     ClearBackground(BLACK);
     BeginMode2D(world_camera(world));
-    world_draw(world, assets, (Vector2){576, 799});
+    world_draw(NULL, world, assets);
     EndMode2D();
     game_canvas_present(canvas);
     EndDrawing();

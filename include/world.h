@@ -2,6 +2,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 #include "raylib.h"
+#include "ui_theme.h"
+#include "exploration_hud.h"
 
 enum { WORLD_RELAY_COUNT = 8, WORLD_RELAY_RULE_COUNT = 9 };
 
@@ -75,7 +77,8 @@ void world_snap_camera(World *world, Vector2 feet);
 Camera2D world_camera(const World *world);
 void world_update_relay_panel(World *world);
 void world_update_dialogue(World *world);
-void world_draw(const World *world, const WorldAssets *assets, Vector2 feet);
+void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets);
 void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet, Camera2D camera, bool foreground);
-void world_draw_interface(const World *world, Vector2 feet);
+HudInteraction world_interaction_view(const World *world, Vector2 feet);
+void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet);
 #endif

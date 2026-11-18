@@ -9,6 +9,8 @@ Use **WASD** ou **setas** para mover, segure **Shift** para correr e pressione
 A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
 uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
 manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
+Os interiores mantêm 720 × 420 unidades lógicas, centralizados com margens
+e zoom 1, sem ampliação para preencher a tela, inclusive no modo tela cheia.
 O exterior usa a ilustração do Complexo Botânico em seu tamanho nativo.
 Os quatro quadrantes melhorados compõem a versão completa de maior resolução,
 aplicada sobre a base preservada. **F8** alterna a comparação do mapa inteiro;
@@ -17,9 +19,12 @@ Consulte [COURTYARD_DETAIL.md](COURTYARD_DETAIL.md) para resolução e validaç�
 Os limites de circulação acompanham os contornos do piso. O jogador começa
 do lado interno do portão sul e pode caminhar na diagonal e deslizar junto
 às bordas. Os NPCs e objetos interativos são desenhados sobre o cenário.
-O cenário ocupa toda a área do jogo. Sobre ele, o HUD indica o setor, o
+No exterior, o cenário ocupa toda a área do jogo. O HUD indica o setor, o
 objetivo atual e as pistas reunidas. Ao se aproximar de um objeto, a ação
-aparece junto dele.
+aparece no centro inferior da tela, acompanhada da tecla E somente quando
+está disponível. Uma seta creme aponta para o alvo, tanto no exterior como
+nos interiores. Bloqueios e pistas registradas mostram uma explicação no
+mesmo painel, sem círculo amarelo ou texto junto ao objeto.
 
 A casa de manutenção usa a ilustração `maintenance_house_interior_v2.png`,
 com colisões nas bases dos móveis. O painel do alarme, a pista e a escotilha

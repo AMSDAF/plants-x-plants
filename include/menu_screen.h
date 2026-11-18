@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include "raylib.h"
+#include "ui_theme.h"
 
 #define MENU_OPTION_COUNT 3
 
@@ -34,7 +35,7 @@ typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_VERSUS, MENU_
 void menu_screen_init(MenuScreen *screen);
 MenuAction menu_screen_update(MenuScreen *screen, bool accept_input);
 void menu_screen_reset_input(MenuScreen *screen);
-void menu_screen_draw(const MenuScreen *screen);
+void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen);
 void menu_screen_shutdown(MenuScreen *screen);
 
 #endif

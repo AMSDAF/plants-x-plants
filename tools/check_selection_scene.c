@@ -75,7 +75,7 @@ static void check_botanical_size(const PlayerAssets *assets)
             BeginTextureMode(target);
             ClearBackground(BLANK);
             BeginMode2D(camera);
-            player_draw(&player, assets, camera);
+            player_draw(NULL, &player, assets, camera);
             EndMode2D();
             EndTextureMode();
             Image sprite = LoadImageFromTexture(target.texture);

@@ -142,6 +142,17 @@ foreach(view_target plants_x_plants selection_scene_check menu_screen_check
     endif()
 endforeach()
 
+add_executable(exploration_hud_check EXCLUDE_FROM_ALL
+    tools/check_exploration_hud.c ${BATTLE_SOURCES}
+    src/game.c src/menu_screen.c src/versus_screen.c src/trainer_select_screen.c
+    src/selection_ui.c src/name_entry_screen.c src/trainer_background.c
+    src/player.c src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c)
+target_include_directories(exploration_hud_check PRIVATE include)
+target_link_libraries(exploration_hud_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(exploration_hud_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 add_executable(game_canvas_check EXCLUDE_FROM_ALL
     tools/check_game_canvas.c src/game_canvas.c src/world.c)
 target_include_directories(game_canvas_check PRIVATE include)
@@ -149,3 +160,10 @@ target_link_libraries(game_canvas_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(game_canvas_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+foreach(ui_target plants_x_plants selection_scene_check menu_screen_check
+        trainer_background_check name_entry_check versus_screen_check game_canvas_check)
+    if(TARGET ${ui_target})
+        target_sources(${ui_target} PRIVATE src/ui_theme.c src/exploration_hud.c)
+    endif()
+endforeach()

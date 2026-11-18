@@ -23,6 +23,8 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 |---|---|
 | `src/main.c` | Abrir a janela, executar o loop principal e encerrar o programa. |
 | `include/game_canvas.h`, `src/game_canvas.c` | Gerenciar o alvo na resolução física do viewport, mantendo coordenadas lógicas de 1280 × 720, enquadramento, mouse e recortes de interface. O alvo é recriado somente ao mudar de tamanho. |
+| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar Atkinson Hyperlegible Next Regular/Semibold, medir e desenhar textos UTF-8 e painéis creme. `Game` possui os recursos e os passa explicitamente às telas. |
+| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo, pistas, instrução inferior e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas, os modos de jogo, o início das partidas e o reinício. |
 
@@ -46,6 +48,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels), câmera de tela inteira e HUD contextual sobre o mapa. |
 | `tools/prepare_courtyard_detail.py`, `include/courtyard_detail_data.h` | Unir os quatro quadrantes em 3010 × 1694, com iluminação local da base e costuras de menor diferença. Preserva a fonte e o primeiro resultado aprovado. `WorldAssets` carrega a textura completa opcional; `World.detail_enabled` permite comparação por F8. |
 | `tools/check_game_canvas.c` | Verificar resolução física, HiDPI, enquadramento, mouse, recorte, câmera, quadrante, ausência de recurso e ponte em OpenGL. |
+| `tools/check_exploration_hud.c` | Verificar tipografia, acentos, estados e alvo compartilhado da interação, centralização, seta, resoluções, fonte de reserva e desenho imutável. Capturas em `build/hud_preview/`. |
 | `tools/prepare_trainers.py` | Limpeza e normalização dos sprites, sem alterar as fontes; gera atlas de execução e prévias de inspeção. |
 | `tools/prepare_trainer_walk6.py` | Experimento isolado de extração e normalização de seis poses masculinas; gera outro atlas, máscaras e prévias A/B. |
 | `tools/prepare_trainer_portraits.py` | Regenera os retratos detalhados de fallback estático; não gera mais a respiração procedural antiga. Não altera fontes nem atlas de caminhada. |

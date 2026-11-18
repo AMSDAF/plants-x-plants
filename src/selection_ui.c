@@ -1,5 +1,6 @@
 /* Desenha formas na grade de pixels e protege a entrada nas transições. */
 #include "selection_ui.h"
+#include "ui_theme.h"
 #include <math.h>
 const Color SELECTION_CREAM = {247,237,198,255};
 const Color SELECTION_INK = {24,52,30,255};
@@ -15,9 +16,9 @@ void selection_ui_panel(Rectangle bounds, int corner, Color color)
     DrawRectangle(x,y+2*corner,w,h-4*corner,color);
 }
 
-void selection_ui_text(const char *text, int center, int y, int size, Color color)
+void selection_ui_text(const UiTheme *ui, const char *text, int center, int y, int size, Color color)
 {
-    DrawText(text,center-MeasureText(text,size)/2,y,size,color);
+    ui_text(ui, text,center-ui_measure(ui, text,size)/2,y,size,color);
 }
 
 bool selection_ui_input_down(void)

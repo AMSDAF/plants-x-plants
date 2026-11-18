@@ -1,5 +1,6 @@
 /* Apresenta retratos de seleção e devolve ações ao coordenador de telas. */
 #include "trainer_select_screen.h"
+#include "ui_theme.h"
 #include "selection_ui.h"
 #include "selection_portrait_v2_data.h"
 #include "male_portrait_idle_data.h"
@@ -178,7 +179,7 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
     return action;
 }
 
-static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle body, int index,
+static void draw_portrait_texture(const UiTheme *ui, Texture2D texture, Rectangle source, Rectangle body, int index,
                                   Rectangle card, float alpha, float size)
 {
     if (texture.id && body.height > 0 && body.width > 0) {
@@ -192,35 +193,35 @@ static void draw_portrait_texture(Texture2D texture, Rectangle source, Rectangle
         dest=(Rectangle){roundf(card.x+(dest.x-original.x)*factor),roundf(card.y+(dest.y-original.y)*factor),
                          dest.width*factor,dest.height*factor};
         DrawTexturePro(texture, source, dest, (Vector2){0}, 0, Fade(WHITE,alpha));
-    } else centered_text("Retrato indisponivel", (int)roundf(card.x+card.width/2),
+    } else centered_text(ui, "Retrato indisponivel", (int)roundf(card.x+card.width/2),
                          (int)roundf(card.y+224*card.height/480),20,Fade(INK,alpha));
 }
 
-static void draw_portrait(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets, int index, Rectangle card, float alpha)
+static void draw_portrait(const UiTheme *ui, const TrainerSelectScreen *screen, const TrainerSelectAssets *assets, int index, Rectangle card, float alpha)
 {
     Texture2D botanical = assets->botanical_portraits[index];
     if (botanical.id) {
         Rectangle bounds = {0, 0, botanical.width, botanical.height};
-        draw_portrait_texture(botanical, bounds, bounds, index, card, alpha, 0.84f);
+        draw_portrait_texture(ui, botanical, bounds, bounds, index, card, alpha, 0.84f);
     } else if (index == TRAINER_MALE && assets->male_idle.id && assets->male_idle_halo.id) {
         Texture2D halo = assets->male_idle_halo;
-        draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
+        draw_portrait_texture(ui, halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
                               SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_MALE], index, card, alpha, 1.0f);
         int frame = trainer_select_male_idle_frame(screen->male_idle_time);
         Rectangle source = {frame*MALE_PORTRAIT_IDLE_WIDTH,0,
                             MALE_PORTRAIT_IDLE_WIDTH,MALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
+        draw_portrait_texture(ui, assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
     } else if (index == TRAINER_FEMALE && assets->female_idle.id && assets->female_idle_halo.id) {
         Texture2D halo = assets->female_idle_halo;
-        draw_portrait_texture(halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
+        draw_portrait_texture(ui, halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
                               SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index, card, alpha, 1.0f);
         int frame = trainer_select_female_idle_frame(screen->female_idle_time);
         Rectangle source = {frame*FEMALE_PORTRAIT_IDLE_WIDTH,0,
                             FEMALE_PORTRAIT_IDLE_WIDTH,FEMALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
+        draw_portrait_texture(ui, assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
     } else {
         Texture2D texture = assets->portraits[index];
-        draw_portrait_texture(texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
+        draw_portrait_texture(ui, texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
                               assets->portrait_bounds[index], index, card, alpha, 1.0f);
     }
 }
@@ -230,7 +231,7 @@ Rectangle trainer_select_card_bounds(Trainer trainer)
     return control_bounds((int)trainer);
 }
 
-void trainer_select_draw_card(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
+void trainer_select_draw_card(const UiTheme *ui, const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
                               Trainer trainer, Rectangle bounds, float alpha, bool selected, float label_alpha)
 {
     const char *label=trainer==TRAINER_MALE ? "Homem" : "Mulher";
@@ -239,19 +240,19 @@ void trainer_select_draw_card(const TrainerSelectScreen *screen, const TrainerSe
     Rectangle inner={bounds.x+border,bounds.y+border,bounds.width-2*border,bounds.height-2*border};
     pixel_panel(inner,8,Fade(CREAM,alpha));
     if (selected) selection_ui_accents(bounds,alpha);
-    draw_portrait(screen,assets,(int)trainer,bounds,alpha);
+    draw_portrait(ui, screen,assets,(int)trainer,bounds,alpha);
     int center=(int)roundf(bounds.x+bounds.width/2);
     float factor=bounds.height/480;
     int y=(int)roundf(bounds.y+432*factor);
-    centered_text(label,center,y,30,Fade(INK,alpha*label_alpha));
-    if (selected) selection_ui_cursor(center-MeasureText(label,30)/2-12,y+15,screen->background_time,alpha*label_alpha);
+    centered_text(ui, label,center,y,30,Fade(INK,alpha*label_alpha));
+    if (selected) selection_ui_cursor(center-ui_measure(ui, label,30)/2-12,y+15,screen->background_time,alpha*label_alpha);
 }
 
-void trainer_select_draw_chrome(const TrainerSelectScreen *screen, float alpha)
+void trainer_select_draw_chrome(const UiTheme *ui, const TrainerSelectScreen *screen, float alpha)
 {
     pixel_panel((Rectangle){260,28,760,64},4,Fade(INK,alpha));
     pixel_panel((Rectangle){264,32,752,56},4,Fade(CREAM,alpha));
-    centered_text("Escolha seu personagem",640,40,40,Fade(INK,alpha));
+    centered_text(ui, "Escolha seu personagem",640,40,40,Fade(INK,alpha));
     for (int i=CONFIRM_CONTROL;i<=BACK_CONTROL;i++) {
         Rectangle bounds=control_bounds(i);
         bool hover=screen->hovered==i;
@@ -261,17 +262,17 @@ void trainer_select_draw_chrome(const TrainerSelectScreen *screen, float alpha)
         Color fill=pressed ? (Color){212,211,155,255} : hover ? (Color){232,227,176,255} : CREAM;
         pixel_panel(inner,4,Fade(fill,alpha));
         if (hover) DrawRectangle((int)bounds.x+16,(int)bounds.y+12,4,28,Fade(ACCENT_ORANGE,alpha));
-        centered_text(i==CONFIRM_CONTROL ? "Confirmar" : "Voltar",(int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,Fade(INK,alpha));
+        centered_text(ui, i==CONFIRM_CONTROL ? "Confirmar" : "Voltar",(int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,Fade(INK,alpha));
     }
     pixel_panel((Rectangle){224,688,832,28},4,Fade(INK,alpha));
-    centered_text("Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar",640,692,20,Fade(CREAM,alpha));
+    centered_text(ui, "Setas / A-D: escolher  |  ENTER: confirmar  |  ESC: voltar",640,692,20,Fade(CREAM,alpha));
 }
 
-void trainer_select_screen_draw(const TrainerSelectScreen *screen, const TrainerSelectAssets *assets)
+void trainer_select_screen_draw(const UiTheme *ui, const TrainerSelectScreen *screen, const TrainerSelectAssets *assets)
 {
     trainer_background_draw(&assets->background,screen->background_time);
     if (screen->background_preview) return;
-    trainer_select_draw_chrome(screen,1);
+    trainer_select_draw_chrome(ui, screen,1);
     for (int i=0;i<TRAINER_COUNT;i++)
-        trainer_select_draw_card(screen,assets,(Trainer)i,trainer_select_card_bounds((Trainer)i),1,screen->selected==(Trainer)i,1);
+        trainer_select_draw_card(ui, screen,assets,(Trainer)i,trainer_select_card_bounds((Trainer)i),1,screen->selected==(Trainer)i,1);
 }

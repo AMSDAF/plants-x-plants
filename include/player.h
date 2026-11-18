@@ -1,6 +1,7 @@
 /* Define recursos, movimento cardinal e desenho dos treinadores. */
 #ifndef PLAYER_H
 #define PLAYER_H
+#include "ui_theme.h"
 #include "world.h"
 typedef enum { TRAINER_MALE, TRAINER_FEMALE, TRAINER_COUNT } Trainer;
 typedef enum { FACING_SOUTH, FACING_WEST, FACING_EAST, FACING_NORTH } Facing;
@@ -25,5 +26,5 @@ void player_assets_load(PlayerAssets *assets);
 void player_assets_unload(PlayerAssets *assets);
 void player_init(Player *player, Trainer trainer, Vector2 feet);
 void player_update(Player *player, const World *world, float dt);
-void player_draw(const Player *player, const PlayerAssets *assets, Camera2D camera);
+void player_draw(const UiTheme *ui, const Player *player, const PlayerAssets *assets, Camera2D camera);
 #endif

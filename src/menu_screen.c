@@ -1,5 +1,6 @@
 /* Compõe título/menu pixel art, anima vegetação/mascote e encaminha ações de entrada. */
 #include "menu_screen.h"
+#include "ui_theme.h"
 #include "menu_mascot_data.h"
 #include "menu_grass_data.h"
 #include "menu_tree_data.h"
@@ -222,9 +223,9 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
     return MENU_ACTION_NONE;
 }
 
-static void centered_text(const char *text, int center, int y, int size, Color color)
+static void centered_text(const UiTheme *ui, const char *text, int center, int y, int size, Color color)
 {
-    DrawText(text, center - MeasureText(text, size) / 2, y, size, color);
+    ui_text(ui, text, center - ui_measure(ui, text, size) / 2, y, size, color);
 }
 
 static void draw_background(const MenuScreen *screen)
@@ -271,7 +272,7 @@ static void draw_art(Texture2D texture, Rectangle source, int center, int y, flo
                    (Vector2){0}, 0, WHITE);
 }
 
-static void draw_panel(const MenuScreen *screen)
+static void draw_panel(const UiTheme *ui, const MenuScreen *screen)
 {
     /* Bordas em degraus e sombra sólida, alinhadas a pixels inteiros. */
     DrawRectangle(850, 352, 332, 230, (Color){53, 66, 36, 255});
@@ -299,7 +300,7 @@ static void draw_panel(const MenuScreen *screen)
                 DrawRectangle(x0, center_y - half_height, x1 - x0, 2 * half_height + 1, INK);
             }
         }
-        DrawText(OPTION_LABELS[i], 908, (int)bounds.y + 16, 30, option_is_enabled(i) ? INK : MUTED);
+        ui_text(ui, OPTION_LABELS[i], 908, (int)bounds.y + 16, 30, option_is_enabled(i) ? INK : MUTED);
     }
 }
 
@@ -321,13 +322,13 @@ static void draw_mascot(const MenuScreen *screen)
     DrawTexturePro(screen->mascot_idle, source, dest, (Vector2){0}, 0, WHITE);
 }
 
-void menu_screen_draw(const MenuScreen *screen)
+void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen)
 {
     ClearBackground((Color){118, 143, 67, 255});
     draw_background(screen);
     int logo_offset = (int)roundf(4.0f * sinf(2.0f * PI * screen->ui_time / 3.0f));
     if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28 + logo_offset, screen->menu_open ? 244 : 324);
-    else centered_text("Plants x Plants", 640, 90 + logo_offset, 50, INK);
+    else centered_text(ui, "Plants x Plants", 640, 90 + logo_offset, 50, INK);
     if (screen->mascot.id || screen->mascot_idle.id) {
         /* Sombra pequena em degraus, sem elipse suavizada nem halo. */
         DrawRectangle(583, 607, 114, 6, (Color){124, 110, 53, 255});
@@ -335,11 +336,11 @@ void menu_screen_draw(const MenuScreen *screen)
         draw_mascot(screen);
     }
     if (screen->menu_open) {
-        draw_panel(screen);
-        centered_text("Setas: escolher   ENTER: confirmar   ESC: voltar", 640, 660, 20, INK);
+        draw_panel(ui, screen);
+        centered_text(ui, "Setas: escolher   ENTER: confirmar   ESC: voltar", 640, 660, 20, INK);
     } else if (fmodf(screen->ui_time, 1.2f) < 0.8f) {
-        centered_text("Pressione ENTER", 642, 652, 30, (Color){242, 232, 188, 255});
-        centered_text("Pressione ENTER", 640, 650, 30, INK);
+        centered_text(ui, "Pressione ENTER", 642, 652, 30, (Color){242, 232, 188, 255});
+        centered_text(ui, "Pressione ENTER", 640, 650, 30, INK);
     }
 }
 

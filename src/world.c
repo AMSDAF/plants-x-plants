@@ -1,5 +1,6 @@
 /* Desenha a estufa e resolve os obstáculos a partir das proposições do cenário. */
 #include "world.h"
+#include "ui_theme.h"
 #include "game_view.h"
 #include "courtyard_detail_data.h"
 #include <math.h>
@@ -521,11 +522,24 @@ static void talk_to_researcher(World *world)
                   world->guardian_defeated ? NULL : hint);
 }
 
+static HudInteractionState interaction_state(const World *world, Object object)
+{
+    if ((object == UPPER_LIFT && !world->basement_visited) ||
+        ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light) ||
+        (object == LOCKED_HATCH && !world->maintenance_key) ||
+        (object == NURSERY_DOOR && !world_gate_open(world)) ||
+        (object == RELAY_PANEL && !world->guardian_defeated)) return HUD_INTERACTION_BLOCKED;
+    if (object == ALARM_NOTE && world->alarm_note) return HUD_INTERACTION_INFO;
+    return HUD_INTERACTION_AVAILABLE;
+}
+
 WorldEncounter world_interact(World *world, Vector2 *feet)
 {
     if (world->completed || world->relay_panel_open || world->dialogue_title) return WORLD_ENCOUNTER_NONE;
     Object object = nearby_object(world, *feet);
     const Vector2 entrance = {640, 533};
+    if (object != OBJECT_COUNT && interaction_state(world, object) != HUD_INTERACTION_AVAILABLE)
+        return WORLD_ENCOUNTER_NONE;
     switch (object) {
         case VALVE: world->water = !world->water; break;
         case POWER: world->light = !world->light; break;
@@ -628,7 +642,8 @@ Camera2D world_camera(const World *world)
         return (Camera2D){
             .offset = {GAME_SCREEN_WIDTH / 2.0f, GAME_SCREEN_HEIGHT / 2.0f},
             .target = {room.x + room.width / 2, room.y + room.height / 2},
-            .zoom = fmaxf(GAME_SCREEN_WIDTH / room.width, GAME_SCREEN_HEIGHT / room.height)
+            /* Mantém o tamanho da sala, sem ampliá-la para preencher a tela. */
+            .zoom = 1.0f
         };
     }
     return (Camera2D){
@@ -637,9 +652,9 @@ Camera2D world_camera(const World *world)
     };
 }
 
-static void centered_text(const char *text, int x, int y, int size, Color color)
+static void centered_text(const UiTheme *ui, const char *text, int x, int y, int size, Color color)
 {
-    DrawText(text, x - MeasureText(text, size) / 2, y, size, color);
+    ui_text(ui, text, x - ui_measure(ui, text, size) / 2, y, size, color);
 }
 
 static void draw_sector(const Sector *sector)
@@ -656,13 +671,6 @@ static void draw_sector(const Sector *sector)
     }
 }
 
-static void draw_interaction_marker(Object object)
-{
-    Vector2 p = objects[object].position;
-    DrawCircleLines((int)p.x, (int)p.y, 36, GOLD);
-    DrawCircleLines((int)p.x, (int)p.y, 37, GOLD);
-}
-
 static const Sector *sector_at(Vector2 feet)
 {
     for (unsigned int i = 0; i < sizeof(sectors) / sizeof(sectors[0]); i++)
@@ -670,7 +678,7 @@ static const Sector *sector_at(Vector2 feet)
     return NULL;
 }
 
-static void draw_switch(Object object, const char *name, bool on)
+static void draw_switch(const UiTheme *ui, Object object, const char *name, bool on)
 {
     Vector2 p = objects[object].position;
     int x = (int)p.x;
@@ -680,19 +688,19 @@ static void draw_switch(Object object, const char *name, bool on)
     DrawRectangle(x - 20, y - 15, 40, 29, ink);
     DrawCircle(x, y - 1, 10, on ? LIME : ORANGE);
     DrawCircle(x - 2, y - 4, 3, cream);
-    centered_text(name, x, y + 25, 18, ink);
+    centered_text(ui, name, x, y + 25, 18, ink);
 }
 
-static void draw_note(Object object, const char *name, bool collected)
+static void draw_note(const UiTheme *ui, Object object, const char *name, bool collected)
 {
     int x = (int)objects[object].position.x;
     int y = (int)objects[object].position.y;
     DrawRectangle(x - 17, y - 23, 34, 36, collected ? cream : GOLD);
     for (int i = 0; i < 3; i++) DrawRectangle(x - 10, y - 15 + i * 7, 20, 2, frame);
-    centered_text(name, x, y + 23, 18, ink);
+    centered_text(ui, name, x, y + 23, 18, ink);
 }
 
-static void draw_guard(Object object, const char *name, Color color)
+static void draw_guard(const UiTheme *ui, Object object, const char *name, Color color)
 {
     int x = (int)objects[object].position.x;
     int y = (int)objects[object].position.y;
@@ -702,10 +710,10 @@ static void draw_guard(Object object, const char *name, Color color)
     DrawEllipse(x + 15, y - 8, 15, 7, DARKGREEN);
     DrawCircle(x, y - 23, 22, color);
     DrawCircle(x, y - 22, 11, frame);
-    centered_text(name, x, y + 22, 18, ink);
+    centered_text(ui, name, x, y + 22, 18, ink);
 }
 
-static void draw_room_portal(Object object, const char *label, bool locked)
+static void draw_room_portal(const UiTheme *ui, Object object, const char *label, bool locked)
 {
     Vector2 p = objects[object].position;
     int x = (int)p.x, y = (int)p.y;
@@ -713,8 +721,8 @@ static void draw_room_portal(Object object, const char *label, bool locked)
     DrawRectangle(x - 25, y - 20, 50, 31, locked ? MAROON : path_edge);
     DrawRectangle(x - 12, y - 9, 24, 5, cream);
     if (object == INTERIOR_DOOR || object == BASEMENT_HATCH)
-        centered_text(label, x + 132, y - 11, 16, ink);
-    else centered_text(label, x, y + 22, 18, ink);
+        centered_text(ui, label, x + 132, y - 11, 16, ink);
+    else centered_text(ui, label, x, y + 22, 18, ink);
 }
 
 static void draw_ground_tiles(Texture2D tiles, Rectangle source, Rectangle area, int size)
@@ -826,7 +834,7 @@ static void draw_tiled_exterior(const World *world, Texture2D atlas)
     DrawCircle((int)lift.x + 16, (int)lift.y - 37, 4, lift_available ? LIME : ORANGE);
 }
 
-static void draw_exterior(const World *world, const WorldAssets *assets)
+static void draw_exterior(const UiTheme *ui, const World *world, const WorldAssets *assets)
 {
     if (!assets->courtyard.id && assets->tiles.id) {
         draw_tiled_exterior(world, assets->tiles);
@@ -862,8 +870,8 @@ static void draw_exterior(const World *world, const WorldAssets *assets)
         DrawCircle(744, 538, 3, world->drain_open ? LIME : ORANGE);
         DrawCircle(1194, 638, 3, world->water ? LIME : ORANGE);
     } else {
-        draw_switch(DRAIN, "Dreno", world->drain_open);
-        draw_switch(UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
+        draw_switch(ui, DRAIN, "Dreno", world->drain_open);
+        draw_switch(ui, UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
     }
 }
 
@@ -887,7 +895,7 @@ static void draw_maintenance_details(const World *world)
     DrawCircle(850, 410, 3, hatch_color);
 }
 
-static void draw_interior(const World *world, const WorldAssets *assets)
+static void draw_interior(const UiTheme *ui, const World *world, const WorldAssets *assets)
 {
     const Sector *room = &rooms[world->location];
     Rectangle b = room->bounds;
@@ -908,9 +916,9 @@ static void draw_interior(const World *world, const WorldAssets *assets)
     switch (world->location) {
         case WORLD_MAINTENANCE:
             if (!assets->maintenance_interior.id) {
-                draw_switch(ALARM, "Painel do alarme", world->alarm);
-                draw_note(ALARM_NOTE, "Pista da cabine", world->alarm_note);
-                draw_room_portal(LOCKED_HATCH,
+                draw_switch(ui, ALARM, "Painel do alarme", world->alarm);
+                draw_note(ui, ALARM_NOTE, "Pista da cabine", world->alarm_note);
+                draw_room_portal(ui, LOCKED_HATCH,
                                  world->maintenance_key ? "Escotilha" : "Escotilha trancada",
                                  !world->maintenance_key);
             }
@@ -920,34 +928,34 @@ static void draw_interior(const World *world, const WorldAssets *assets)
                 DrawRectangle(330, 283 + 75 * i, 115, 44, Fade(room->trim, 0.45f));
                 DrawRectangle(835, 283 + 75 * i, 115, 44, Fade(room->trim, 0.45f));
             }
-            if (!world->maintenance_key) draw_guard(ALOE, "Babosa guardiã", (Color){73, 162, 120, 255});
-            else centered_text("Chave da manutenção obtida", 640, 325, 22, ink);
+            if (!world->maintenance_key) draw_guard(ui, ALOE, "Babosa guardiã", (Color){73, 162, 120, 255});
+            else centered_text(ui, "Chave da manutenção obtida", 640, 325, 22, ink);
             break;
         case WORLD_BASEMENT:
-            draw_switch(POWER, "Distribuidor de energia", world->light);
-            draw_switch(LOWER_LIFT, "Elevador", !world->light);
-            draw_room_portal(BASEMENT_HATCH, "Subir pela escotilha", false);
+            draw_switch(ui, POWER, "Distribuidor de energia", world->light);
+            draw_switch(ui, LOWER_LIFT, "Elevador", !world->light);
+            draw_room_portal(ui, BASEMENT_HATCH, "Subir pela escotilha", false);
             break;
         case WORLD_NURSERY:
             DrawRectangle(306, 284, 116, 194, Fade(DARKGREEN, 0.27f));
             DrawRectangle(875, 284, 99, 194, Fade(DARKGREEN, 0.27f));
-            if (!world->guardian_defeated) draw_guard(SUNFLOWER, "Girassol guardião", GOLD);
-            draw_switch(RELAY_PANEL, "Central de relés", world->guardian_defeated);
+            if (!world->guardian_defeated) draw_guard(ui, SUNFLOWER, "Girassol guardião", GOLD);
+            draw_switch(ui, RELAY_PANEL, "Central de relés", world->guardian_defeated);
             break;
         case WORLD_BRIDGE_CONTROL:
             DrawRectangle(450, 410, 380, 9, frame);
             DrawRectangle(450, 410, 190, 9, world->north_channel ? water_color : frame);
             DrawRectangle(640, 410, 190, 9, world->south_channel ? water_color : frame);
-            draw_switch(NORTH_CHANNEL, TextFormat("Canal norte (+%d)", NORTH_PRESSURE), world->north_channel);
-            draw_switch(SOUTH_CHANNEL, TextFormat("Canal sul (+%d)", SOUTH_PRESSURE), world->south_channel);
-            centered_text(TextFormat("Dreno externo %s", world->drain_open ? "aberto" : "fechado"),
+            draw_switch(ui, NORTH_CHANNEL, TextFormat("Canal norte (+%d)", NORTH_PRESSURE), world->north_channel);
+            draw_switch(ui, SOUTH_CHANNEL, TextFormat("Canal sul (+%d)", SOUTH_PRESSURE), world->south_channel);
+            centered_text(ui, TextFormat("Dreno externo %s", world->drain_open ? "aberto" : "fechado"),
                           640, 443, 20, ink);
             break;
         default: break;
     }
     if (world->location != WORLD_BASEMENT &&
         !(world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id))
-        draw_room_portal(INTERIOR_DOOR, "Voltar ao pátio", false);
+        draw_room_portal(ui, INTERIOR_DOOR, "Voltar ao pátio", false);
 }
 
 static void draw_npc(Texture2D atlas, int sprite, Vector2 base, Camera2D camera)
@@ -991,32 +999,27 @@ static void draw_sign(Texture2D atlas, Object object)
     }
 }
 
-void world_draw(const World *world, const WorldAssets *assets, Vector2 feet)
+void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets)
 {
     if (world->location == WORLD_EXTERIOR) {
-        draw_exterior(world, assets);
+        draw_exterior(ui, world, assets);
         if (!assets->courtyard.id) draw_sign(assets->tiles, ENTRANCE_SIGN);
         draw_sign(assets->tiles, BRIDGE_SIGN);
     } else {
-        draw_interior(world, assets);
+        draw_interior(ui, world, assets);
     }
-
-    Object nearby = nearby_object(world, feet);
-    if (world->location != WORLD_EXTERIOR && !world->relay_panel_open && !world->dialogue_title &&
-        !world->completed && nearby != OBJECT_COUNT)
-        draw_interaction_marker(nearby);
 }
 
-static void draw_relay_action(Rectangle bounds, const char *label, bool enabled)
+static void draw_relay_action(const UiTheme *ui, Rectangle bounds, const char *label, bool enabled)
 {
     bool hovered = enabled && CheckCollisionPointRec(GetMousePosition(), bounds);
     DrawRectangleRec(bounds, enabled ? (hovered ? GOLD : stone) : LIGHTGRAY);
     DrawRectangleLinesEx(bounds, 2, frame);
-    centered_text(label, (int)(bounds.x + bounds.width / 2), (int)bounds.y + 14, 20,
+    centered_text(ui, label, (int)(bounds.x + bounds.width / 2), (int)bounds.y + 14, 20,
                   enabled ? ink : DARKGRAY);
 }
 
-static void draw_relay_panel(const World *world)
+static void draw_relay_panel(const UiTheme *ui, const World *world)
 {
     static const struct {
         const char *formula;
@@ -1037,9 +1040,9 @@ static void draw_relay_panel(const World *world)
     DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.88f));
     DrawRectangle(62, 40, 1160, 640, cream);
     DrawRectangleLinesEx((Rectangle){62, 40, 1160, 640}, 4, frame);
-    DrawText("Central de relés", 82, 64, 36, ink);
-    DrawText("Valide uma regra por vez. As regras anteriores continuam valendo.", 82, 117, 23, ink);
-    DrawText("Use 1 a 8 ou clique nos relés. Ligado = verdadeiro.", 82, 153, 20, ink);
+    ui_text(ui, "Central de relés", 82, 64, 36, ink);
+    ui_text(ui, "Valide uma regra por vez. As regras anteriores continuam valendo.", 82, 117, 23, ink);
+    ui_text(ui, "Use 1 a 8 ou clique nos relés. Ligado = verdadeiro.", 82, 153, 20, ink);
 
     for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
         Rectangle bounds = relay_button(i);
@@ -1048,49 +1051,42 @@ static void draw_relay_panel(const World *world)
         int y = (int)bounds.y;
         DrawRectangleRec(bounds, on ? (Color){201, 225, 171, 255} : stone);
         DrawRectangleLinesEx(bounds, 2, frame);
-        DrawText(TextFormat("%d", i + 1), x + 9, y + 8, 15, ink);
-        centered_text(TextFormat("%c", 'A' + i), x + 65, y + 13, 30, ink);
+        ui_text(ui, TextFormat("%d", i + 1), x + 9, y + 8, 15, ink);
+        centered_text(ui, TextFormat("%c", 'A' + i), x + 65, y + 13, 30, ink);
         DrawCircle(x + 18, y + 65, 6, on ? DARKGREEN : MAROON);
-        DrawText(on ? "Ligado" : "Desligado", x + 31, y + 56, 16, ink);
+        ui_text(ui, on ? "Ligado" : "Desligado", x + 31, y + 56, 16, ink);
     }
 
     const Rectangle rule_panel = {82, 303, 1124, 266};
     DrawRectangleRec(rule_panel, (Color){237, 228, 190, 255});
     DrawRectangleLinesEx(rule_panel, world->relay_rejected ? 4 : 2, world->relay_rejected ? MAROON : frame);
-    DrawText(TextFormat("Regra %02d de %02d", step + 1, WORLD_RELAY_RULE_COUNT), 104, 324, 23, ink);
+    ui_text(ui, TextFormat("Regra %02d de %02d", step + 1, WORLD_RELAY_RULE_COUNT), 104, 324, 23, ink);
     if (available) {
-        DrawText(clues[step].formula, 104, 378, 31, ink);
-        DrawText(clues[step].guide, 104, 429, 20, ink);
+        ui_text(ui, clues[step].formula, 104, 378, 31, ink);
+        ui_text(ui, clues[step].guide, 104, 429, 20, ink);
         if (world->relay_rejected)
-            DrawText("Esta regra falhou. Ajuste os relés e tente novamente.", 104, 505, 22, MAROON);
+            ui_text(ui, "Esta regra falhou. Ajuste os relés e tente novamente.", 104, 505, 22, MAROON);
         else if (step == WORLD_RELAY_RULE_COUNT - 1)
-            DrawText("Valide para abrir a saída.", 104, 505, 21, ink);
+            ui_text(ui, "Valide para abrir a saída.", 104, 505, 21, ink);
         else
-            DrawText("Valide para revelar a próxima regra.", 104, 505, 21, ink);
+            ui_text(ui, "Valide para revelar a próxima regra.", 104, 505, 21, ink);
     } else {
-        DrawText("Pista necessária", 104, 378, 31, ink);
-        DrawText(step == CANAL_RELAY_RULE ? "Registre a pista nos canais para revelar esta regra."
+        ui_text(ui, "Pista necessária", 104, 378, 31, ink);
+        ui_text(ui, step == CANAL_RELAY_RULE ? "Registre a pista nos canais para revelar esta regra."
                                         : "Registre a pista na cabine do alarme para revelar esta regra.",
                  104, 429, 20, ink);
     }
 
-    draw_relay_action(validate_relays, "ENTER  Validar regra", available);
-    draw_relay_action(previous_relay_rule, "ESQ  Regra anterior", step > 0);
-    draw_relay_action(close_relays, "ESC  Fechar", true);
-    DrawText(TextFormat("Relés ligados: %d", active_relays(world->relay_mask)), 950, 597, 18, ink);
-    DrawText(TextFormat("Tentativas: %u", world->relay_attempts), 950, 625, 18, ink);
+    draw_relay_action(ui, validate_relays, "ENTER  Validar regra", available);
+    draw_relay_action(ui, previous_relay_rule, "ESQ  Regra anterior", step > 0);
+    draw_relay_action(ui, close_relays, "ESC  Fechar", true);
+    ui_text(ui, TextFormat("Relés ligados: %d", active_relays(world->relay_mask)), 950, 597, 18, ink);
+    ui_text(ui, TextFormat("Tentativas: %u", world->relay_attempts), 950, 625, 18, ink);
 }
 
-static void hud_card(Rectangle bounds, Color accent)
+static void draw_condition(const UiTheme *ui, int x, int y, bool met, const char *label)
 {
-    DrawRectangleRec((Rectangle){bounds.x + 2, bounds.y + 3, bounds.width, bounds.height}, Fade(ink, 0.25f));
-    DrawRectangleRec(bounds, Fade(ink, 0.92f));
-    DrawRectangleLinesEx(bounds, 1, Fade(accent, 0.45f));
-}
-
-static void draw_condition(int x, int y, bool met, const char *label)
-{
-    Color color = met ? (Color){170, 224, 145, 255} : (Color){246, 198, 115, 255};
+    Color color = met ? (Color){45, 100, 61, 255} : (Color){139, 89, 33, 255};
     DrawRectangleLines(x, y + 2, 13, 13, color);
     if (met) {
         DrawLine(x + 3, y + 8, x + 5, y + 10, color);
@@ -1098,10 +1094,10 @@ static void draw_condition(int x, int y, bool met, const char *label)
     } else {
         DrawLine(x + 4, y + 8, x + 9, y + 8, color);
     }
-    DrawText(label, x + 22, y, 17, cream);
+    ui_text(ui, label, x + 22, y, 18, ink);
 }
 
-static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
+static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object object, Vector2 feet)
 {
     bool bridge = world->location == WORLD_BRIDGE_CONTROL || object == DRAIN ||
                   object == BRIDGE_CONTROL_DOOR ||
@@ -1110,17 +1106,17 @@ static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
     bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1270 && feet.y <= 475;
     if (!bridge && !nursery) return (Rectangle){0};
 
-    int top = 60;
+    int top = 78;
     Rectangle card = {916, top, 346, bridge ? 119 : 142};
     int left = (int)card.x + 13;
     int right = (int)(card.x + card.width) - 13;
     bool open = bridge ? world_bridge_open(world) : world_gate_open(world);
-    Color status_color = open ? (Color){170, 224, 145, 255} : (Color){246, 198, 115, 255};
-    hud_card(card, status_color);
-    DrawText(bridge ? "Ponte" : "Porta do viveiro", left, top + 10, 21, cream);
+    Color status_color = open ? (Color){45, 100, 61, 255} : (Color){139, 89, 33, 255};
+    ui_panel(card);
+    ui_text(ui, bridge ? "Ponte" : "Porta do viveiro", left, top + 10, 21, ink);
     const char *status = bridge ? (open ? "Estendida" : "Recolhida") : (open ? "Aberta" : "Fechada");
-    DrawText(status, right - MeasureText(status, 16), top + 13, 16, status_color);
-    DrawLine(left, top + 35, right, top + 35, Fade(stone, 0.26f));
+    ui_text(ui, status, right - ui_measure(ui, status, 16), top + 13, 16, status_color);
+    DrawLine(left, top + 35, right, top + 35, Fade(frame, 0.26f));
 
     const char *rule;
     if (bridge) {
@@ -1130,17 +1126,17 @@ static Rectangle draw_challenge(const World *world, Object object, Vector2 feet)
             : world->north_channel ? "Dois canais abertos" : "Nenhum canal aberto";
         const char *level = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
             : pressure > BRIDGE_TARGET_PRESSURE ? "alta" : "correta";
-        draw_condition(left, top + 44, one_channel, channels);
-        draw_condition(left, top + 67, pressure == BRIDGE_TARGET_PRESSURE,
+        draw_condition(ui, left, top + 44, one_channel, channels);
+        draw_condition(ui, left, top + 67, pressure == BRIDGE_TARGET_PRESSURE,
                        TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, level));
         rule = TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE);
     } else {
-        draw_condition(left, top + 44, world->water, world->water ? "Água liberada" : "Água fechada");
-        draw_condition(left, top + 67, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
-        draw_condition(left, top + 90, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
+        draw_condition(ui, left, top + 44, world->water, world->water ? "Água liberada" : "Água fechada");
+        draw_condition(ui, left, top + 67, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
+        draw_condition(ui, left, top + 90, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
         rule = world->gate_unlocked ? "Trava acionada · porta liberada" : "Água E Luz E NÃO Alarme";
     }
-    DrawText(rule, left, top + (int)card.height - 24, 16, stone);
+    ui_text(ui, rule, left, top + (int)card.height - 24, 16, ink);
     return card;
 }
 
@@ -1161,34 +1157,34 @@ static const char *current_objective(const World *world)
 static const char *interaction_hint(const World *world, Object object)
 {
     static const char *const prompts[OBJECT_COUNT] = {
-        [VALVE] = "[E] Alternar água",
-        [POWER] = "[E] Redirecionar energia",
-        [ALARM] = "[E] Alternar alarme",
-        [NORTH_CHANNEL] = "[E] Alternar canal norte",
-        [SOUTH_CHANNEL] = "[E] Alternar canal sul",
-        [DRAIN] = "[E] Alternar dreno",
-        [ALOE] = "[E] Desafiar Babosa pela chave",
-        [SUNFLOWER] = "[E] Desafiar Girassol",
-        [CANAL_NOTE] = "[E] Registrar pista dos canais",
-        [ALARM_NOTE] = "[E] Registrar pista da cabine",
-        [MAINTENANCE_DOOR] = "[E] Entrar na casa de manutenção",
-        [DEPOT_DOOR] = "[E] Entrar no depósito",
-        [NURSERY_DOOR] = "[E] Entrar no viveiro",
-        [BRIDGE_CONTROL_DOOR] = "[E] Entrar no controle da ponte",
-        [INTERIOR_DOOR] = "[E] Voltar ao pátio",
-        [LOCKED_HATCH] = "[E] Descer pela escotilha",
-        [BASEMENT_HATCH] = "[E] Subir pela escotilha",
-        [UPPER_LIFT] = "[E] Descer pelo elevador",
-        [LOWER_LIFT] = "[E] Subir pelo elevador",
-        [RELAY_PANEL] = "[E] Abrir central de relés",
-        [ENTRANCE_SIGN] = "[E] Ler placa do jardim",
-        [BRIDGE_SIGN] = "[E] Ler aviso da ponte",
-        [GARDENER] = "[E] Falar com a jardineira",
-        [TECHNICIAN] = "[E] Falar com o técnico",
-        [RESEARCHER] = "[E] Falar com a pesquisadora"
+        [VALVE] = "Alternar água",
+        [POWER] = "Redirecionar energia",
+        [ALARM] = "Alternar alarme",
+        [NORTH_CHANNEL] = "Alternar canal norte",
+        [SOUTH_CHANNEL] = "Alternar canal sul",
+        [DRAIN] = "Alternar dreno",
+        [ALOE] = "Desafiar Babosa pela chave",
+        [SUNFLOWER] = "Desafiar Girassol",
+        [CANAL_NOTE] = "Registrar pista dos canais",
+        [ALARM_NOTE] = "Registrar pista da cabine",
+        [MAINTENANCE_DOOR] = "Entrar na casa de manutenção",
+        [DEPOT_DOOR] = "Entrar no depósito",
+        [NURSERY_DOOR] = "Entrar no viveiro",
+        [BRIDGE_CONTROL_DOOR] = "Entrar no controle da ponte",
+        [INTERIOR_DOOR] = "Voltar ao pátio",
+        [LOCKED_HATCH] = "Descer pela escotilha",
+        [BASEMENT_HATCH] = "Subir pela escotilha",
+        [UPPER_LIFT] = "Descer pelo elevador",
+        [LOWER_LIFT] = "Subir pelo elevador",
+        [RELAY_PANEL] = "Abrir central de relés",
+        [ENTRANCE_SIGN] = "Ler placa do jardim",
+        [BRIDGE_SIGN] = "Ler aviso da ponte",
+        [GARDENER] = "Falar com a jardineira",
+        [TECHNICIAN] = "Falar com o técnico",
+        [RESEARCHER] = "Falar com a pesquisadora"
     };
-    if (object == DRAIN) return world->drain_open ? "[E] Fechar dreno" : "[E] Abrir dreno";
-    if (object == POWER) return world->light ? "[E] Alimentar elevador" : "[E] Alimentar refletor";
+    if (object == DRAIN) return world->drain_open ? "Fechar dreno" : "Abrir dreno";
+    if (object == POWER) return world->light ? "Alimentar elevador" : "Alimentar refletor";
     if (object == UPPER_LIFT && !world->basement_visited) return "Elevador travado. Use a escotilha primeiro.";
     if ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light)
         return "Elevador sem energia. Volte pela escotilha.";
@@ -1196,87 +1192,81 @@ static const char *interaction_hint(const World *world, Object object)
         return "Escotilha trancada. A Babosa guarda a chave.";
     if (object == NURSERY_DOOR && !world_gate_open(world))
         return "Viveiro fechado. Confira as condições.";
-    if (object == CANAL_NOTE && world->canal_note) return "[E] Reler a pista dos canais";
+    if (object == CANAL_NOTE && world->canal_note) return "Reler a pista dos canais";
     if (object == ALARM_NOTE && world->alarm_note) return "Pista da cabine registrada";
     if (object == RELAY_PANEL && !world->guardian_defeated)
         return "Central bloqueada até você vencer o Girassol.";
     return prompts[object];
 }
 
-static void draw_interaction_hint(const World *world, Object object, Rectangle challenge)
+HudInteraction world_interaction_view(const World *world, Vector2 feet)
 {
-    const char *hint = interaction_hint(world, object);
-    bool actionable = hint[0] == '[';
-    if (actionable) hint += 4; /* Remove o prefixo [E] da mensagem. */
-    Vector2 position = GetWorldToScreen2D(objects[object].position, world_camera(world));
-    float width = MeasureText(hint, 17) + (actionable ? 55 : 24);
-    float left = position.x < GAME_SCREEN_WIDTH / 2.0f ? position.x + 42 : position.x - width - 42;
-    Rectangle card = {
-        roundf(fminf(fmaxf(left, 18), GAME_SCREEN_WIDTH - 18 - width)),
-        roundf(fminf(fmaxf(position.y - 71, 92), GAME_SCREEN_HEIGHT - 76)), width, 34
+    if (world->dialogue_title || world->relay_panel_open || world->completed) return (HudInteraction){0};
+    Object object = nearby_object(world, feet);
+    if (object == OBJECT_COUNT) return (HudInteraction){0};
+    static const char *const labels[OBJECT_COUNT] = {
+        [VALVE]="Válvula da água", [POWER]="Distribuidor de energia", [ALARM]="Painel do alarme",
+        [NORTH_CHANNEL]="Canal norte", [SOUTH_CHANNEL]="Canal sul", [DRAIN]="Dreno",
+        [ALOE]="Babosa guardiã", [SUNFLOWER]="Girassol guardião", [CANAL_NOTE]="Pista dos canais",
+        [ALARM_NOTE]="Pista da cabine", [MAINTENANCE_DOOR]="Casa de manutenção",
+        [DEPOT_DOOR]="Depósito", [NURSERY_DOOR]="Viveiro", [BRIDGE_CONTROL_DOOR]="Controle da ponte",
+        [INTERIOR_DOOR]="Saída", [LOCKED_HATCH]="Escotilha de manutenção", [BASEMENT_HATCH]="Escotilha",
+        [UPPER_LIFT]="Elevador", [LOWER_LIFT]="Elevador", [RELAY_PANEL]="Central de relés",
+        [ENTRANCE_SIGN]="Placa do jardim", [BRIDGE_SIGN]="Aviso da ponte", [GARDENER]="Jardineira",
+        [TECHNICIAN]="Técnico", [RESEARCHER]="Pesquisadora"
     };
-    if (challenge.width > 0 && CheckCollisionRecs(card, challenge))
-        card.x = challenge.x - width - 10;
-    hud_card(card, actionable ? stone : ORANGE);
-    if (actionable) {
-        DrawRectangle((int)card.x + 8, (int)card.y + 6, 23, 22, cream);
-        DrawText("E", (int)card.x + 15, (int)card.y + 9, 16, ink);
-    }
-    DrawText(hint, (int)card.x + (actionable ? 42 : 12), (int)card.y + 8, 17, cream);
+    Vector2 anchor = objects[object].position;
+    float offset = 45;
+    if (object == DRAIN) offset = 64;
+    if (object == MAINTENANCE_DOOR || object == DEPOT_DOOR) offset = 72;
+    if (object == NURSERY_DOOR) offset = 80;
+    if (object == BRIDGE_CONTROL_DOOR) offset = 64;
+    if (object == LOCKED_HATCH) offset = 48;
+    if (object == ALARM) offset = 54;
+    if (object == ALARM_NOTE) offset = 30;
+    if (object >= GARDENER && object <= RESEARCHER) offset = 55 / world_camera(world).zoom;
+    anchor.y -= offset;
+    return (HudInteraction){.state=interaction_state(world, object), .context=labels[object],
+        .message=interaction_hint(world, object), .target=objects[object].position, .marker_anchor=anchor};
 }
 
-static void draw_dialogue(const World *world)
+static void draw_dialogue(const UiTheme *ui, const World *world)
 {
-    Rectangle card = {48, 534, GAME_SCREEN_WIDTH - 96, 160};
-    DrawRectangleRec((Rectangle){card.x + 4, card.y + 5, card.width, card.height}, Fade(ink, 0.46f));
-    DrawRectangleRec(card, cream);
-    DrawRectangleLinesEx(card, 4, frame);
-    DrawText(world->dialogue_title, 72, 551, 26, ink);
-    DrawLine(72, 584, GAME_SCREEN_WIDTH - 72, 584, stone);
-    DrawText(world->dialogue_pages[world->dialogue_page], 72, 594, 22, ink);
-
+    Rectangle card = {48, 510, GAME_SCREEN_WIDTH - 96, 184};
+    ui_panel(card);
+    ui_text_bold(ui, world->dialogue_title, 72, 526, 26, ink);
+    DrawLine(72, 562, GAME_SCREEN_WIDTH-72, 562, Fade(frame, 0.3f));
+    ui_text_wrap(ui, world->dialogue_pages[world->dialogue_page],
+                 (Rectangle){72, 574, GAME_SCREEN_WIDTH-144, 72}, 24, ink, false);
     bool has_next = world->dialogue_page == 0 && world->dialogue_pages[1];
     const char *controls = has_next ? "E / Enter  Próxima     Esc  Fechar" : "E / Enter / Esc  Fechar";
-    DrawText(controls, GAME_SCREEN_WIDTH - 72 - MeasureText(controls, 17), 666, 17, frame);
+    ui_text(ui, controls, GAME_SCREEN_WIDTH-72-ui_measure(ui, controls, 18), 663, 18, frame);
 }
 
-void world_draw_interface(const World *world, Vector2 feet)
+void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)
 {
     if (world->dialogue_title) {
-        draw_dialogue(world);
+        draw_dialogue(ui, world);
         return;
     }
     if (world->relay_panel_open) {
-        draw_relay_panel(world);
+        draw_relay_panel(ui, world);
         return;
     }
     if (world->completed) {
         DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.83f));
         DrawRectangle(310, 260, 660, 190, cream);
         DrawRectangleLinesEx((Rectangle){310, 260, 660, 190}, 4, frame);
-        centered_text("Estufa concluída!", 640, 291, 36, ink);
-        centered_text("Você venceu o guardião e validou os oito relés.", 640, 350, 22, ink);
-        centered_text("ENTER ou ESC  Voltar ao menu", 640, 401, 20, ink);
+        centered_text(ui, "Estufa concluída!", 640, 291, 36, ink);
+        centered_text(ui, "Você venceu o guardião e validou os oito relés.", 640, 350, 22, ink);
+        centered_text(ui, "ENTER ou ESC  Voltar ao menu", 640, 401, 20, ink);
         return;
     }
 
     const Sector *sector = world->location == WORLD_EXTERIOR ? sector_at(feet) : &rooms[world->location];
     const char *area = sector ? sector->name : "Travessia";
-    const char *objective = current_objective(world);
-    int objective_width = (int)fmaxf(MeasureText(area, 16), MeasureText(objective, 21));
-    hud_card((Rectangle){18, 18, objective_width + 32, 61}, stone);
-    DrawText(area, 34, 27, 16, stone);
-    DrawText(objective, 34, 49, 21, cream);
-
-    hud_card((Rectangle){1139, 18, 123, 32}, stone);
-    DrawText("Pistas", 1151, 26, 16, stone);
-    DrawText(TextFormat("%d/2", world->canal_note + world->alarm_note), 1220, 25, 18, cream);
-
-    Object object = nearby_object(world, feet);
-    Rectangle challenge = draw_challenge(world, object, feet);
-    if (object != OBJECT_COUNT) draw_interaction_hint(world, object, challenge);
-
-    const char *controls = "WASD / Setas  Mover   Shift  Correr   E  Interagir   Esc  Menu";
-    hud_card((Rectangle){18, 674, MeasureText(controls, 15) + 24, 28}, stone);
-    DrawText(controls, 30, 681, 15, stone);
+    HudInteraction interaction = world_interaction_view(world, feet);
+    draw_challenge(ui, world, nearby_object(world, feet), feet);
+    exploration_hud_draw(ui, area, current_objective(world), world->canal_note + world->alarm_note,
+                         &interaction, world_camera(world));
 }
