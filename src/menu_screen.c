@@ -1,4 +1,4 @@
-/* Compõe título/menu pixel art, anima vegetação/mascote e encaminha ações de entrada. */
+/* Compõe a tela inicial, anima vegetação/mascote e abre a seleção de personagem. */
 #include "menu_screen.h"
 #include "ui_theme.h"
 #include "menu_mascot_data.h"
@@ -7,38 +7,7 @@
 #include <math.h>
 #include <stddef.h>
 
-#define BUTTON_FEEDBACK_DURATION 0.12f
-
 static const Color INK = {24, 52, 30, 255};
-static const Color CREAM = {247, 237, 198, 255};
-static const Color MUTED = {128, 134, 100, 255};
-static const char *OPTION_LABELS[MENU_OPTION_COUNT] = {"Campanha", "Versus local", "Sair"};
-
-static bool option_is_enabled(int option)
-{
-    return option >= 0 && option < MENU_OPTION_COUNT;
-}
-
-static MenuAction option_action(int option)
-{
-    static const MenuAction actions[MENU_OPTION_COUNT] = {
-        MENU_ACTION_CAMPAIGN, MENU_ACTION_VERSUS, MENU_ACTION_EXIT
-    };
-    return option_is_enabled(option) ? actions[option] : MENU_ACTION_NONE;
-}
-
-/* Áreas fixas, compartilhadas pelo desenho e pelos testes de clique. */
-static Rectangle option_bounds(int option)
-{
-    return (Rectangle){864, 366 + option * 66.0f, 300, 62};
-}
-
-static void clear_activation(MenuScreen *screen)
-{
-    screen->pressed_option = -1;
-    screen->pending_option = -1;
-    screen->activation_time = 0;
-}
 
 static bool menu_input_down(void)
 {
@@ -146,7 +115,6 @@ void menu_screen_init(MenuScreen *screen)
             TraceLog(LOG_WARNING, "Atlas de repouso do mascote invalido; usando imagem estatica.");
         }
     } else TraceLog(LOG_INFO, "Atlas de repouso do mascote ausente; usando imagem estatica.");
-    clear_activation(screen);
 }
 
 MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
@@ -157,10 +125,9 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
     /* O relógio avança inclusive enquanto ENTER/ESC aguardam soltura. */
     screen->mascot_time = fmodf(screen->mascot_time + dt, MENU_MASCOT_FRAME_COUNT / MENU_MASCOT_FPS);
     screen->grass_time = fmodf(screen->grass_time + dt, MENU_GRASS_FRAME_COUNT / MENU_GRASS_FPS);
-    /* Seis segundos fecham os três ciclos visuais, sem reiniciar ao trocar título/menu. */
+    /* Seis segundos fecham os três ciclos visuais, sem reiniciar nas transições da tela inicial. */
     screen->ui_time = fmodf(screen->ui_time + dt, 6.0f);
     if (!accept_input) {
-        clear_activation(screen);
         /* Sincroniza a soltura com o bloqueio de game.c ao voltar de outra tela. */
         if (!menu_input_down()) screen->input_blocked = false;
         return MENU_ACTION_NONE;
@@ -169,57 +136,8 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
         if (!menu_input_down()) screen->input_blocked = false;
         return MENU_ACTION_NONE;
     }
-    if (!screen->menu_open) {
-        if (IsKeyPressed(KEY_ENTER)) {
-            screen->menu_open = true;
-            menu_screen_reset_input(screen);
-        }
-        return MENU_ACTION_NONE;
-    }
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        screen->menu_open = false;
-        menu_screen_reset_input(screen);
-        return MENU_ACTION_NONE;
-    }
-    if (screen->pending_option >= 0) {
-        screen->activation_time += dt;
-        if (screen->activation_time >= BUTTON_FEEDBACK_DURATION) {
-            int option = screen->pending_option;
-            clear_activation(screen);
-            return option_action(option);
-        }
-        return MENU_ACTION_NONE;
-    }
-    int direction = IsKeyPressed(KEY_DOWN) ? 1 : IsKeyPressed(KEY_UP) ? -1 : 0;
-    if (direction) {
-        do {
-            screen->selected_option = (screen->selected_option + direction + MENU_OPTION_COUNT) % MENU_OPTION_COUNT;
-        } while (!option_is_enabled(screen->selected_option));
-    }
-    Vector2 mouse = GetMousePosition();
-    Vector2 delta = GetMouseDelta();
-    bool mouse_moved = delta.x != 0 || delta.y != 0;
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) screen->pressed_option = -1;
-    for (int i = 0; i < MENU_OPTION_COUNT; i++) {
-        if (!option_is_enabled(i)) continue;
-        bool hovered = CheckCollisionPointRec(mouse, option_bounds(i));
-        if (hovered && mouse_moved && !direction) screen->selected_option = i;
-        if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            screen->selected_option = i;
-            screen->pressed_option = i;
-        }
-    }
-    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-        int pressed = screen->pressed_option;
-        screen->pressed_option = -1;
-        if (pressed >= 0 && option_is_enabled(pressed) && CheckCollisionPointRec(mouse, option_bounds(pressed)))
-            return option_action(pressed);
-    }
-    if (IsKeyPressed(KEY_ENTER) && option_is_enabled(screen->selected_option)) {
-        screen->pressed_option = -1;
-        screen->pending_option = screen->selected_option;
-        screen->activation_time = 0;
-    }
+    if (IsKeyPressed(KEY_ENTER)) return MENU_ACTION_CAMPAIGN;
+    if (IsKeyPressed(KEY_ESCAPE)) return MENU_ACTION_EXIT;
     return MENU_ACTION_NONE;
 }
 
@@ -272,38 +190,6 @@ static void draw_art(Texture2D texture, Rectangle source, int center, int y, flo
                    (Vector2){0}, 0, WHITE);
 }
 
-static void draw_panel(const UiTheme *ui, const MenuScreen *screen)
-{
-    /* Bordas em degraus e sombra sólida, alinhadas a pixels inteiros. */
-    DrawRectangle(850, 352, 332, 230, (Color){53, 66, 36, 255});
-    DrawRectangle(842, 344, 332, 230, INK);
-    DrawRectangle(838, 352, 340, 214, INK);
-    DrawRectangle(850, 352, 316, 214, CREAM);
-    DrawRectangle(846, 360, 324, 198, CREAM);
-    for (int i = 0; i < MENU_OPTION_COUNT; i++) {
-        Rectangle bounds = option_bounds(i);
-        bool selected = screen->selected_option == i;
-        bool pressed = screen->pending_option == i ||
-            (screen->pressed_option == i && CheckCollisionPointRec(GetMousePosition(), bounds));
-        if (selected) DrawRectangle(860, (int)bounds.y + 2, 300, 56,
-                                    pressed ? (Color){212, 211, 155, 255} : (Color){232, 227, 176, 255});
-        if (selected) {
-            /* Dimensões ímpares preservam o centro do cursor na grade de pixels. */
-            float pulse = 1.0f + 0.1f * sinf(2.0f * PI * screen->ui_time);
-            int width = 2 * (int)roundf(7.0f * pulse) + 1;
-            int left = 884 - width / 2;
-            int center_y = (int)bounds.y + 30;
-            for (int step = 0; step < 5; step++) {
-                int x0 = left + (int)roundf(step * width / 5.0f);
-                int x1 = left + (int)roundf((step + 1) * width / 5.0f);
-                int half_height = (int)roundf((13 - step * 3) * pulse);
-                DrawRectangle(x0, center_y - half_height, x1 - x0, 2 * half_height + 1, INK);
-            }
-        }
-        ui_text(ui, OPTION_LABELS[i], 908, (int)bounds.y + 16, 30, option_is_enabled(i) ? INK : MUTED);
-    }
-}
-
 static void draw_mascot(const MenuScreen *screen)
 {
     if (!screen->mascot_idle.id) {
@@ -327,7 +213,7 @@ void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen)
     ClearBackground((Color){118, 143, 67, 255});
     draw_background(screen);
     int logo_offset = (int)roundf(4.0f * sinf(2.0f * PI * screen->ui_time / 3.0f));
-    if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28 + logo_offset, screen->menu_open ? 244 : 324);
+    if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28 + logo_offset, 324);
     else centered_text(ui, "Plants x Plants", 640, 90 + logo_offset, 50, INK);
     if (screen->mascot.id || screen->mascot_idle.id) {
         /* Sombra pequena em degraus, sem elipse suavizada nem halo. */
@@ -335,10 +221,7 @@ void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen)
         DrawRectangle(595, 613, 90, 3, (Color){124, 110, 53, 255});
         draw_mascot(screen);
     }
-    if (screen->menu_open) {
-        draw_panel(ui, screen);
-        centered_text(ui, "Setas: escolher   ENTER: confirmar   ESC: voltar", 640, 660, 20, INK);
-    } else if (fmodf(screen->ui_time, 1.2f) < 0.8f) {
+    if (fmodf(screen->ui_time, 1.2f) < 0.8f) {
         centered_text(ui, "Pressione ENTER", 642, 652, 30, (Color){242, 232, 188, 255});
         centered_text(ui, "Pressione ENTER", 640, 650, 30, INK);
     }
@@ -359,6 +242,5 @@ void menu_screen_shutdown(MenuScreen *screen)
 
 void menu_screen_reset_input(MenuScreen *screen)
 {
-    clear_activation(screen);
     screen->input_blocked = true;
 }

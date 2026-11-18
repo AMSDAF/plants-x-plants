@@ -9,7 +9,7 @@
 
 #define MAX_MOVES 2
 #define MAX_TEAM_SIZE 4
-#define MIN_VERSUS_TEAM_SIZE 2
+#define MIN_TEAM_SIZE 2
 
 // Estrutura de um golpe
 typedef struct {
@@ -22,8 +22,6 @@ typedef struct {
 typedef struct {
     int id;                  // Identificador da espécie
     char name_pt[32];        // Nome da planta em português
-    
-    int level;               // Nível atual da planta
     
     // Atributos de Combate
     int max_hp;
@@ -52,6 +50,6 @@ void Team_Restore(Team *team);
 int Plant_IsAlive(const Plant *plant);
 void Plant_TakeDamage(Plant *plant, int damage);
 
-Plant Plant_CreateFromSpecies(int species_id, int level);
+Plant Plant_CreateFromSpecies(int species_id);
 
 #endif

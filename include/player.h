@@ -10,9 +10,7 @@ typedef enum { FACING_SOUTH, FACING_WEST, FACING_EAST, FACING_NORTH } Facing;
 #define PLAYER_MALE_WALK_CYCLE_SECONDS 0.56f
 #endif
 typedef struct {
-    Texture2D sheets[TRAINER_COUNT];
     Texture2D botanical_sheets[TRAINER_COUNT];
-    Texture2D male_walk6;
 } PlayerAssets;
 typedef struct {
     Vector2 feet;
@@ -20,7 +18,6 @@ typedef struct {
     Facing facing;
     float walk_time;
     bool moving;
-    bool use_walk6;
 } Player;
 void player_assets_load(PlayerAssets *assets);
 void player_assets_unload(PlayerAssets *assets);

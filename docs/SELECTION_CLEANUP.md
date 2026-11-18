@@ -1,5 +1,10 @@
 # Auditoria de recursos: menu e seleção
 
+> Registro histórico da limpeza anterior. A decisão posterior mantém somente
+> quatro PNGs de personagem; retratos estáticos, halos, fontes e variantes
+> legadas citados como preservados abaixo já foram removidos. Consulte
+> [TRAINER_SELECTION.md](TRAINER_SELECTION.md) e [TRAINER_TEST.md](TRAINER_TEST.md).
+
 ## Escopo e rastreamento
 
 A árvore de trabalho estava limpa no início. Foram conferidos os carregadores e

@@ -265,7 +265,7 @@ void world_assets_load(WorldAssets *assets)
         .bridge_open = load_map_texture("assets/maps/botanical_bridge.png", 158, 113),
         .tiles = load_map_texture("assets/maps/botanical_tiles.png", 512, 512),
         .maintenance_interior = load_map_texture(
-            "assets/maps/maintenance_house_interior_v2.png", 1672, 941),
+            "assets/maps/maintenance_house_interior.png", 1672, 941),
         .courtyard_detail = load_map_texture("assets/maps/courtyard_detail/courtyard_complete.png",
                                             COURTYARD_DETAIL_WIDTH, COURTYARD_DETAIL_HEIGHT),
         .depot_interior = load_map_texture("assets/maps/depot_interior.png", 1672, 941),
@@ -443,8 +443,10 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     if (feet.y < b.y + edge_margin) feet.y = b.y + edge_margin;
     if (feet.y > b.y + b.height - edge_margin) feet.y = b.y + b.height - edge_margin;
 
-    /* Pega mais a largura real do personagem para nÃ£o atravessar caixas pelo canto. */
-    Rectangle box = {feet.x - 12, feet.y - 7, 24, 14};
+    /* Conserva os pés do exterior; os interiores usam o explorador ampliado. */
+    Rectangle box = world->location == WORLD_EXTERIOR
+        ? (Rectangle){feet.x - 8, feet.y - 4, 16, 8}
+        : (Rectangle){feet.x - 12, feet.y - 7, 24, 14};
     const Rectangle *furniture = NULL;
     size_t furniture_count = 0;
     switch (world->location) {
@@ -1301,11 +1303,11 @@ static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object ob
         int pressure = world_bridge_pressure(world);
         const char *channels = one_channel ? (world->north_channel ? "Só o canal norte aberto" : "Só o canal sul aberto")
             : world->north_channel ? "Dois canais abertos" : "Nenhum canal aberto";
-        const char *level = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
+        const char *pressure_label = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
             : pressure > BRIDGE_TARGET_PRESSURE ? "alta" : "correta";
         draw_condition(ui, left, top + 44, one_channel, channels);
         draw_condition(ui, left, top + 67, pressure == BRIDGE_TARGET_PRESSURE,
-                       TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, level));
+                       TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, pressure_label));
         rule = TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE);
     } else {
         draw_condition(ui, left, top + 44, world->water, world->water ? "Água liberada" : "Água fechada");
@@ -1392,17 +1394,32 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [ENTRANCE_SIGN]="Placa do jardim", [BRIDGE_SIGN]="Aviso da ponte", [GARDENER]="Jardineira",
         [TECHNICIAN]="Técnico", [RESEARCHER]="Pesquisadora"
     };
-    Vector2 anchor = objects[object].position;
-    float offset = 45;
-    if (object == DRAIN) offset = 64;
-    if (object == MAINTENANCE_DOOR || object == DEPOT_DOOR) offset = 72;
-    if (object == NURSERY_DOOR) offset = 80;
-    if (object == BRIDGE_CONTROL_DOOR) offset = 64;
-    if (object == LOCKED_HATCH) offset = 48;
-    if (object == ALARM) offset = 54;
-    if (object == ALARM_NOTE) offset = 30;
-    if (object >= GARDENER && object <= RESEARCHER) offset = 55 / world_camera(world).zoom;
-    anchor.y -= offset;
+    /* Centro superior visível, independente do ponto usado para alcance e colisão. */
+    static const Vector2 marker_anchors[OBJECT_COUNT] = {
+        [VALVE]={1168, 615}, [POWER]={640, 301}, [ALARM]={433, 250},
+        [NORTH_CHANNEL]={539, 331}, [SOUTH_CHANNEL]={742, 331}, [DRAIN]={733, 530},
+        [ALOE]={640, 375}, [SUNFLOWER]={640, 375}, [CANAL_NOTE]={1273, 360},
+        [ALARM_NOTE]={540, 273}, [MAINTENANCE_DOOR]={246, 574},
+        [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
+        [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},
+        [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
+        [UPPER_LIFT]={430, 434}, [LOWER_LIFT]={900, 426}, [RELAY_PANEL]={782, 296},
+        [ENTRANCE_SIGN]={483, 747}, [BRIDGE_SIGN]={771, 565},
+        [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
+    };
+    Vector2 anchor = marker_anchors[object];
+    if (object == INTERIOR_DOOR && world->location != WORLD_MAINTENANCE) anchor.y = 539;
+    if (object >= GARDENER && object <= RESEARCHER)
+        anchor.y = objects[object].position.y - 53 / world_camera(world).zoom;
+    /* Quando o jogador passa na frente, afasta a seta do chapéu sem deslocá-la de lado. */
+    float zoom = world_camera(world).zoom;
+    float horizontal = fabsf(feet.x-anchor.x) * zoom;
+    float clearance = fminf(fmaxf((32-horizontal)/20, 0), 1);
+    clearance = clearance*clearance*(3-2*clearance);
+    float vertical = fminf(fmaxf((feet.y-anchor.y)*zoom/12+1.5f, 0), 1);
+    clearance *= vertical*vertical*(3-2*vertical);
+    float player_top = feet.y-58/zoom;
+    anchor.y -= fmaxf(anchor.y-player_top, 0)*clearance;
     return (HudInteraction){.state=interaction_state(world, object), .context=labels[object],
         .message=interaction_hint(world, object), .target=objects[object].position, .marker_anchor=anchor};
 }

@@ -1,4 +1,4 @@
-/* Atlas, ancoragem e tempos gerados por prepare_male_portrait_idle.py. */
+/* Dimensões, ancoragem e tempos dos quatro quadros do atlas de repouso. */
 #ifndef MALE_PORTRAIT_IDLE_DATA_H
 #define MALE_PORTRAIT_IDLE_DATA_H
 #include "raylib.h"

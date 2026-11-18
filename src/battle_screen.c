@@ -14,8 +14,7 @@ static const int move_keys[MAX_MOVES] = {KEY_ONE, KEY_TWO};
 static const int switch_keys[MAX_TEAM_SIZE] = {KEY_Q, KEY_W, KEY_E, KEY_R};
 static const char *const switch_labels[MAX_TEAM_SIZE] = {"Q", "W", "E", "R"};
 
-static const Rectangle restart_button = {64, 565, 265, 54};
-static const Rectangle menu_button = {347, 565, 265, 54};
+static const Rectangle return_button = {64, 565, 265, 54};
 static const Rectangle logic_button = {634, 567, 582, 48};
 static const Rectangle setup_left = {64, 225, 400, 58};
 static const Rectangle setup_operator = {480, 225, 200, 58};
@@ -52,11 +51,9 @@ static const char *const operator_rules[LOGIC_OPERATOR_COUNT] = {
     "Exatamente uma condição precisa ser verdadeira."
 };
 
-static const char *side_name(const BattleScreen *screen, int side)
+static const char *side_name(int side)
 {
-    if (side == 0) return "Jogador 1";
-    if (screen->campaign_battle) return "Guardião";
-    return screen->versus_cpu ? "Computador" : "Jogador 2";
+    return side == 0 ? "Jogador" : "Guardião";
 }
 
 static const Team *turn_team(const BattleState *battle)
@@ -71,7 +68,7 @@ static bool battle_over(const BattleState *battle)
 
 static bool cpu_turn(const BattleScreen *screen)
 {
-    return screen->versus_cpu && screen->battle.current_turn == 1 && !battle_over(&screen->battle);
+    return screen->battle.current_turn == 1 && !battle_over(&screen->battle);
 }
 
 static Rectangle move_button(int index)
@@ -155,22 +152,14 @@ static void update_setup(BattleScreen *screen)
         draft->operator = (draft->operator + 1) % LOGIC_OPERATOR_COUNT;
     } else if (activate(setup_confirm, KEY_ENTER)) {
         screen->battle.formulas[screen->setup_side] = *draft;
-        if (screen->setup_side == 0 && !screen->versus_cpu) {
-            screen->setup_side = 1;
-            screen->choosing_team = true;
-            screen->roster_cursor = 0;
-            screen->team_slot = 0;
-            *draft = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-        } else {
-            screen->setup_side = -1;
-        }
+        screen->setup_side = -1;
     }
 }
 
 BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 {
     BattleState *battle = &screen->battle;
-    if (IsKeyPressed(KEY_ESCAPE)) return BATTLE_SCREEN_MENU;
+    if (IsKeyPressed(KEY_ESCAPE)) return BATTLE_SCREEN_RETURN;
 
     if (screen->setup_side >= 0) {
         if (screen->choosing_team) {
@@ -182,8 +171,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     }
 
     if (battle_over(battle)) {
-        if (activate(restart_button, KEY_ENTER)) return BATTLE_SCREEN_RESTART;
-        if (!screen->campaign_battle && activate(menu_button, KEY_M)) return BATTLE_SCREEN_MENU;
+        if (activate(return_button, KEY_ENTER)) return BATTLE_SCREEN_RETURN;
         return BATTLE_SCREEN_NONE;
     }
 
@@ -231,8 +219,8 @@ static void draw_team_selection(const UiTheme *ui, const BattleScreen *screen)
 {
     const Team *team = screen->setup_side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
     ui_text(ui, "Monte sua equipe", 64, 42, 40, ink);
-    ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
-    ui_text(ui, TextFormat("%s  ·  %d/%d plantas no grupo", side_name(screen, screen->setup_side),
+    ui_text(ui, "ESC · Estufa", 1060, 43, 20, ink);
+    ui_text(ui, TextFormat("%s  ·  %d/%d plantas no grupo", side_name(screen->setup_side),
                         team->count, MAX_TEAM_SIZE),
              64, 104, 26, ink);
     ui_text(ui, "Escolha uma vaga abaixo, depois clique numa planta ou use as setas e Espaço.",
@@ -264,7 +252,7 @@ static void draw_team_selection(const UiTheme *ui, const BattleScreen *screen)
     }
     draw_button(ui, setup_confirm, "ENTER  Confirmar equipe", true);
     draw_button(ui, remove_reserve, "BACKSPACE  Remover reserva",
-                team->count > MIN_VERSUS_TEAM_SIZE && screen->team_slot > 0 && screen->team_slot < team->count);
+                team->count > MIN_TEAM_SIZE && screen->team_slot > 0 && screen->team_slot < team->count);
     const char *hint = screen->team_slot == team->count
         ? "Escolha uma espécie que ainda não está no grupo."
         : "A primeira planta começa ativa. As demais ficam na reserva.";
@@ -283,8 +271,8 @@ static void draw_setup(const UiTheme *ui, const BattleScreen *screen)
     const Move *move = Battle_LogicMove(formula.operator);
 
     ui_text(ui, "Monte seu próprio golpe", 64, 42, 40, ink);
-    ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
-    ui_text(ui, TextFormat("Montagem de %s", side_name(screen, screen->setup_side)), 64, 110, 28, ink);
+    ui_text(ui, "ESC · Estufa", 1060, 43, 20, ink);
+    ui_text(ui, TextFormat("Montagem de %s", side_name(screen->setup_side)), 64, 110, 28, ink);
     ui_text(ui, "Escolha duas condições diferentes e combine com um operador.", 64, 158, 22, ink);
     ui_text(ui, "Condição P", 64, 196, 20, ink);
     ui_text(ui, "Operador", 480, 196, 20, ink);
@@ -300,7 +288,7 @@ static void draw_setup(const UiTheme *ui, const BattleScreen *screen)
     ui_text(ui, TextFormat("Com as equipes no início: %s %s %s = %s",
                         truth(value.left), operators[formula.operator], truth(value.right),
                         truth(value.result)), 86, 471, 22, ink);
-    if (screen->campaign_battle) {
+    {
         LogicFormula rival = screen->battle.formulas[1];
         ui_text(ui, TextFormat("Golpe do guardião: %s %s %s", conditions[rival.left],
                             operators[rival.operator], conditions[rival.right]), 64, 548, 18, ink);
@@ -409,12 +397,12 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
     bool ended = battle_over(battle);
     bool cpu = cpu_turn(screen);
 
-    ui_text(ui, screen->campaign_battle ? "Batalha na estufa" : "Arena Versus", 64, 29, 38, ink);
-    ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
+    ui_text(ui, "Batalha na estufa", 64, 29, 38, ink);
+    ui_text(ui, "ESC · Estufa", 1060, 43, 20, ink);
 
-    draw_team(ui, &battle->player_team, side_name(screen, 0), 64,
+    draw_team(ui, &battle->player_team, side_name(0), 64,
               !ended && battle->current_turn == 0, aloe_guard, sunflower_guard);
-    draw_team(ui, &battle->enemy_team, side_name(screen, 1), 672,
+    draw_team(ui, &battle->enemy_team, side_name(1), 672,
               !ended && battle->current_turn == 1, aloe_guard, sunflower_guard);
 
     DrawRectangle(64, 450, 1152, 42, ink);
@@ -422,13 +410,12 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
 
     if (ended) {
         int winner = battle->state == BATTLE_STATE_PLAYER_WIN ? 0 : 1;
-        ui_text(ui, TextFormat("%s venceu!", side_name(screen, winner)), 64, 511, 30, ink);
-        draw_button(ui, restart_button, screen->campaign_battle ? "ENTER  Estufa" : "ENTER  Reiniciar", true);
-        if (!screen->campaign_battle) draw_button(ui, menu_button, "M  Menu principal", true);
+        ui_text(ui, TextFormat("%s venceu!", side_name(winner)), 64, 511, 30, ink);
+        draw_button(ui, return_button, "ENTER  Estufa", true);
         return;
     }
 
-    const char *side = side_name(screen, battle->current_turn);
+    const char *side = side_name(battle->current_turn);
     if (battle->state == BATTLE_STATE_REPLACEMENT) {
         ui_text(ui, TextFormat("%s precisa escolher uma reserva.", side), 64, 511, 26, ink);
     } else {

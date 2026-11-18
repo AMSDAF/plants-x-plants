@@ -347,18 +347,21 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_EXTERIOR && !world->basement_visited);
     enter_maintenance(game);
     Camera2D room_camera = world_camera(world);
-    assert(room_camera.zoom == 1.0f && room_camera.offset.x == GAME_SCREEN_WIDTH / 2.0f);
+    assert(fabsf(room_camera.zoom - (1280.0f / 720.0f) * 0.68f) < 0.001f);
+    assert(room_camera.offset.x == GAME_SCREEN_WIDTH / 2.0f);
     assert(room_camera.offset.y == GAME_SCREEN_HEIGHT / 2.0f);
-    /* Todas as salas cabem inteiras, com margens, sem ampliar móveis ou piso. */
+    /* O enquadramento remoto mantém os interiores completos, com margens. */
     for (int location = WORLD_MAINTENANCE; location < WORLD_LOCATION_COUNT; location++) {
         World sample = *world;
         sample.location = (WorldLocation)location;
         Camera2D camera = world_camera(&sample);
         Vector2 top_left = GetWorldToScreen2D((Vector2){280, 191}, camera);
         Vector2 bottom_right = GetWorldToScreen2D((Vector2){1000, 611}, camera);
-        assert(camera.zoom == 1.0f);
-        assert(top_left.x == 280 && top_left.y == 150);
-        assert(bottom_right.x - top_left.x == 720 && bottom_right.y - top_left.y == 420);
+        assert(fabsf(camera.zoom - room_camera.zoom) < 0.001f);
+        assert(top_left.x > 0 && top_left.y > 0);
+        assert(bottom_right.x < GAME_SCREEN_WIDTH && bottom_right.y < GAME_SCREEN_HEIGHT);
+        assert(fabsf(bottom_right.x - top_left.x - 720 * camera.zoom) < 0.001f);
+        assert(fabsf(bottom_right.y - top_left.y - 420 * camera.zoom) < 0.001f);
     }
     assert(game->world_assets.maintenance_interior.id);
     Vector2 previous = {780, 380};
@@ -377,7 +380,9 @@ static void check_greenhouse(Game *game)
     game->world_assets.maintenance_interior.id = 0;
     capture(game, target, "build/name_entry_preview/maintenance_fallback.png");
     game->world_assets = saved_assets;
-    interact_at(game, 445, 310);
+    walk_axis(game, true, 520);
+    walk_axis(game, false, 370);
+    interact_at(game, 445, 360); /* Aproxima pela frente da bancada ampliada. */
     interact_at(game, 537, 281);
     assert(!world->alarm && world->alarm_note);
     walk_axis(game, false, 370); /* Contorna a prateleira antes de voltar à porta. */
@@ -385,7 +390,7 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_EXTERIOR);
     leave_maintenance_path(game);
     enter_depot(game);
-    interact_at(game, 640, 320);
+    interact_at(game, 640, 420);
     assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_ALOE);
     key(game, KEY_ENTER);
     key(game, KEY_ENTER);
@@ -394,7 +399,7 @@ static void check_greenhouse(Game *game)
     assert(world->location == WORLD_EXTERIOR && game->player.feet.x == world_spawn().x);
     assert(game->campaign.has_team && !world->maintenance_key && world->alarm_note && !world->alarm);
     enter_depot(game);
-    interact_at(game, 640, 320);
+    interact_at(game, 640, 420);
     assert(game->screen == GAME_BATTLE && game->battle_screen.setup_side < 0);
     capture(game, target, "build/name_entry_preview/greenhouse_guard.png");
     win_guardian(game);
@@ -408,13 +413,15 @@ static void check_greenhouse(Game *game)
     interact_at(game, 846, 416);
     assert(world->location == WORLD_BASEMENT && world->basement_visited);
     capture(game, target, "build/name_entry_preview/greenhouse_basement.png");
-    interact_at(game, 837, 410);
+    walk_axis(game, false, 480);
+    interact_at(game, 890, 445);
     assert(world->location == WORLD_EXTERIOR);
     key(game, KEY_E);
     assert(world->location == WORLD_BASEMENT);
     interact_at(game, 640, 320);
     assert(world->light);
-    interact_at(game, 837, 410);
+    walk_axis(game, false, 480);
+    interact_at(game, 890, 445);
     assert(world->location == WORLD_BASEMENT); /* O refletor desligou o elevador. */
     interact_at(game, 640, 572);
     assert(world->location == WORLD_MAINTENANCE);
@@ -423,7 +430,7 @@ static void check_greenhouse(Game *game)
     leave_maintenance_path(game);
     walk_axis(game, false, 570);
     enter_bridge_control(game);
-    interact_at(game, 450, 352);
+    interact_at(game, 539, 390);
     assert(world->north_channel && world->drain_open);
     assert(world_bridge_pressure(world) == 1 && !world_bridge_open(world));
     capture(game, target, "build/name_entry_preview/greenhouse_bridge_control.png");
@@ -438,10 +445,10 @@ static void check_greenhouse(Game *game)
     key(game, KEY_E);
     assert(world->drain_open && !world_bridge_open(world));
     enter_bridge_control(game);
-    interact_at(game, 830, 352);
+    interact_at(game, 742, 390);
     assert(world->north_channel && world->south_channel && world_bridge_pressure(world) == 6);
     assert(!world_bridge_open(world));
-    interact_at(game, 450, 352);
+    interact_at(game, 539, 390);
     assert(!world->north_channel && world->south_channel && world_bridge_open(world));
     interact_at(game, 640, 572);
     interact_at(game, 868, 578);
@@ -471,20 +478,24 @@ static void check_greenhouse(Game *game)
     approach_nursery(game);
     assert(world->location == WORLD_NURSERY && world->gate_unlocked);
     capture(game, target, "build/name_entry_preview/greenhouse_open.png");
-    interact_at(game, 882, 477);
+    interact_at(game, 790, 485);
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Pesquisadora") == 0);
     assert(strstr(world->dialogue_pages[0], "Girassol"));
     capture(game, target, "build/name_entry_preview/campaign_researcher.png");
     key(game, KEY_E);
     assert(strstr(world->dialogue_pages[world->dialogue_page], "placa nos canais"));
     key(game, KEY_E);
-    interact_at(game, 790, 340);
+    walk_axis(game, true, 740);
+    walk_axis(game, false, 375);
+    interact_at(game, 782, 315);
     assert(!world->relay_panel_open);
-    interact_at(game, 515, 340);
+    interact_at(game, 640, 420);
     assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_SUNFLOWER);
     win_guardian(game);
     assert(world->guardian_defeated);
-    interact_at(game, 790, 340);
+    walk_axis(game, true, 740);
+    walk_axis(game, false, 375);
+    interact_at(game, 782, 315);
     key(game, KEY_ENTER);
     assert(world->relay_panel_open && world->relay_rejected && world->relay_step == 0);
     click(game, 289, 237); /* B satisfaz o primeiro XOR. */
@@ -505,7 +516,9 @@ static void check_greenhouse(Game *game)
     walk_axis(game, false, 419);
     approach_nursery(game);
     assert(world->location == WORLD_NURSERY);
-    interact_at(game, 790, 340);
+    walk_axis(game, true, 740);
+    walk_axis(game, false, 375);
+    interact_at(game, 782, 315);
     assert(world->relay_panel_open && !world->completed && world->relay_step == 2);
     Vector2 before = game->player.feet;
     key(game, KEY_D);
@@ -580,7 +593,7 @@ int main(void)
         assert(game.name_entry.focus==0);
         capture_native(&game, TextFormat("build/name_entry_preview/name_1080p_%d.png", gender));
         click(&game,950,570); /* Confirmar por mouse transfere nome e personagem. */
-        assert(game.screen==GAME_EXPLORATION && game.campaign.ready);
+        assert(game.screen==GAME_EXPLORATION);
         assert(game.campaign.trainer==(Trainer)gender && game.player.trainer==(Trainer)gender);
         assert(strcmp(game.campaign.player_name,gender ? "João" : "Antônio")==0);
         key(&game,KEY_ESCAPE);

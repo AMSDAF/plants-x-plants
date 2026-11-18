@@ -29,32 +29,6 @@ def match_lighting(generated, reference):
     return Image.fromarray(corrected).convert("RGBA")
 
 
-def horizontal_seam(generated, reference):
-    """Escolhe uma costura entre áreas semelhantes, evitando contornos fortes."""
-    pixels = np.asarray(generated.convert("RGB").resize((900, 535), Image.Resampling.BOX), dtype=np.float32)
-    original = np.asarray(reference, dtype=np.float32)
-    gray = original.mean(axis=2)
-    edges = np.abs(np.diff(gray, axis=0, prepend=gray[:1]))
-    cost = np.abs(pixels - original).mean(axis=2) + 1.5 * edges
-    start, end = 415, 520
-    band = cost[start:end]
-    energy = band[:, 0].copy()
-    parents = np.zeros(band.shape, dtype=np.int8)
-    rows = np.arange(end - start)
-    for x in range(1, 900):
-        options = np.stack((np.r_[np.inf, energy[:-1]], energy, np.r_[energy[1:], np.inf]))
-        choices = np.argmin(options, axis=0)
-        energy = options[choices, rows] + band[:, x]
-        parents[:, x] = choices - 1
-    row = int(np.argmin(energy))
-    seam = np.zeros(900, dtype=np.float32)
-    for x in range(899, -1, -1):
-        seam[x] = start + row
-        if x:
-            row += int(parents[row, x])
-    return seam
-
-
 def minimum_path(cost):
     """Encontra uma costura contínua, avançando no máximo um pixel por linha."""
     energy = cost[:, 0].copy()
@@ -166,42 +140,6 @@ def prepare():
     if source.size != (1672, 941):
         raise ValueError("O tamanho da base mudou; revise os recortes e as posições.")
     DIRECTORY.mkdir(parents=True, exist_ok=True)
-    cropped = source.crop((0, 0, 900, 535))
-    cropped.save(DIRECTORY / "northwest_source.png")
-    cropped.resize((1800, 1070), Image.Resampling.NEAREST).save(DIRECTORY / "northwest_reference_2x.png")
-
-    generated_path = DIRECTORY / "northwest_generated_v1.png"
-    generated = Image.open(generated_path).convert("RGBA")
-    width, height = generated.size
-    if width <= 900 or height <= 535 or abs(width / height - 900 / 535) > 0.002:
-        raise ValueError("O resultado precisa de ganho real de resolução e do mesmo enquadramento.")
-    # Uma mistura larga de pisos desalinhados criava uma faixa escura horizontal.
-    generated = match_lighting(generated, cropped)
-    seam = horizontal_seam(generated, cropped)
-    positions = (np.arange(width) + 0.5) * 900 / width
-    seam_pixels = np.interp(positions, np.arange(900) + 0.5, seam)
-    vertical_positions = (np.arange(height) + 0.5) * 535 / height
-    horizontal_alpha = np.clip((900 - positions) / 64, 0, 1)
-    horizontal_alpha = horizontal_alpha**2 * (3 - 2 * horizontal_alpha)
-    vertical_alpha = np.clip((seam_pixels[None, :] + 8 - vertical_positions[:, None]) / 16, 0, 1)
-    vertical_alpha = vertical_alpha**2 * (3 - 2 * vertical_alpha)
-    alpha = np.round(255 * vertical_alpha * horizontal_alpha).astype(np.uint8)
-    generated.putalpha(Image.fromarray(alpha))
-    generated.save(DIRECTORY / "northwest_detail.png", optimize=True)
-    metadata = {
-        "source": source_path.relative_to(ROOT).as_posix(),
-        "source_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
-        "generated_sha256": hashlib.sha256(generated_path.read_bytes()).hexdigest(),
-        "generated_size": [width, height], "world_rect": [0, 0, 900, 535],
-        "core_rect": [0, 0, 836, 471], "overlap": 64,
-        "actual_scale": [width / 900, height / 535],
-        "blend_method": "local_lighting_match_and_minimum_error_seam",
-        "seam_world_y_range": [float(seam.min()), float(seam.max())],
-        "seam_feather": 16,
-        "status": "approved_northwest_reference",
-    }
-    (DIRECTORY / "metadata.json").write_text(json.dumps(metadata, indent=2)+"\n", encoding="utf-8")
-    print(f"Quadrant ready: {width} x {height}; native scale {width/900:.3f} x {height/535:.3f}.")
     prepare_full_map(source)
 
 

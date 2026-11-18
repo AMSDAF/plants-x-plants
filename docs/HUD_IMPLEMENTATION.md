@@ -2,8 +2,8 @@
 
 Implementa a direção escolhida em [HUD_REDESIGN_PLAN.md](HUD_REDESIGN_PLAN.md):
 painéis creme com texto verde-escuro, interação no centro inferior e seta
-apontando para o alvo. A referência visual é
-`assets/ui/hud_concepts/cream_arrow_v1.png`.
+apontando para o alvo. As imagens de conceito e seus prompts foram removidos
+após a integração; a direção visual está registrada no plano.
 
 ## Comportamento
 
@@ -14,11 +14,24 @@ inferior de 24 pixels lógicos. Sua largura varia entre 400 e 640; a altura é
 estiver disponível. Bloqueios e pistas registradas mostram seu estado e a
 explicação, sem sugerir uma ação indisponível.
 
-A seta tem 20 × 26 pixels lógicos, com preenchimento creme e contorno escuro.
+A seta usa o PNG transparente `assets/ui/interaction_chevron_pixel.png`, gerado
+com a ferramenta integrada de imagens. É um chevron para baixo, sem haste,
+em pixel art, com preenchimento marfim, detalhe dourado e contorno escuro,
+em 18 × 12 pixels lógicos. O prompt está em
+`assets/ui/interaction_chevron_pixel_prompt.json`.
+Ela oscila suavemente 4 pixels na vertical, em ciclos de 1,4 segundo.
+Na importação, a arte é amostrada na grade 18 × 12, com paleta opaca e
+contorno de um pixel. A filtragem é pontual, sem blur ou halo. A posição usa
+pixels inteiros; o enquadramento reserva todo o percurso antes da
+oscilação, evitando que a seta suma e reapareça perto da borda da tela.
+O relógio avança na atualização da exploração; o desenho apenas consulta
+seu valor. Sem a textura, desenha um chevron de reserva, também sem haste.
 Sua âncora visual é convertida pela câmera, mas seu tamanho não acompanha o
-zoom do mundo. Portas, painel, escotilha e NPCs usam deslocamentos visuais
-próprios, sem alterar as coordenadas físicas da interação. Não há texto de
-interação junto ao alvo, círculo amarelo nem marca desenhada no chão.
+zoom do mundo. Cada objeto tem uma âncora no centro superior da sua arte,
+separada das coordenadas físicas de alcance e colisão. Quando o personagem
+ocupa a área da seta, sua âncora sobe gradualmente, preservando o alinhamento
+horizontal com o objeto. Não há texto de interação junto ao alvo, círculo
+amarelo nem marca desenhada no chão.
 
 Sem alvo, o painel e a seta somem. Diálogo, central de relés e resultado
 substituem o HUD de exploração. As condições da ponte e do viveiro também
@@ -28,8 +41,9 @@ o menu de ajuda por Tab sugerido em uma das alternativas visuais.
 
 ## Responsabilidades
 
-- `UiTheme`, pertencente a `Game`, carrega Regular e Semibold uma vez e libera
-  os recursos no encerramento. É passado explicitamente às funções de desenho.
+- `UiTheme`, pertencente a `Game`, carrega os dois pesos de Atkinson e o chevron uma
+  vez e libera os recursos no encerramento. Guarda também o relógio visual
+  do marcador e é passado explicitamente às funções de desenho.
 - `ui_theme.c` centraliza fonte, medidas, painéis e quebra de linha UTF-8.
 - `exploration_hud.c` calcula a geometria e desenha objetivo, pistas, painel
   inferior e seta a partir de dados somente de leitura.
@@ -45,11 +59,15 @@ conceitos não são coladas na tela nem usadas como textura de texto.
 
 ## Fonte
 
-O jogo usa Atkinson Hyperlegible Next Regular e Semibold. Os TTFs estáticos,
+O HUD de exploração, os diálogos e a central usam Atkinson Hyperlegible Next,
+priorizando a leitura.
+As molduras creme têm contorno duplo, cantos em degraus e sombra sólida;
+a tecla E também usa uma caixa quadrada. Não há arredondamento suave.
+As demais telas usam Atkinson Hyperlegible Next Regular e Semibold. Os TTFs estáticos,
 a origem e a licença SIL Open Font License estão em `assets/fonts/`.
 O atlas de 96 pixels tem acentos latinos e a pontuação usada na interface,
-com filtro bilinear. Menu, seleção, entrada de nome, exploração, diálogos,
-central e batalha utilizam os mesmos auxiliares de fonte e medição.
+com filtro bilinear. Todas as telas utilizam os mesmos auxiliares de fonte
+e medição, com a mesma fonte legível também na exploração.
 Logos, cenários e personagens foram preservados.
 
 Na ausência de um peso, usa o outro; na ausência de ambos, usa a fonte padrão
@@ -79,7 +97,7 @@ escotilha. `name_entry_check` percorre a campanha e verifica foco, acentos,
 diálogos, portas, colisões, ponte, guardiões e conclusão. `game_canvas_check`
 verifica resolução, mouse, recorte e a regressão da borda horizontal.
 
-Os alvos existentes `versus_screen_check`, `selection_scene_check` e
+Os alvos existentes `selection_scene_check` e
 `menu_screen_check` também foram adaptados para os parâmetros explícitos
 de tipografia. As funções que desenham isoladamente podem receber `NULL`
 para usar a fonte de reserva; `game_draw` sempre recebe os recursos de `Game`.

@@ -1,7 +1,7 @@
 # Relatório do protótipo de combate
 
-No menu, abra **Versus local**, escolha **VS CPU** ou **VS PLAYER** e confirme.
-Monte a equipe e o Golpe Lógico para entrar na arena.
+Na campanha, interaja com um guardião para iniciar um encontro.
+No primeiro encontro, monte a equipe e o Golpe Lógico antes de lutar.
 A arena mostra a planta ativa, o HP das duas equipes, de quem é o turno e o
 resultado da última ação. As plantas são desenhadas com formas da raylib.
 
@@ -10,8 +10,8 @@ resultado da última ação. As plantas são desenhadas com formas da raylib.
 | **1** ou **2** | Usar um dos dois golpes da planta ativa. |
 | **3** | Usar o Golpe Lógico se a fórmula estiver verdadeira. |
 | **Q/W/E/R** | Escolher uma das quatro posições da equipe para entrar em campo. |
-| **ENTER** no resultado | Recomeçar no mesmo modo com as duas equipes restauradas. |
-| **M** ou **ESC** no resultado | Retornar ao menu. ESC também funciona durante a partida. |
+| **ENTER** no resultado | Retornar à estufa. |
+| **ESC** | Retornar à estufa, inclusive durante a montagem ou a batalha. |
 
 Os golpes, as trocas e os botões do resultado também aceitam cliques.
 
@@ -45,10 +45,10 @@ comando, de modo que tentar usar um golpe bloqueado preserva HP e turno.
 
 ## Equipes e turnos
 
-Cada jogador humano escolhe de duas a quatro plantas de nível 1 entre Cacto,
+O jogador escolhe de duas a quatro plantas entre Cacto,
 Girassol, Babosa, Rosa, Hera, Bambu, Samambaia, Lavanda, Orquídea, Lótus,
-Hortelã e Trevo. A CPU sorteia espécies distintas e monta um grupo do mesmo
-tamanho. Cada espécie tem atributos e dois golpes próprios.
+Hortelã e Trevo. O guardião usa espécies predefinidas e monta um grupo do mesmo
+tamanho. Cada espécie usa diretamente os atributos base do catálogo e tem dois golpes próprios.
 
 Selecione uma vaga com **Q/W/E/R** ou clique nela. Depois selecione a espécie
 com **setas** e **Espaço** ou clique no cartão. A primeira posição começa
@@ -57,8 +57,8 @@ trocam de lugar. Para adicionar em uma vaga livre, escolha uma espécie que
 ainda esteja fora do grupo. **Backspace** remove uma reserva, mantendo
 pelo menos duas plantas no grupo.
 
-O Jogador 1 faz a primeira ação. Reiniciar restaura o HP e a ordem inicial
-das equipes escolhidas. Cada equipe comporta até quatro plantas.
+O jogador faz a primeira ação. Ao retornar à exploração, sua equipe é
+restaurada e sua fórmula é preservada para os encontros seguintes. Cada equipe comporta até quatro plantas.
 
 1. Em um turno normal, a equipe pode atacar ou colocar em campo uma reserva viva.
    Qualquer uma dessas ações passa o turno ao adversário. Tentar trocar pela
@@ -69,8 +69,8 @@ das equipes escolhidas. Cada equipe comporta até quatro plantas.
    só pode escolher uma reserva. Depois da escolha, esse mesmo lado faz seu
    turno normal.
 3. Quando uma equipe perde a última planta, o combate registra o vencedor
-   imediatamente. A tela continua exibindo a última ação e oferece reinício
-   ou retorno ao menu. O motor rejeita ataques e trocas após o resultado.
+   imediatamente. A tela continua exibindo a última ação e oferece retorno
+   à estufa. O motor rejeita ataques e trocas após o resultado.
 
 ## Dano e precisão
 
@@ -87,8 +87,8 @@ do Cacto.
 
 ## Computador e interface
 
-A CPU usa uma fórmula fixa de **E** entre HP baixo da própria planta ativa e
-HP baixo da planta ativa rival. Quando sua fórmula é verdadeira, o golpe
+Cada guardião usa uma fórmula fixa de **E**, combinando uma condição de HP
+com a existência de reservas na própria equipe. Quando sua fórmula é verdadeira, o golpe
 personalizado entra na mesma comparação que os demais. A CPU escolhe o golpe
 com maior produto de poder por precisão. Esse critério
 é uma aproximação simples e ignora o HP do alvo. Para repor uma planta
@@ -99,28 +99,21 @@ A tela acumula o tempo dos quadros antes de cada ação da CPU. Isso dá tempo
 para ler as mensagens enquanto a janela continua desenhando e aceitando ESC.
 A interface e a CPU chamam as mesmas funções de ataque e troca. O motor
 valida a ação e modifica o estado. O desenho apenas consulta esse estado,
-e `game.c` coordena entrada, reinício e saída da arena.
+e `game.c` coordena entrada e saída dos encontros.
 
 ## Como validar
 
 Execute os comandos na raiz do projeto.
 
 ```powershell
-cmake --build build --target plants_x_plants versus_screen_check
-.\build\versus_screen_check.exe
+cmake --build build --target plants_x_plants battle_check name_entry_check menu_screen_check
+.\build\battle_check.exe
+.\build\name_entry_check.exe
+.\build\menu_screen_check.exe
 ```
 
-A verificação injeta eventos de teclado e mouse pelo fluxo real do jogo.
-Ela cobre partidas em ambos os modos, substituições, troca voluntária, erro de
-precisão, rejeição de ações inválidas, vitória, reinício e retorno ao menu.
-Também verifica as 12 combinações das tabelas-verdade, a montagem independente,
-o bloqueio da fórmula falsa e o uso do golpe por jogador e CPU.
-Na montagem da equipe, a verificação cobre adicionar e remover reservas,
-evitar duplicatas, iniciar com quatro plantas contra a CPU e usar a quarta
-posição em combate.
-As capturas da arena ficam em `build/versus_preview/`.
-
-A compilação do jogo e a verificação automatizada do Versus passaram.
-Um teste isolado do motor também confirmou a
-vitória do segundo lado e verificou que golpes e trocas com índices inválidos
-deixam o estado intacto.
+`battle_check` verifica atributos das 12 espécies, tabelas-verdade, ações inválidas,
+trocas, derrota, substituição pela IA, vitória e restauração. `name_entry_check`
+percorre a campanha com guardiões e progresso. `menu_screen_check` confere a
+entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerramento.
+O modo de batalha independente e seus recursos exclusivos foram removidos.

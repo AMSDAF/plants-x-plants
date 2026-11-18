@@ -7,8 +7,8 @@ a exploração. Não há persistência em disco.
 
 `name_entry_screen` cuida da edição, foco e composição; `game` apenas coordena
 as ações. `selection_ui` compartilha paleta e bordas em degraus. O cartão usa
-os limites reais da seleção e chega a (172,140,308,440), escalando retrato e
-halo juntos, uniformemente. A transição dura 0,60 s, com curva suave sem
+os limites reais da seleção e chega a (172,140,308,440), escalando o atlas de repouso
+uniformemente, sem halo separado. A transição dura 0,60 s, com curva suave sem
 ultrapassagem: elementos antigos desaparecem nos primeiros 0,15 s; a nova
 interface sobe 12 pixels e aparece entre 0,30 e 0,60 s. O cartão móvel fica à
 frente do formulário. A volta percorre os mesmos extremos. Fundo e repousos
@@ -61,7 +61,7 @@ a pixel e gera GIFs, contatos e ampliações em `build/name_entry_preview/`.
 São trechos de 0,60 s com pausas nos extremos; o reinício dos GIFs não representa
 um ciclo fechado do cenário, cujo relógio continua avançando.
 
-A inspeção visual das capturas OpenGL verifica enquadramento, acentos, halo,
+A inspeção visual das capturas OpenGL verifica enquadramento, acentos, retratos,
 recortes e sobreposição durante o movimento. Essa inspeção das capturas não
 substitui um teste manual completo com teclado físico. A arte dos
 repousos conserva as pequenas diferenças já documentadas em

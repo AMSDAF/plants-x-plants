@@ -35,7 +35,7 @@ set(BATTLE_SOURCES
 
 add_executable(plants_x_plants
     src/main.c
-    src/versus_screen.c
+
     src/game.c
     ${BATTLE_SOURCES}
     src/player.c
@@ -57,7 +57,7 @@ target_link_libraries(plants_x_plants PRIVATE raylib)
 add_executable(selection_scene_check EXCLUDE_FROM_ALL
     tools/check_selection_scene.c
     ${BATTLE_SOURCES}
-    src/versus_screen.c
+
     src/game.c
     src/menu_screen.c
     src/trainer_select_screen.c
@@ -74,7 +74,7 @@ target_link_libraries(selection_scene_check PRIVATE raylib)
 add_executable(menu_screen_check EXCLUDE_FROM_ALL
     tools/check_menu_screen.c
     ${BATTLE_SOURCES}
-    src/versus_screen.c
+
     src/game.c
     src/menu_screen.c
     src/trainer_select_screen.c
@@ -90,7 +90,7 @@ target_link_libraries(menu_screen_check PRIVATE raylib)
 add_executable(trainer_background_check EXCLUDE_FROM_ALL
     tools/check_trainer_background.c
     ${BATTLE_SOURCES}
-    src/versus_screen.c
+
     src/game.c src/menu_screen.c src/trainer_select_screen.c src/selection_ui.c src/name_entry_screen.c
     src/trainer_background.c src/player.c src/world.c
 )
@@ -101,7 +101,7 @@ if(WIN32)
     add_executable(name_entry_check EXCLUDE_FROM_ALL
         tools/check_name_entry.c tools/check_name_entry_input.c
         ${BATTLE_SOURCES}
-        src/versus_screen.c
+
         src/game.c src/menu_screen.c src/trainer_select_screen.c src/trainer_background.c
         src/name_entry_screen.c src/selection_ui.c src/player.c src/world.c)
     target_include_directories(name_entry_check PRIVATE include)
@@ -122,21 +122,9 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
-# Verifica escolha de modos e integração com o fluxo de telas real.
-add_executable(versus_screen_check EXCLUDE_FROM_ALL
-    tools/check_versus_screen.c
-    ${BATTLE_SOURCES}
-    src/game.c src/versus_screen.c src/menu_screen.c src/trainer_select_screen.c
-    src/selection_ui.c src/name_entry_screen.c src/trainer_background.c src/player.c src/world.c)
-target_include_directories(versus_screen_check PRIVATE include)
-target_link_libraries(versus_screen_check PRIVATE raylib)
-if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(versus_screen_check PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-
 # O mesmo canvas atende à janela real e aos alvos de verificação da interface.
 foreach(view_target plants_x_plants selection_scene_check menu_screen_check
-        trainer_background_check name_entry_check versus_screen_check)
+        trainer_background_check name_entry_check)
     if(TARGET ${view_target})
         target_sources(${view_target} PRIVATE src/game_canvas.c)
     endif()
@@ -144,7 +132,7 @@ endforeach()
 
 add_executable(exploration_hud_check EXCLUDE_FROM_ALL
     tools/check_exploration_hud.c ${BATTLE_SOURCES}
-    src/game.c src/menu_screen.c src/versus_screen.c src/trainer_select_screen.c
+    src/game.c src/menu_screen.c src/trainer_select_screen.c
     src/selection_ui.c src/name_entry_screen.c src/trainer_background.c
     src/player.c src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c)
 target_include_directories(exploration_hud_check PRIVATE include)
@@ -162,8 +150,16 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 foreach(ui_target plants_x_plants selection_scene_check menu_screen_check
-        trainer_background_check name_entry_check versus_screen_check game_canvas_check)
+        trainer_background_check name_entry_check game_canvas_check)
     if(TARGET ${ui_target})
         target_sources(${ui_target} PRIVATE src/ui_theme.c src/exploration_hud.c)
     endif()
 endforeach()
+
+# Regras compartilhadas da campanha, sem janela nem dependência da raylib.
+add_executable(battle_check EXCLUDE_FROM_ALL
+    tools/check_battle.c src/plant.c src/plant_data.c src/battle.c src/ai.c)
+target_include_directories(battle_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(battle_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()

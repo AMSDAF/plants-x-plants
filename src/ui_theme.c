@@ -15,6 +15,39 @@ static Font load_font(const char *path, const int *codepoints, int count)
     return font;
 }
 
+static Texture2D load_pixel_marker(const char *path)
+{
+    Image image = LoadImage(path);
+    if (!image.data) return (Texture2D){0};
+    /* Importa a arte gerada na grade nativa, sem halo ou pixels semitransparentes. */
+    ImageResizeNN(&image, 18, 12);
+    ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    Color *pixels = image.data;
+    Color fill[18*12] = {0};
+    for (int i = 0; i < 18*12; i++) {
+        Color color = pixels[i];
+        if (color.a >= 128 && color.r >= 140 && color.g >= 110)
+            fill[i] = color.b < 120 ? (Color){240, 184, 56, 255} : (Color){255, 250, 218, 255};
+    }
+    for (int y = 0; y < 12; y++) {
+        for (int x = 0; x < 18; x++) {
+            Color color = fill[y*18+x];
+            if (!color.a) {
+                for (int dy = -1; dy <= 1; dy++)
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int nx = x+dx, ny = y+dy;
+                        if (nx >= 0 && nx < 18 && ny >= 0 && ny < 12 && fill[ny*18+nx].a)
+                            color = (Color){25, 35, 48, 255};
+                    }
+            }
+            pixels[y*18+x] = color;
+        }
+    }
+    Texture2D texture = LoadTextureFromImage(image);
+    UnloadImage(image);
+    return texture;
+}
+
 void ui_theme_load(UiTheme *ui)
 {
     int codepoints[512];
@@ -28,12 +61,26 @@ void ui_theme_load(UiTheme *ui)
         .regular = load_font("assets/fonts/atkinson_hyperlegible_next_regular.ttf", codepoints, count),
         .semibold = load_font("assets/fonts/atkinson_hyperlegible_next_semibold.ttf", codepoints, count)
     };
+    const char *marker_path = "assets/ui/interaction_chevron_pixel.png";
+    if (FileExists(marker_path)) {
+        ui->interaction_chevron = load_pixel_marker(marker_path);
+        if (ui->interaction_chevron.id) {
+            SetTextureFilter(ui->interaction_chevron, TEXTURE_FILTER_POINT);
+            SetTextureWrap(ui->interaction_chevron, TEXTURE_WRAP_CLAMP);
+        }
+    }
+}
+
+void ui_theme_update(UiTheme *ui, float dt)
+{
+    if (isfinite(dt) && dt > 0) ui->marker_time = fmodf(ui->marker_time + dt, 1.4f);
 }
 
 void ui_theme_unload(UiTheme *ui)
 {
     if (ui->regular.texture.id) UnloadFont(ui->regular);
     if (ui->semibold.texture.id) UnloadFont(ui->semibold);
+    if (ui->interaction_chevron.id) UnloadTexture(ui->interaction_chevron);
     *ui = (UiTheme){0};
 }
 
@@ -73,14 +120,21 @@ void ui_text_bold(const UiTheme *ui, const char *text, int x, int y, int size, C
     DrawTextEx(ui_font(ui, true), text, (Vector2){x, y}, size, 0, color);
 }
 
+static void pixel_box(Rectangle bounds, int step, Color color)
+{
+    DrawRectangleRec((Rectangle){bounds.x+step, bounds.y, bounds.width-2*step, bounds.height}, color);
+    DrawRectangleRec((Rectangle){bounds.x, bounds.y+step, bounds.width, bounds.height-2*step}, color);
+}
+
 void ui_panel(Rectangle bounds)
 {
-    DrawRectangleRounded((Rectangle){bounds.x+2, bounds.y+3, bounds.width, bounds.height}, 0.25f, 8,
-                         (Color){49, 35, 21, 65});
-    DrawRectangleRounded(bounds, 0.25f, 8, (Color){127, 92, 56, 255});
-    Rectangle inside = {bounds.x+2, bounds.y+2, bounds.width-4, bounds.height-4};
-    DrawRectangleRounded(inside, 0.25f, 8, (Color){246, 235, 204, 255});
-    DrawRectangleRoundedLinesEx(inside, 0.25f, 8, 1, (Color){255, 249, 225, 255});
+    bounds.x = roundf(bounds.x);
+    bounds.y = roundf(bounds.y);
+    pixel_box((Rectangle){bounds.x+2, bounds.y+4, bounds.width, bounds.height}, 6, (Color){22, 31, 40, 255});
+    pixel_box(bounds, 6, (Color){31, 44, 54, 255});
+    pixel_box((Rectangle){bounds.x+2, bounds.y+2, bounds.width-4, bounds.height-4}, 4, (Color){108, 135, 142, 255});
+    pixel_box((Rectangle){bounds.x+4, bounds.y+4, bounds.width-8, bounds.height-8}, 2, (Color){255, 250, 226, 255});
+    pixel_box((Rectangle){bounds.x+6, bounds.y+6, bounds.width-12, bounds.height-12}, 2, (Color){246, 235, 204, 255});
 }
 
 int ui_text_wrap(const UiTheme *ui, const char *text, Rectangle bounds, int size, Color color, bool bold)

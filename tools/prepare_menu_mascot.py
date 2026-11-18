@@ -34,7 +34,7 @@ def save_gif(frames, path):
 
 
 def runtime_preview():
-    for screen in ('title', 'menu'):
+    for screen in ('title',):
         frames = [Image.open(PREVIEW / f'{screen}_{i:02d}.png').convert('RGB') for i in range(8)]
         arrays = [np.array(frame) for frame in frames]
         assert len({hashlib.sha256(frame.tobytes()).hexdigest() for frame in frames}) == 8

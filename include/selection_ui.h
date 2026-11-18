@@ -1,4 +1,4 @@
-/* Compartilha paleta e formas pixeladas entre seleção, entrada de nome e Versus. */
+/* Compartilha paleta e formas pixeladas entre seleção e entrada de nome. */
 #ifndef SELECTION_UI_H
 #define SELECTION_UI_H
 #include "raylib.h"

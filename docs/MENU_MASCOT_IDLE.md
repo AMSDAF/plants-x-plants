@@ -15,6 +15,9 @@ Saídas necessárias à execução:
 
 No quadro neutro, o recorte estático de 968 × 994 começa em `(28, 16)`. Margens transparentes acomodam as pontas em movimento. A linha inferior dos pés fica em y=1010 em todos os quadros.
 
+> A apresentação atual usa somente a tela inicial, com ENTER direto na seleção.
+> Referências abaixo a título/menu descrevem a integração histórica da animação.
+
 ## Movimento e integração
 
 São oito quadros distintos, a 6 FPS, ciclo de aproximadamente 1,33 s. O corpo sobe no máximo quatro pixels da fonte, equivalentes a cerca de um pixel na janela. A expressão acompanha rigidamente o corpo: olhos e traços não deformam. A parte inferior transita até deslocamento zero antes dos pés. Os punhos têm fases ligeiramente distintas e as folhas flexionam por deslocamentos horizontais que se anulam nas ligações. As pontas movem até aproximadamente dois pixels exibidos. Ambos os pés são cópias exatas da região original em todos os quadros.
@@ -38,8 +41,8 @@ Prévias em `build/menu_mascot_preview/`:
 
 - `idle.gif`: inspeção offline em escala próxima à do jogo, com mascote de cerca de 240 pixels.
 - `contact.png`, `joints.png`, `loop_boundary.png`: oito poses, ligações ampliadas e sequência 8→1→2.
-- `title_idle.gif`, `menu_idle.gif`: recortes 1:1 das capturas OpenGL de ambas as telas.
-- `title.png`, `menu.png`: telas completas renderizadas pelo jogo.
+- `title_idle.gif`: recortes 1:1 das capturas OpenGL da tela inicial.
+- `title.png`: tela inicial completa renderizada pelo jogo.
 - `inspection.json`: hash, máscaras/geometria, limites de quadros, paleta/alfa preservados, pés constantes, rosto rígido e continuidade da emenda.
 
 Somente os GIFs diagnósticos usam paleta indexada, exigida pelo formato; o atlas de execução permanece RGBA sem conversão. Os quadros têm oito estados distintos também na escala efetivamente renderizada. O script de prévia do jogo compara a região inferior de todas as fases para verificar pés e sombra imóveis.

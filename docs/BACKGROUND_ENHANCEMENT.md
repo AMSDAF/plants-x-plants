@@ -1,20 +1,21 @@
 # Melhoria do background botânico
 
 Fonte preservada: `assets/maps/botanical_courtyard.png`.
-Versão para avaliação: `assets/maps/botanical_courtyard_enhanced_v1.png`.
+Tentativa antiga removida: `assets/maps/botanical_courtyard_enhanced_v1.png`.
 
-Esta é a tentativa anterior de edição da imagem inteira, sem aumento de
-resolução. Ela não é usada na execução. O experimento posterior por quadrantes
+Este documento preserva o histórico da tentativa de edição da imagem inteira,
+sem aumento de resolução. A imagem experimental foi removida por não ser usada.
+O resultado atual por quadrantes
 e a correção do canvas estão em [COURTYARD_DETAIL.md](COURTYARD_DETAIL.md).
 
 Preparada com a ferramenta integrada de geração/edição de imagens, usando
 a imagem inteira como alvo. O objetivo é definir contornos e detalhes mantendo
 o estilo e a composição, sem sobrepor objetos produzidos separadamente.
 
-O jogo continua carregando a fonte original. A versão gerada deve ser avaliada
-antes da integração: a preservação exata das silhuetas e do alinhamento com
-colisões e ponte não é garantida por geração de imagem. Nenhuma regra, colisão
-ou posição de interação foi alterada.
+O jogo utiliza o mapa completo `assets/maps/courtyard_detail/courtyard_complete.png`,
+com o original como alternativa. A tentativa antiga não foi integrada: a geração
+não garantia a preservação exata das silhuetas nem o alinhamento com colisões
+e ponte. Sua remoção não altera regras, colisões ou posições de interação.
 
 ## Prompt usado
 
