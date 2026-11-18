@@ -11,7 +11,6 @@
 #include "menu_screen.h"
 #include "trainer_select_screen.h"
 #include "name_entry_screen.h"
-#include "versus_screen.h"
 #include "battle_screen.h"
 #include "game_view.h"
 #include "ui_theme.h"
@@ -20,7 +19,7 @@
 #define GAME_TITLE "Plants x Plants"
 
 typedef enum {
-    GAME_MENU, GAME_VERSUS_SELECT, GAME_TRAINER_SELECT, GAME_NAME_ENTRY,
+    GAME_MENU, GAME_TRAINER_SELECT, GAME_NAME_ENTRY,
     GAME_EXPLORATION, GAME_BATTLE
 } GameScreen;
 
@@ -28,7 +27,6 @@ typedef enum {
 typedef struct {
     Trainer trainer;
     char player_name[PLAYER_NAME_CAPACITY];
-    bool ready;
     bool has_team;
     Team team;
     LogicFormula formula;
@@ -47,10 +45,6 @@ typedef struct {
     NameEntryScreen name_entry;
     CampaignSession campaign;
     WorldEncounter encounter;
-    VersusAssets versus_assets;
-    VersusScreen versus;
-    VersusMode versus_mode;
-    bool versus_mode_selected;
     BattleScreen battle_screen;
     Player player;
     World world;

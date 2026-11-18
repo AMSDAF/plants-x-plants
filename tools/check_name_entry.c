@@ -580,7 +580,7 @@ int main(void)
         assert(game.name_entry.focus==0);
         capture_native(&game, TextFormat("build/name_entry_preview/name_1080p_%d.png", gender));
         click(&game,950,570); /* Confirmar por mouse transfere nome e personagem. */
-        assert(game.screen==GAME_EXPLORATION && game.campaign.ready);
+        assert(game.screen==GAME_EXPLORATION);
         assert(game.campaign.trainer==(Trainer)gender && game.player.trainer==(Trainer)gender);
         assert(strcmp(game.campaign.player_name,gender ? "João" : "Antônio")==0);
         key(&game,KEY_ESCAPE);

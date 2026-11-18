@@ -1,6 +1,6 @@
 # Estufa Lógica
 
-Abra **Campanha**, escolha o personagem, confirme o nome e explore a estufa.
+Pressione **ENTER** na tela inicial, escolha o personagem, confirme o nome e explore a estufa.
 Use **WASD** ou **setas** para mover, segure **Shift** para correr e pressione
 **E** quando aparecer o marcador de interação.
 
@@ -26,7 +26,7 @@ está disponível. Uma seta creme aponta para o alvo, tanto no exterior como
 nos interiores. Bloqueios e pistas registradas mostram uma explicação no
 mesmo painel, sem círculo amarelo ou texto junto ao objeto.
 
-A casa de manutenção usa a ilustração `maintenance_house_interior_v2.png`,
+A casa de manutenção usa a ilustração `maintenance_house_interior.png`,
 com colisões nas bases dos móveis. O painel do alarme, a pista e a escotilha
 seguem as posições desse interior; o percurso contorna a prateleira central.
 Essa arte interna é carregada separadamente do mapa exterior melhorado.

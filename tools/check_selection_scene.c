@@ -103,40 +103,29 @@ static void capture(Game *game, RenderTexture2D target, const char *path, bool t
     UnloadImage(shot);
 }
 
-static void check_static_fallback_loaders(void)
+static void check_portrait_loaders(void)
 {
-    /* Diretórios isolados verificam as duas camadas legadas sem alterar os assets reais. */
+    /* Falha parcial em diretório isolado, sem alterar os quatro assets reais. */
     char root[1024];
     snprintf(root, sizeof(root), "%s", GetWorkingDirectory());
-    const char *names[] = {"male", "female"};
-    for (int original = 0; original < 2; original++) {
-        const char *fixture = original ? "build/selection_cleanup/original_fallback" :
-                                         "build/selection_cleanup/prepared_fallback";
-        const char *directory = TextFormat("%s/assets/sprites/trainers", fixture);
-        assert(DirectoryExists(directory) || MakeDirectory(directory) == 0);
-        for (int i = 0; i < TRAINER_COUNT; i++) {
-            const char *source = original ? TextFormat("assets/sprites/trainer_%s_portrait.png", names[i]) :
-                                            TextFormat("assets/sprites/trainers/%s_portrait.png", names[i]);
-            int size = 0;
-            unsigned char *data = LoadFileData(source, &size);
-            assert(data && size > 0);
-            const char *target = original ? TextFormat("%s/assets/sprites/trainer_%s_portrait.png", fixture, names[i]) :
-                                            TextFormat("%s/assets/sprites/trainers/%s_portrait.png", fixture, names[i]);
-            assert(SaveFileData(target, data, size));
-            UnloadFileData(data);
-        }
-        assert(ChangeDirectory(fixture));
-        TrainerSelectAssets assets;
-        trainer_select_assets_load(&assets);
-        for (int i = 0; i < TRAINER_COUNT; i++) {
-            assert(assets.portraits[i].id);
-            assert(original ? assets.portraits[i].width > 320 : assets.portraits[i].width == 320);
-            assert(assets.portrait_bounds[i].height > 0);
-        }
-        assert(!assets.male_idle.id && !assets.female_idle.id);
-        trainer_select_assets_unload(&assets);
-        assert(ChangeDirectory(root));
-    }
+    const char *fixture = "build/trainer_cleanup/invalid_portrait";
+    const char *directory = "build/trainer_cleanup/invalid_portrait/assets/sprites/trainers";
+    assert(DirectoryExists(directory) || MakeDirectory(directory) == 0);
+    Image invalid = GenImageColor(1, 1, WHITE);
+    assert(ExportImage(invalid, TextFormat("%s/male_portrait_idle.png", directory)));
+    UnloadImage(invalid);
+    int size = 0;
+    unsigned char *data = LoadFileData("assets/sprites/trainers/female_portrait_idle.png", &size);
+    assert(data && size > 0);
+    assert(SaveFileData(TextFormat("%s/female_portrait_idle.png", directory), data, size));
+    UnloadFileData(data);
+    assert(ChangeDirectory(fixture));
+    TrainerSelectAssets assets;
+    trainer_select_assets_load(&assets);
+    assert(!assets.male_idle.id && assets.female_idle.id);
+    trainer_select_assets_unload(&assets);
+    assert(!assets.female_idle.id);
+    assert(ChangeDirectory(root));
 }
 
 static void confirm_campaign_name(Game *game)
@@ -163,20 +152,17 @@ int main(void)
     assert(IsWindowReady());
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
-    check_static_fallback_loaders();
+    check_portrait_loaders();
     Game game;
     game_init(&game);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         Texture2D sheet = game.player_assets.botanical_sheets[i];
         assert(sheet.id && sheet.width == 768 && sheet.height == 1024);
-        assert(game.trainer_select_assets.botanical_portraits[i].id);
     }
     check_botanical_size(&game.player_assets);
     RenderTexture2D target = LoadRenderTexture(1280, 720);
-    assert(game.trainer_select_assets.portraits[0].width == 816);
-    assert(game.trainer_select_assets.portraits[1].height == 1072);
-    assert(game.trainer_select_assets.male_idle.id && game.trainer_select_assets.male_idle_halo.id);
-    assert(game.trainer_select_assets.female_idle.id && game.trainer_select_assets.female_idle_halo.id);
+    assert(game.trainer_select_assets.male_idle.id);
+    assert(game.trainer_select_assets.female_idle.id);
     assert(game.trainer_select.female_idle_time == FEMALE_PORTRAIT_IDLE_PHASE_OFFSET);
     float start = 0;
     for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
@@ -193,7 +179,6 @@ int main(void)
     }
     assert(trainer_select_female_idle_frame(FEMALE_PORTRAIT_IDLE_SECONDS) == 0);
     assert(game.trainer_select_assets.background.base.id && game.trainer_select_assets.background.atlas.id);
-    game.menu.menu_open = true;
     campaign(&game);
     float background_before = game.trainer_select.background_time;
     float idle_before = game.trainer_select.male_idle_time;
@@ -277,11 +262,7 @@ int main(void)
     trainer_select_screen_update(&game.trainer_select, false, .1f);
     assert(fabsf(game.trainer_select.female_idle_time - .075f) < .001f);
     trainer_select_screen_init(&game.trainer_select);
-    /* As capturas históricas de repouso exercitam os retratos de reserva. */
-    Texture2D botanical_male = game.trainer_select_assets.botanical_portraits[TRAINER_MALE];
-    Texture2D botanical_female = game.trainer_select_assets.botanical_portraits[TRAINER_FEMALE];
-    game.trainer_select_assets.botanical_portraits[TRAINER_MALE] = (Texture2D){0};
-    game.trainer_select_assets.botanical_portraits[TRAINER_FEMALE] = (Texture2D){0};
+    /* Captura os atlas de repouso usados diretamente na seleção. */
     assert(DirectoryExists("build/male_portrait_idle_preview") || MakeDirectory("build/male_portrait_idle_preview") == 0);
     float pose_time = 0;
     for (int i = 0; i < MALE_PORTRAIT_IDLE_FRAMES; i++) {
@@ -295,10 +276,6 @@ int main(void)
     game.trainer_select_assets.male_idle = (Texture2D){0};
     capture(&game, target, "build/male_portrait_idle_preview/runtime_fallback.png", false);
     game.trainer_select_assets.male_idle = saved_idle;
-    Texture2D saved_halo = game.trainer_select_assets.male_idle_halo;
-    game.trainer_select_assets.male_idle_halo = (Texture2D){0};
-    capture(&game, target, "build/male_portrait_idle_preview/runtime_fallback_halo.png", false);
-    game.trainer_select_assets.male_idle_halo = saved_halo;
     game.trainer_select.male_idle_time = 0;
     assert(DirectoryExists("build/female_portrait_idle_preview") || MakeDirectory("build/female_portrait_idle_preview") == 0);
     game.trainer_select.selected = TRAINER_FEMALE;
@@ -314,10 +291,6 @@ int main(void)
     game.trainer_select_assets.female_idle = (Texture2D){0};
     capture(&game, target, "build/female_portrait_idle_preview/runtime_fallback.png", false);
     game.trainer_select_assets.female_idle = saved_idle;
-    saved_halo = game.trainer_select_assets.female_idle_halo;
-    game.trainer_select_assets.female_idle_halo = (Texture2D){0};
-    capture(&game, target, "build/female_portrait_idle_preview/runtime_fallback_halo.png", false);
-    game.trainer_select_assets.female_idle_halo = saved_halo;
     float male_time = 0;
     for (int m = 0; m < 4; m++) {
         float female_time = 0;
@@ -329,8 +302,6 @@ int main(void)
         }
         male_time += MALE_PORTRAIT_IDLE_DURATIONS[m];
     }
-    game.trainer_select_assets.botanical_portraits[TRAINER_MALE] = botanical_male;
-    game.trainer_select_assets.botanical_portraits[TRAINER_FEMALE] = botanical_female;
     trainer_select_screen_init(&game.trainer_select);
     capture(&game, target, "build/selection_preview/selected_male.png", false);
     game.trainer_select.selected = TRAINER_FEMALE;
@@ -349,9 +320,8 @@ int main(void)
     game_shutdown(&game);
     for (int i = 0; i < TRAINER_COUNT; i++) {
         assert(!game.player_assets.botanical_sheets[i].id);
-        assert(!game.trainer_select_assets.botanical_portraits[i].id);
     }
-    assert(!game.trainer_select_assets.female_idle.id && !game.trainer_select_assets.female_idle_halo.id);
+    assert(!game.trainer_select_assets.female_idle.id && !game.trainer_select_assets.male_idle.id);
     assert(!game.trainer_select_assets.background.base.id && !game.trainer_select_assets.background.atlas.id);
     CloseWindow();
     puts("PASS: teclado/mouse, confirmar/voltar, ESC, reentrada, ambos os treinadores, entrada mantida, relogio continuo, F7, desenho imutavel, ambos os estados OpenGL, fallback e descarregamento.");

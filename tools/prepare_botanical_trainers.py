@@ -1,4 +1,4 @@
-"""Recorta as fontes fornecidas e gera retratos e atlas ancorados pelos pés."""
+"""Recorta fontes externas e gera os dois atlas botânicos ancorados pelos pés."""
 import argparse
 from pathlib import Path
 
@@ -56,21 +56,10 @@ def prepare_sheet(path, name):
     atlas.save(OUT / f"{name}_botanical.png", optimize=True)
 
 
-def prepare_portrait(path, name):
-    pixels, labels, regions = components(path)
-    if len(regions) != 1:
-        raise ValueError(f"{path}: esperado um personagem isolado")
-    portrait = crop_component(pixels, labels, regions[0])
-    portrait.thumbnail((256, 256), Image.Resampling.NEAREST)
-    portrait = portrait.crop(portrait.getbbox())
-    portrait.save(OUT / f"{name}_botanical_portrait.png", optimize=True)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    for argument in ("male_sheet", "female_sheet", "male_portrait", "female_portrait"):
+    for argument in ("male_sheet", "female_sheet"):
         parser.add_argument(argument, type=Path)
     args = parser.parse_args()
     for trainer in ("male", "female"):
         prepare_sheet(getattr(args, f"{trainer}_sheet"), trainer)
-        prepare_portrait(getattr(args, f"{trainer}_portrait"), trainer)

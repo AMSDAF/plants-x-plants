@@ -1,0 +1,7 @@
+{
+  "mode": "built_in_imagegen",
+  "output": "interaction_chevron_pixel.png",
+  "transparent_background": true,
+  "prompt": "Use case: stylized-concept. Asset type: ONE transparent PNG interaction chevron sprite for a 2D pixel-art RPG. Create a very small bold DOWNWARD V-shaped chevron: exactly two diagonal arms made only of stair-stepped SQUARE PIXEL BLOCKS meeting at the lower central point. Hollow above the V. No shaft, no stem, no dash, no filled triangle. Design on a logical 18 by 12 pixel grid, present at integer pixel scale with large clearly visible uniform square pixels. Center a single 18x12-style chevron with minimal transparent padding. Thick nearly black dark navy outline, SOLID OPAQUE bright warm ivory interior, tiny gold lower-edge pixel accent. High contrast. Authentic handheld 16-bit RPG / GBA sprite aesthetic. Flat limited palette, maximum four opaque colors. Every edge hard and aligned to the grid. Actual transparent background alpha outside the icon. NO translucent pixels in the icon, NO antialiasing, NO blur, NO gradients, NO lighting, NO glow, NO shadow haze, NO text, NO scene, NO mockup, NO checkerboard drawn in the image. Single icon only.",
+  "runtime_import": "18x12 nearest sampling; opaque ivory/gold palette and one-pixel navy outline"
+}

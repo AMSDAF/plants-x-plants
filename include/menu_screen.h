@@ -1,12 +1,10 @@
-/* Declara recursos, relógios de vegetação/mascote e entrada do título/menu. */
+/* Declara recursos, relógios de vegetação/mascote e entrada da tela inicial. */
 #ifndef MENU_SCREEN_H
 #define MENU_SCREEN_H
 
 #include <stdbool.h>
 #include "raylib.h"
 #include "ui_theme.h"
-
-#define MENU_OPTION_COUNT 3
 
 typedef struct {
     Texture2D background;
@@ -22,15 +20,10 @@ typedef struct {
     float ui_time;
     Rectangle logo_source;
     Rectangle mascot_source;
-    bool menu_open;
     bool input_blocked;
-    int selected_option;
-    int pressed_option;
-    int pending_option;
-    float activation_time;
 } MenuScreen;
 
-typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_VERSUS, MENU_ACTION_EXIT } MenuAction;
+typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_EXIT } MenuAction;
 
 void menu_screen_init(MenuScreen *screen);
 MenuAction menu_screen_update(MenuScreen *screen, bool accept_input);

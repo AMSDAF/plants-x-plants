@@ -1,14 +1,15 @@
 # Plano do novo HUD e da tipografia
 
 Status: direção escolhida e implementada. Este documento preserva o plano
-e a exploração visual. A execução e as verificações estão descritas em
+e as decisões da exploração visual. As sete imagens de conceito e arquivos
+de apoio foram removidos após a integração. A execução e as verificações estão descritas em
 [HUD_IMPLEMENTATION.md](HUD_IMPLEMENTATION.md).
 
 ## Direção escolhida
 
 O usuário escolheu o HUD creme da segunda proposta, com uma seta apontando
-para baixo como indicador de alvo. A prévia combinada está em
-`assets/ui/hud_concepts/cream_arrow_v1.png`.
+para baixo como indicador de alvo. A prévia combinada foi usada como
+referência durante a implementação e removida na limpeza posterior.
 
 Preservar os painéis creme, o texto verde-escuro e o painel de interação
 centralizado no rodapé, com contexto e ação em duas linhas e tecla E à
@@ -17,8 +18,8 @@ com haste curta e ponta triangular, preenchimento creme e contorno escuro.
 A seta fica acima do alvo, sem texto, círculo, losango ou marca no chão.
 
 Essa revisão combina as preferências visuais solicitadas e orienta a
-implementação. O registro da edição fica em
-`assets/ui/hud_concepts/cream_arrow_prompt.json`.
+implementação. O JSON da edição da prévia foi removido junto aos conceitos;
+o prompt da seta pixel em execução permanece em `assets/ui/interaction_chevron_pixel_prompt.json`.
 
 ## Objetivo e escopo
 
@@ -176,10 +177,10 @@ bordas e margens estáveis, sem esticar letras ou ornamentos.
 
 ## Prévias e limites desta entrega
 
-As três imagens estão em `assets/ui/hud_concepts/concept_01.png`,
-`concept_02.png` e `concept_03.png`, na ordem em que foram apresentadas.
-`reference_maintenance.png` guarda a captura usada; `prompts.json` registra
-os prompts e o uso da ferramenta integrada de edição de imagens.
+Foram apresentadas três imagens de conceito, acompanhadas de uma captura
+de referência e JSONs de prompts. Esses arquivos, junto à prévia combinada
+e seu prompt, foram removidos após a integração. As observações abaixo
+registram o contexto histórico das propostas.
 
 Todas simulam a escotilha já desbloqueada e a ação disponível. A captura de
 referência mostra outro estado da missão; o cenário serve de base visual.
@@ -188,6 +189,6 @@ cenário. As duas primeiras têm 1672 × 941 e a terceira 1717 × 916; nenhuma
 foi esticada para simular uma captura exata. A implementação deverá respeitar
 as dimensões lógicas do jogo, não copiar coordenadas dessas imagens.
 
-As imagens desta pasta continuam sendo conceitos; a versão integrada desenha
-componentes e textos dinamicamente. Consulte HUD_IMPLEMENTATION.md para os
+As imagens eram somente conceitos; a versão integrada desenha componentes
+e textos dinamicamente. Consulte HUD_IMPLEMENTATION.md para os
 recursos de execução e os testes implementados após a escolha visual.

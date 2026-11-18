@@ -1,10 +1,10 @@
 # Fundo experimental da seleção
 
 A fonte `assets/sprites/trainer_selection_background.png` permanece intacta.
-Na seleção existente (**Campanha**), **F7** alterna a prévia exclusiva do novo
+Na seleção de personagem aberta por ENTER na tela inicial, **F7** alterna a prévia exclusiva do novo
 fundo. A prévia não mostra interface nem aceita confirmação; **ESC** retorna ao
-menu. F7 novamente recupera os controles e a seleção anterior. Entrar novamente
-por Campanha restaura a seleção normal. O menu aprovado não foi modificado.
+tela inicial. F7 novamente recupera os controles e a seleção anterior. Entrar novamente
+por ENTER na tela inicial restaura a seleção normal. O menu aprovado não foi modificado.
 
 ## Preparação reproduzível
 

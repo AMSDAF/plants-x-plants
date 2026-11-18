@@ -12,7 +12,6 @@ static void change_screen(Game *game, GameScreen screen)
     game->input_blocked = true;
     menu_screen_reset_input(&game->menu);
     game->trainer_select.pressed = -1;
-    game->versus.pressed = -1;
     game->player.moving = false;
     game->player.walk_time = 0;
     /* Descarta eventos enfileirados; entradas mantidas aguardam soltura. */
@@ -28,55 +27,6 @@ static bool transition_input_down(void)
     for (unsigned int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
         if (IsKeyDown(keys[i])) return true;
     return IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-}
-
-static Team random_team(int size)
-{
-    int species[SPECIES_COUNT];
-    for (int i = 0; i < SPECIES_COUNT; i++) species[i] = i;
-
-    Team team = {0};
-    for (int i = 0; i < size; i++) {
-        int pick = i + rand() % (SPECIES_COUNT - i);
-        Team_SelectSpecies(&team, i, species[pick]);
-        species[pick] = species[i];
-    }
-    return team;
-}
-
-static void start_battle(Game *game, bool configure)
-{
-    Plant cactus = Plant_CreateFromSpecies(SPECIES_CACTUS, 1);
-    Plant sunflower = Plant_CreateFromSpecies(SPECIES_SUNFLOWER, 1);
-    Team first = {.plants = {cactus, sunflower}, .count = 2};
-    Team second = {.plants = {sunflower, cactus}, .count = 2};
-
-    BattleScreen *screen = &game->battle_screen;
-    if (!configure) {
-        first = screen->battle.player_team;
-        second = screen->battle.enemy_team;
-        Team_Restore(&first);
-        Team_Restore(&second);
-    }
-    LogicFormula left = screen->battle.formulas[0];
-    LogicFormula right = screen->battle.formulas[1];
-    Battle_Init(&screen->battle, first, second);
-    screen->versus_cpu = game->versus_mode == VERSUS_CPU;
-    screen->campaign_battle = false;
-    screen->cpu_wait = 0;
-    screen->setup_side = configure ? 0 : -1;
-    screen->choosing_team = configure;
-    screen->roster_cursor = 0;
-    screen->team_slot = 0;
-    screen->draft = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-    if (configure) {
-        if (screen->versus_cpu)
-            screen->battle.formulas[1] = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_LOW_HP, LOGIC_AND};
-    } else {
-        screen->battle.formulas[0] = left;
-        screen->battle.formulas[1] = right;
-    }
-    change_screen(game, GAME_BATTLE);
 }
 
 static Team guardian_team(WorldEncounter encounter, int size)
@@ -107,8 +57,6 @@ static void start_encounter(Game *game, WorldEncounter encounter)
 
     BattleScreen *screen = &game->battle_screen;
     *screen = (BattleScreen){
-        .versus_cpu = true,
-        .campaign_battle = true,
         .setup_side = configured ? -1 : 0,
         .choosing_team = !configured,
         .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
@@ -149,8 +97,6 @@ void game_init(Game *game)
     menu_screen_init(&game->menu);
     player_assets_load(&game->player_assets);
     trainer_select_assets_load(&game->trainer_select_assets);
-    versus_assets_load(&game->versus_assets);
-    versus_screen_init(&game->versus, VERSUS_CPU);
     world_init(&game->world);
     world_assets_load(&game->world_assets);
     trainer_select_screen_init(&game->trainer_select);
@@ -160,6 +106,7 @@ void game_init(Game *game)
 
 void game_update(Game *game)
 {
+    if (game->screen == GAME_EXPLORATION) ui_theme_update(&game->ui, GetFrameTime());
     if (game->screen == GAME_NAME_ENTRY) {
         trainer_select_screen_update(&game->trainer_select, false, GetFrameTime());
         NameEntryAction action=name_entry_update(&game->name_entry, !game->input_blocked, GetFrameTime());
@@ -167,7 +114,6 @@ void game_update(Game *game)
         else if (action==NAME_ENTRY_SELECTION) change_screen(game,GAME_TRAINER_SELECT);
         else if (action==NAME_ENTRY_CONFIRM && name_entry_confirm(&game->name_entry,game->campaign.player_name)) {
             game->campaign.trainer=game->trainer_select.selected;
-            game->campaign.ready=true;
             game->campaign.has_team=false;
             world_init(&game->world);
             player_init(&game->player,game->campaign.trainer,world_spawn());
@@ -182,8 +128,6 @@ void game_update(Game *game)
         if (game->screen == GAME_MENU) menu_screen_update(&game->menu, false);
         if (game->screen == GAME_TRAINER_SELECT)
             trainer_select_screen_update(&game->trainer_select, false, GetFrameTime());
-        if (game->screen == GAME_VERSUS_SELECT)
-            versus_screen_update(&game->versus, false, GetFrameTime());
         if (!transition_input_down()) game->input_blocked = false;
         return;
     }
@@ -194,20 +138,6 @@ void game_update(Game *game)
             if (action == MENU_ACTION_CAMPAIGN) {
                 trainer_select_screen_init(&game->trainer_select);
                 change_screen(game, GAME_TRAINER_SELECT);
-            }
-            if (action == MENU_ACTION_VERSUS) {
-                versus_screen_init(&game->versus, game->versus_mode);
-                change_screen(game, GAME_VERSUS_SELECT);
-            }
-            break;
-        }
-        case GAME_VERSUS_SELECT: {
-            VersusAction action = versus_screen_update(&game->versus, true, GetFrameTime());
-            if (action == VERSUS_BACK) change_screen(game, GAME_MENU);
-            else if (action == VERSUS_CONFIRM) {
-                game->versus_mode = game->versus.selected;
-                game->versus_mode_selected = true;
-                start_battle(game, true);
             }
             break;
         }
@@ -242,18 +172,11 @@ void game_update(Game *game)
             break;
         case GAME_BATTLE: {
             BattleScreenAction action = battle_screen_update(&game->battle_screen, GetFrameTime());
-            if (action == BATTLE_SCREEN_TEAM_READY && game->battle_screen.versus_cpu) {
+            if (action == BATTLE_SCREEN_TEAM_READY) {
                 BattleState *battle = &game->battle_screen.battle;
-                battle->enemy_team = game->battle_screen.campaign_battle
-                    ? guardian_team(game->encounter, battle->player_team.count)
-                    : random_team(battle->player_team.count);
+                battle->enemy_team = guardian_team(game->encounter, battle->player_team.count);
             }
-            if (game->battle_screen.campaign_battle) {
-                if (action == BATTLE_SCREEN_MENU || action == BATTLE_SCREEN_RESTART) leave_encounter(game);
-            } else {
-                if (action == BATTLE_SCREEN_RESTART) start_battle(game, false);
-                if (action == BATTLE_SCREEN_MENU) change_screen(game, GAME_MENU);
-            }
+            if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
             break;
         }
         case GAME_NAME_ENTRY: break; /* Atualizada acima para manter os relógios contínuos. */
@@ -265,9 +188,6 @@ void game_draw(const Game *game)
     const UiTheme *ui = &game->ui;
     switch (game->screen) {
         case GAME_MENU: menu_screen_draw(ui, &game->menu); break;
-        case GAME_VERSUS_SELECT:
-            versus_screen_draw(ui, &game->versus, &game->versus_assets, game->menu.logo, game->menu.logo_source);
-            break;
         case GAME_BATTLE:
             battle_screen_draw(ui, &game->battle_screen);
             break;
@@ -298,6 +218,5 @@ void game_shutdown(Game *game)
     world_assets_unload(&game->world_assets);
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);
-    versus_assets_unload(&game->versus_assets);
     menu_screen_shutdown(&game->menu);
 }

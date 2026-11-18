@@ -19,38 +19,44 @@ Rectangle exploration_prompt_bounds(const UiTheme *ui, const HudInteraction *int
     return (Rectangle){roundf((GAME_SCREEN_WIDTH-width)/2), GAME_SCREEN_HEIGHT-24-height, width, height};
 }
 
-Rectangle exploration_marker_bounds(const HudInteraction *interaction, Camera2D camera)
+Rectangle exploration_marker_bounds(const HudInteraction *interaction, Camera2D camera, float animation_time)
 {
     if (interaction->state == HUD_INTERACTION_NONE) return (Rectangle){0};
     Vector2 target = GetWorldToScreen2D(interaction->target, camera);
     if (target.x < 0 || target.x > GAME_SCREEN_WIDTH || target.y < 0 || target.y > GAME_SCREEN_HEIGHT)
         return (Rectangle){0};
     Vector2 point = GetWorldToScreen2D(interaction->marker_anchor, camera);
-    Rectangle bounds = {roundf(point.x)-10, roundf(point.y)-32, 20, 26};
-    if (bounds.x < 6 || bounds.x+bounds.width > GAME_SCREEN_WIDTH-6 ||
-        bounds.y < 6 || bounds.y+bounds.height > GAME_SCREEN_HEIGHT-6) return (Rectangle){0};
-    return bounds;
+    float bob = 2 * (1 - cosf(animation_time * 2 * PI / 1.4f));
+    /* Reserva todo o percurso antes da animação; a borda não alterna a visibilidade. */
+    float x = fminf(fmaxf(point.x-9, 6), GAME_SCREEN_WIDTH-24);
+    float y = fminf(fmaxf(point.y-18, 10), GAME_SCREEN_HEIGHT-18);
+    return (Rectangle){roundf(x), roundf(y-bob), 18, 12};
 }
 
 static void arrow_shape(Rectangle bounds, Color color)
 {
-    float center = bounds.x+bounds.width/2;
-    float head = bounds.y+bounds.height*0.43f;
-    DrawRectangleRec((Rectangle){center-bounds.width*0.18f, bounds.y,
-                                 bounds.width*0.36f, bounds.height*0.55f}, color);
-    DrawTriangle((Vector2){bounds.x, head}, (Vector2){center, bounds.y+bounds.height},
-                 (Vector2){bounds.x+bounds.width, head}, color);
+    /* Degraus de pixels, também na versão de reserva sem textura. */
+    float sx = bounds.width/18, sy = bounds.height/12;
+    for (int step = 0; step < 8; step++) {
+        DrawRectangleRec((Rectangle){bounds.x+(1+step)*sx, bounds.y+(1+step)*sy, 3*sx, 3*sy}, color);
+        DrawRectangleRec((Rectangle){bounds.x+(14-step)*sx, bounds.y+(1+step)*sy, 3*sx, 3*sy}, color);
+    }
 }
 
 static void draw_prompt(const UiTheme *ui, const HudInteraction *interaction, Camera2D camera)
 {
     Rectangle card = exploration_prompt_bounds(ui, interaction);
     if (!card.width) return;
-    Rectangle arrow = exploration_marker_bounds(interaction, camera);
+    Rectangle arrow = exploration_marker_bounds(interaction, camera, ui ? ui->marker_time : 0);
     if (arrow.width) {
-        arrow_shape((Rectangle){arrow.x+1, arrow.y+2, arrow.width, arrow.height}, (Color){44, 32, 19, 80});
-        arrow_shape(arrow, (Color){73, 48, 30, 255});
-        arrow_shape((Rectangle){arrow.x+3, arrow.y+2, arrow.width-6, arrow.height-6}, paper_color);
+        if (ui && ui->interaction_chevron.id) {
+            Texture2D texture = ui->interaction_chevron;
+            DrawTexturePro(texture, (Rectangle){0, 0, texture.width, texture.height},
+                           arrow, (Vector2){0}, 0, WHITE);
+        } else {
+            arrow_shape(arrow, text_color);
+            arrow_shape((Rectangle){arrow.x+2, arrow.y+1, arrow.width-4, arrow.height-4}, paper_color);
+        }
     }
     ui_panel(card);
     bool available = interaction->state == HUD_INTERACTION_AVAILABLE;
@@ -60,7 +66,10 @@ static void draw_prompt(const UiTheme *ui, const HudInteraction *interaction, Ca
     ui_text(ui, TextFormat("%s%s", interaction->context, suffix), left, (int)card.y+10, 18, text_color);
     if (available) {
         Rectangle key = {card.x+22, card.y+(card.height-44)/2, 46, 44};
-        DrawRectangleRounded(key, 0.22f, 8, text_color);
+        DrawRectangleRec((Rectangle){key.x+2, key.y+2, key.width, key.height}, text_color);
+        DrawRectangleRec(key, text_color);
+        DrawRectangleLinesEx((Rectangle){key.x+2, key.y+2, key.width-4, key.height-4}, 2,
+                             (Color){104, 135, 125, 255});
         ui_text_bold(ui, "E", (int)(key.x+(key.width-ui_measure_bold(ui, "E", 28))/2),
                      (int)key.y+6, 28, paper_color);
         DrawLine((int)card.x+89, (int)card.y+16, (int)card.x+89, (int)(card.y+card.height-16),

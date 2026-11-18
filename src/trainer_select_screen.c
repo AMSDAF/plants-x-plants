@@ -2,13 +2,10 @@
 #include "trainer_select_screen.h"
 #include "ui_theme.h"
 #include "selection_ui.h"
-#include "selection_portrait_v2_data.h"
 #include "male_portrait_idle_data.h"
 #include "female_portrait_idle_data.h"
 #include <math.h>
 
-#define PORTRAIT_WIDTH 320
-#define PORTRAIT_HEIGHT 480
 #define CONFIRM_CONTROL 2
 #define BACK_CONTROL 3
 
@@ -38,75 +35,25 @@ static Texture2D load_portrait(const char *path, int width, int height)
     return texture;
 }
 
-static Rectangle visible_portrait_bounds(Texture2D texture)
-{
-    if (!texture.id) return (Rectangle){0, 0, PORTRAIT_WIDTH, PORTRAIT_HEIGHT};
-    Image image = LoadImageFromTexture(texture);
-    Rectangle bounds = GetImageAlphaBorder(image, 0.1f);
-    UnloadImage(image);
-    if (bounds.width <= 0 || bounds.height <= 0)
-        return (Rectangle){0, 0, PORTRAIT_WIDTH, PORTRAIT_HEIGHT};
-    return bounds;
-}
-
 void trainer_select_assets_load(TrainerSelectAssets *assets)
 {
-    const char *names[] = {"male", "female"};
     *assets = (TrainerSelectAssets){0};
     trainer_background_load(&assets->background);
-    for (int i = 0; i < TRAINER_COUNT; i++) {
-        assets->botanical_portraits[i] = load_portrait(
-            TextFormat("assets/sprites/trainers/%s_botanical_portrait.png", names[i]), 0, 0);
-        assets->portraits[i] = load_portrait(TextFormat("assets/sprites/trainers/%s_portrait_v2.png", names[i]),
-                                            SELECTION_PORTRAIT_V2_WIDTH, SELECTION_PORTRAIT_V2_HEIGHT);
-        if (assets->portraits[i].id) {
-            /* O enquadramento corporal exclui o halo, mas o desenho preserva a textura inteira. */
-            assets->portrait_bounds[i] = SELECTION_PORTRAIT_V2_BOUNDS[i];
-            continue;
-        }
-        /* Fontes anteriores permanecem como fallback estático; nenhum atlas antigo é aplicado. */
-        assets->portraits[i] = load_portrait(TextFormat("assets/sprites/trainers/%s_portrait.png", names[i]),
-                                            PORTRAIT_WIDTH, PORTRAIT_HEIGHT);
-        if (!assets->portraits[i].id)
-            assets->portraits[i] = load_portrait(TextFormat("assets/sprites/trainer_%s_portrait.png", names[i]), 0, 0);
-        assets->portrait_bounds[i] = visible_portrait_bounds(assets->portraits[i]);
-        TraceLog(LOG_WARNING, "Retrato v2 de %s indisponivel; usando fallback estatico.", names[i]);
-    }
     assets->male_idle = load_portrait("assets/sprites/trainers/male_portrait_idle.png",
-                                     MALE_PORTRAIT_IDLE_WIDTH*MALE_PORTRAIT_IDLE_FRAMES,
+                                     MALE_PORTRAIT_IDLE_WIDTH * MALE_PORTRAIT_IDLE_FRAMES,
                                      MALE_PORTRAIT_IDLE_HEIGHT);
-    assets->male_idle_halo = load_portrait("assets/sprites/trainers/male_portrait_idle_halo.png",
-                                          SELECTION_PORTRAIT_V2_WIDTH, SELECTION_PORTRAIT_V2_HEIGHT);
-    if (!assets->male_idle.id || !assets->male_idle_halo.id) {
-        if (assets->male_idle.id) UnloadTexture(assets->male_idle);
-        if (assets->male_idle_halo.id) UnloadTexture(assets->male_idle_halo);
-        assets->male_idle = assets->male_idle_halo = (Texture2D){0};
-        TraceLog(LOG_WARNING, "Repouso masculino indisponivel; usando retrato estatico.");
-    }
     assets->female_idle = load_portrait("assets/sprites/trainers/female_portrait_idle.png",
-                                       FEMALE_PORTRAIT_IDLE_WIDTH*FEMALE_PORTRAIT_IDLE_FRAMES,
+                                       FEMALE_PORTRAIT_IDLE_WIDTH * FEMALE_PORTRAIT_IDLE_FRAMES,
                                        FEMALE_PORTRAIT_IDLE_HEIGHT);
-    assets->female_idle_halo = load_portrait("assets/sprites/trainers/female_portrait_idle_halo.png",
-                                            SELECTION_PORTRAIT_V2_WIDTH, SELECTION_PORTRAIT_V2_HEIGHT);
-    if (!assets->female_idle.id || !assets->female_idle_halo.id) {
-        if (assets->female_idle.id) UnloadTexture(assets->female_idle);
-        if (assets->female_idle_halo.id) UnloadTexture(assets->female_idle_halo);
-        assets->female_idle = assets->female_idle_halo = (Texture2D){0};
-        TraceLog(LOG_WARNING, "Repouso feminino indisponivel; usando retrato estatico.");
-    }
+    if (!assets->male_idle.id || !assets->female_idle.id)
+        TraceLog(LOG_WARNING, "Retrato de repouso indisponivel; exibindo aviso no cartao.");
 }
 
 void trainer_select_assets_unload(TrainerSelectAssets *assets)
 {
     trainer_background_unload(&assets->background);
     if (assets->male_idle.id) UnloadTexture(assets->male_idle);
-    if (assets->male_idle_halo.id) UnloadTexture(assets->male_idle_halo);
     if (assets->female_idle.id) UnloadTexture(assets->female_idle);
-    if (assets->female_idle_halo.id) UnloadTexture(assets->female_idle_halo);
-    for (int i = 0; i < TRAINER_COUNT; i++) {
-        if (assets->portraits[i].id) UnloadTexture(assets->portraits[i]);
-        if (assets->botanical_portraits[i].id) UnloadTexture(assets->botanical_portraits[i]);
-    }
     *assets = (TrainerSelectAssets){0};
 }
 
@@ -199,30 +146,16 @@ static void draw_portrait_texture(const UiTheme *ui, Texture2D texture, Rectangl
 
 static void draw_portrait(const UiTheme *ui, const TrainerSelectScreen *screen, const TrainerSelectAssets *assets, int index, Rectangle card, float alpha)
 {
-    Texture2D botanical = assets->botanical_portraits[index];
-    if (botanical.id) {
-        Rectangle bounds = {0, 0, botanical.width, botanical.height};
-        draw_portrait_texture(ui, botanical, bounds, bounds, index, card, alpha, 0.84f);
-    } else if (index == TRAINER_MALE && assets->male_idle.id && assets->male_idle_halo.id) {
-        Texture2D halo = assets->male_idle_halo;
-        draw_portrait_texture(ui, halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
-                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_MALE], index, card, alpha, 1.0f);
+    if (index == TRAINER_MALE) {
         int frame = trainer_select_male_idle_frame(screen->male_idle_time);
-        Rectangle source = {frame*MALE_PORTRAIT_IDLE_WIDTH,0,
-                            MALE_PORTRAIT_IDLE_WIDTH,MALE_PORTRAIT_IDLE_HEIGHT};
+        Rectangle source = {frame * MALE_PORTRAIT_IDLE_WIDTH, 0,
+                            MALE_PORTRAIT_IDLE_WIDTH, MALE_PORTRAIT_IDLE_HEIGHT};
         draw_portrait_texture(ui, assets->male_idle, source, MALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
-    } else if (index == TRAINER_FEMALE && assets->female_idle.id && assets->female_idle_halo.id) {
-        Texture2D halo = assets->female_idle_halo;
-        draw_portrait_texture(ui, halo, (Rectangle){0,0,(float)halo.width,(float)halo.height},
-                              SELECTION_PORTRAIT_V2_BOUNDS[TRAINER_FEMALE], index, card, alpha, 1.0f);
-        int frame = trainer_select_female_idle_frame(screen->female_idle_time);
-        Rectangle source = {frame*FEMALE_PORTRAIT_IDLE_WIDTH,0,
-                            FEMALE_PORTRAIT_IDLE_WIDTH,FEMALE_PORTRAIT_IDLE_HEIGHT};
-        draw_portrait_texture(ui, assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
     } else {
-        Texture2D texture = assets->portraits[index];
-        draw_portrait_texture(ui, texture, (Rectangle){0,0,(float)texture.width,(float)texture.height},
-                              assets->portrait_bounds[index], index, card, alpha, 1.0f);
+        int frame = trainer_select_female_idle_frame(screen->female_idle_time);
+        Rectangle source = {frame * FEMALE_PORTRAIT_IDLE_WIDTH, 0,
+                            FEMALE_PORTRAIT_IDLE_WIDTH, FEMALE_PORTRAIT_IDLE_HEIGHT};
+        draw_portrait_texture(ui, assets->female_idle, source, FEMALE_PORTRAIT_IDLE_BODY, index, card, alpha, 1.0f);
     }
 }
 

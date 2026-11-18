@@ -71,7 +71,7 @@ Todos os diagnósticos ficam em `build/menu_grass_preview/`, ignorado pelo Git:
 - `scene.gif`: cena completa em 1280 × 720, sem interface.
 - `contact.png` e `closeup.png`: quadros 31, 0, 1 e curva máxima.
 - `title_game.gif` e `game_closeup.png`: capturas reais do renderizador do jogo com OpenGL, incluindo mascote.
-- `menu.png` e `static_fallback.png`: menu aberto e comparação do fallback.
+- `title_sample.png` e `static_fallback.png`: tela inicial e comparação do fallback.
 - `inspection.json`: geometria, fases, hashes, contagem de pixels e memória.
 
 A preparação verifica bases fixas, margens transparentes, paleta da fonte e ausência de alterações fora da remoção. O verificador gráfico cobre 32 fases, permite diferenças somente nas regiões de copas/grama/mascote, testa os relógios em ENTER/ESC, fallback com recursos ausentes/inválidos e pares incompletos, desenho sem mutação, descarregamento e o fluxo existente de teclado/mouse até seleção/exploração. Os testes isolados do mascote congelam o relógio do vento.

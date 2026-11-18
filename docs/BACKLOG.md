@@ -1,5 +1,9 @@
 # Backlog — Plants x Plants
 
+> O escopo abaixo registra a entrega inicial histórica. Na versão atual, o modo
+> Versus independente foi removido: ENTER abre diretamente a seleção de personagem
+> e o combate acontece na campanha. Consulte README.md e ARCHITECTURE.md para o fluxo atual.
+
 O controle das tarefas é realizado pelo GitHub Issues e pelo quadro do GitHub Projects.
 
 - [Quadro Kanban](https://github.com/users/AMSDAF/projects/2)

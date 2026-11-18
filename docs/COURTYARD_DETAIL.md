@@ -6,17 +6,20 @@ unidos em `assets/maps/courtyard_detail/courtyard_complete.png`, com
 1672 × 941 originais. A preparação não aumenta artificialmente os resultados:
 cada imagem gerada tem densidade nativa ligeiramente superior ao fator comum.
 
-A imagem original e o resultado noroeste aprovado permanecem preservados.
+A imagem original e as quatro fontes geradas dos quadrantes permanecem preservadas.
 Nenhuma regra de circulação, posição de porta, interação ou colisão foi alterada.
 A edição pode variar detalhes das formas; a geração não garante equivalência
 geométrica pixel a pixel com a fonte.
 
 ## Fontes e composição
 
-Os arquivos ficam em `assets/maps/courtyard_detail/`. Para cada região há
-`<região>_source.png`, `<região>_reference_2x.png`, `<região>_generated_v1.png`
-e `<região>_matched.png`. A referência 2× é somente a entrada ampliada para
-a ferramenta de edição, não o resultado final.
+As quatro fontes `<região>_generated_v1.png` e o mapa completo ficam em
+`assets/maps/courtyard_detail/`. As 12 imagens intermediárias
+`<região>_source.png`, `<região>_reference_2x.png` e `<região>_matched.png`
+foram removidas: o jogo não as carrega e o gerador consegue recriá-las a partir
+do mapa original e das quatro fontes mantidas. A referência 2× serve somente
+como entrada ampliada para edição, não como resultado final. Executar novamente
+`tools/prepare_courtyard_detail.py` recria esses intermediários na mesma pasta.
 
 | Região | Recorte original [esquerda, topo, direita, base] | Resultado gerado |
 | --- | --- | --- |
@@ -37,8 +40,9 @@ camadas transparentes sobrepostas. Não há reconstrução procedural do piso.
 
 `full_metadata.json` registra dimensões, recortes, densidades, hashes e limites
 das costuras. `include/courtyard_detail_data.h` contém as dimensões reais usadas
-pelo carregador. O primeiro `northwest_detail.png` e seu `metadata.json` foram
-mantidos como referência do teste aprovado; não são mais a textura de execução.
+pelo carregador. O teste antigo de apenas um quadrante (`northwest_detail.png`
+e `metadata.json`) e seu trecho exclusivo no gerador foram removidos. A preparação
+agora executa somente a composição do mapa completo.
 Os prompts das três regiões novas ficam em `prompts.json`, gerados com a
 ferramenta integrada de imagem e com o primeiro quadrante como referência de estilo.
 

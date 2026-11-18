@@ -8,7 +8,7 @@
 #include "plant_data.h"
 #include <string.h>
 
-Plant Plant_CreateFromSpecies(int species_id, int level) {
+Plant Plant_CreateFromSpecies(int species_id) {
     const SpeciesData *base = PlantData_GetSpecies((SpeciesId)species_id);
     Plant plant;
     
@@ -20,13 +20,12 @@ Plant Plant_CreateFromSpecies(int species_id, int level) {
 
     plant.id = base->id;
     strcpy(plant.name_pt, base->name_pt);
-    plant.level = level;
     
-    // Cálculo simples de atributos baseado no nível
-    plant.max_hp = base->base_hp + (level - 1) * 10;
+    // Usa diretamente os atributos definidos no catálogo da espécie
+    plant.max_hp = base->base_hp;
     plant.current_hp = plant.max_hp; // Começa com HP cheio
-    plant.attack = base->base_attack + (level - 1) * 3;
-    plant.defense = base->base_defense + (level - 1) * 2;
+    plant.attack = base->base_attack;
+    plant.defense = base->base_defense;
     
     // Copia os golpes do catálogo para a instância
     for (int i = 0; i < MAX_MOVES; i++) {
@@ -78,14 +77,14 @@ int Team_SelectSpecies(Team *team, int index, int species_id)
             return 1;
         }
     }
-    team->plants[index] = Plant_CreateFromSpecies(species_id, 1);
+    team->plants[index] = Plant_CreateFromSpecies(species_id);
     if (index == team->count) team->count++;
     return 1;
 }
 
 int Team_RemoveReserve(Team *team, int index)
 {
-    if (team->count <= MIN_VERSUS_TEAM_SIZE || index <= 0 || index >= team->count)
+    if (team->count <= MIN_TEAM_SIZE || index <= 0 || index >= team->count)
         return 0;
     for (int i = index; i + 1 < team->count; i++)
         team->plants[i] = team->plants[i + 1];

@@ -9,14 +9,11 @@
 typedef enum {
     BATTLE_SCREEN_NONE,
     BATTLE_SCREEN_TEAM_READY,
-    BATTLE_SCREEN_RESTART,
-    BATTLE_SCREEN_MENU
+    BATTLE_SCREEN_RETURN
 } BattleScreenAction;
 
 typedef struct {
     BattleState battle;
-    bool versus_cpu;
-    bool campaign_battle;
     float cpu_wait;
     int setup_side; /* -1 quando a montagem está concluída. */
     bool choosing_team;

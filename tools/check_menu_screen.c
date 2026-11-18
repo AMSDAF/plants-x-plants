@@ -149,7 +149,7 @@ static void check_wind(Game *game, RenderTexture2D target)
     assert(game->menu.grass_background.id && game->menu.grass_atlas.id);
     assert(game->menu.tree_background.id && game->menu.tree_atlas.id);
     game->screen = GAME_MENU;
-    game->menu.menu_open = false;
+
     game->menu.input_blocked = false;
     game->menu.grass_time = 1.0f;
     game->menu.mascot_time = 0.5f;
@@ -224,10 +224,10 @@ static void check_wind(Game *game, RenderTexture2D target)
     }
     assert(changes > 0);
     UnloadImage(first);
-    game->menu.menu_open = true;
+
     game->menu.grass_time = 2.5f;
-    Image menu = capture(game, target, "build/menu_grass_preview/menu.png");
-    assert(ExportImage(menu, "build/menu_tree_preview/menu.png"));
+    Image menu = capture(game, target, "build/menu_grass_preview/title_sample.png");
+    assert(ExportImage(menu, "build/menu_tree_preview/title_sample.png"));
     UnloadImage(menu);
     game->menu = saved;
     puts("PASS: 32 fases de copas/grama/mascote, somente regioes previstas mudam, relogios continuos e fallback em camadas.");
@@ -285,81 +285,38 @@ int main(void)
     input(2, KEY_ENTER, 0);
     game.menu.mascot_time = 0.5f;
     tick(&game);
-    assert(game.menu.menu_open && game.menu.input_blocked);
+    assert(game.screen == GAME_TRAINER_SELECT && game.input_blocked);
     assert(game.menu.mascot_time > 0.5f && game.menu.mascot_time <= 0.61f);
     for (int i = 0; i < 15; i++) tick(&game);
-    assert(game.screen == GAME_MENU && game.menu.pending_option == -1);
+    assert(game.screen == GAME_TRAINER_SELECT && game.input_blocked);
     input(1, KEY_ENTER, 0);
     tick(&game);
     tick(&game);
-    assert(!game.menu.input_blocked);
-    key(&game, KEY_DOWN);
-    assert(game.menu.selected_option == 1);
-    key(&game, KEY_DOWN);
-    assert(game.menu.selected_option == 2);
-    key(&game, KEY_DOWN);
-    assert(game.menu.selected_option == 0);
-    key(&game, KEY_UP);
-    assert(game.menu.selected_option == 2);
-    key(&game, KEY_UP);
-    assert(game.menu.selected_option == 1);
-    key(&game, KEY_UP);
-    assert(game.menu.selected_option == 0);
-    click(&game, 1000, 460);
-    assert(game.screen == GAME_VERSUS_SELECT && !game.exit_requested);
+    assert(!game.input_blocked);
     key(&game, KEY_ESCAPE);
     assert(game.screen == GAME_MENU);
-    input(7, 1000, 397);
-    input(6, 0, 0);
-    tick(&game);
-    input(7, 100, 100);
-    input(5, 0, 0);
-    tick(&game);
-    assert(game.screen == GAME_MENU && game.menu.pressed_option == -1);
-    game.menu.ui_time = 0;
-    game.menu.grass_time = 0;
-    Image menu = capture(&game, target, "build/menu_v2_preview/menu.png");
-    for (int i = 0; i < 30; i++) tick(&game);
-    game.menu.ui_time = 0;
-    game.menu.grass_time = 0;
-    still = capture(&game, target, NULL);
-    check_mascot_only_change(menu, still, true);
-    UnloadImage(menu);
-    UnloadImage(still);
-    game.menu.mascot_time = 0.5f;
-    key(&game, KEY_ESCAPE);
-    assert(!game.menu.menu_open && game.screen == GAME_MENU);
-    assert(game.menu.mascot_time > 0.5f && game.menu.mascot_time < 0.81f);
+    /* Os antigos cartões de opções não existem mais. */
+    click(&game, 1000, 460);
+    click(&game, 1000, 529);
+    assert(game.screen == GAME_MENU && !game.exit_requested);
     key(&game, KEY_ENTER);
-    assert(game.menu.menu_open && game.screen == GAME_MENU);
-    click(&game, 1000, 397);
     assert(game.screen == GAME_TRAINER_SELECT);
     key(&game, KEY_RIGHT);
     key(&game, KEY_ENTER);
     confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_FEMALE);
     key(&game, KEY_ESCAPE);
-    assert(game.screen == GAME_MENU && game.menu.menu_open);
+    assert(game.screen == GAME_MENU);
     key(&game, KEY_ENTER);
-    for (int i = 0; i < 20; i++) tick(&game);
     assert(game.screen == GAME_TRAINER_SELECT);
     trainer_select_screen_init(&game.trainer_select);
     Image selection = capture(&game, target, "build/menu_v2_preview/selection_unchanged.png");
     UnloadImage(selection);
     key(&game, KEY_ESCAPE);
     assert(game.screen == GAME_MENU);
-    key(&game, KEY_DOWN);
-    key(&game, KEY_DOWN);
-    assert(game.menu.selected_option == 2);
-    key(&game, KEY_ENTER);
-    for (int i = 0; i < 15; i++) tick(&game);
-    assert(game.exit_requested);
-    game.exit_requested = false;
-    click(&game, 1000, 529);
-    assert(game.exit_requested);
-    game.exit_requested = false;
     key(&game, KEY_ESCAPE);
-    assert(!game.menu.menu_open);
+    assert(game.exit_requested);
+    game.exit_requested = false;
     MenuScreen saved = game.menu;
     game.menu.background = (Texture2D){0};
     game.menu.logo = (Texture2D){0};
@@ -368,31 +325,25 @@ int main(void)
     Image fallback = capture(&game, target, "build/menu_v2_preview/fallback.png");
     UnloadImage(fallback);
     game.menu = saved;
-    /* Amostra todas as fases em ambas as telas na mesma escala do jogo. */
-    for (int screen = 0; screen < 2; screen++) {
-        game.menu.menu_open = screen != 0;
-        for (int frame = 0; frame < MENU_MASCOT_FRAME_COUNT; frame++) {
-            game.menu.mascot_time = (frame + 0.01f) / MENU_MASCOT_FPS;
-            Image phase = capture(&game, target, NULL);
-            if (frame == 2) assert(ExportImage(phase, TextFormat("build/menu_mascot_preview/%s.png", screen ? "menu" : "title")));
-            ImageCrop(&phase, (Rectangle){500, 360, 280, 280});
-            assert(ExportImage(phase, TextFormat("build/menu_mascot_preview/%s_%02d.png", screen ? "menu" : "title", frame)));
-            UnloadImage(phase);
-        }
+    /* Amostra todas as fases da tela inicial na escala do jogo. */
+    for (int frame = 0; frame < MENU_MASCOT_FRAME_COUNT; frame++) {
+        game.menu.mascot_time = (frame + 0.01f) / MENU_MASCOT_FPS;
+        Image phase = capture(&game, target, NULL);
+        if (frame == 2) assert(ExportImage(phase, "build/menu_mascot_preview/title.png"));
+        ImageCrop(&phase, (Rectangle){500, 360, 280, 280});
+        assert(ExportImage(phase, TextFormat("build/menu_mascot_preview/title_%02d.png", frame)));
+        UnloadImage(phase);
     }
     check_wind(&game, target);
-    /* Capturas de inspeção visual: mesmas fases nas duas telas, outros relógios fixos. */
+    /* Capturas da tela inicial, com os demais relógios fixos. */
     assert(DirectoryExists("build/menu_ui_preview") || MakeDirectory("build/menu_ui_preview") == 0);
     const float ui_phases[] = {0, 0.25f, 0.75f, 0.85f, 1.0f, 1.25f, 2.25f, 3.0f};
     game.menu.mascot_time = 0;
     game.menu.grass_time = 0;
-    for (int screen = 0; screen < 2; screen++) {
-        game.menu.menu_open = screen != 0;
-        for (int phase = 0; phase < 8; phase++) {
-            game.menu.ui_time = ui_phases[phase];
-            Image sample = capture(&game, target, TextFormat("build/menu_ui_preview/%s_%02d.png", screen ? "menu" : "title", phase));
-            UnloadImage(sample);
-        }
+    for (int phase = 0; phase < 8; phase++) {
+        game.menu.ui_time = ui_phases[phase];
+        Image sample = capture(&game, target, TextFormat("build/menu_ui_preview/title_%02d.png", phase));
+        UnloadImage(sample);
     }
     UnloadRenderTexture(target);
     game_shutdown(&game);
@@ -400,6 +351,6 @@ int main(void)
     assert(!game.menu.grass_background.id && !game.menu.grass_atlas.id);
     assert(!game.menu.tree_background.id && !game.menu.tree_atlas.id);
     CloseWindow();
-    puts("PASS: atlas/fallback alinhados, apenas mascote anima, pes/sombra/cenario fixos, relogio continuo no ENTER/ESC, 8 fases em ambas as telas, navegacao teclado/mouse, Campanha/exploracao/retorno, Sair, desenho imutavel e descarregamento.");
+    puts("PASS: atlas/fallback alinhados, apenas mascote anima, pes/sombra/cenario fixos, relogio continuo no ENTER/ESC, 8 fases na tela inicial, ENTER direto na selecao, entrada mantida, Campanha/exploracao/retorno e ESC para sair, desenho imutavel e descarregamento.");
     return 0;
 }

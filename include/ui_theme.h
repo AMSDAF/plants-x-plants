@@ -7,10 +7,13 @@
 typedef struct {
     Font regular;
     Font semibold;
+    Texture2D interaction_chevron;
+    float marker_time;
 } UiTheme;
 
 void ui_theme_load(UiTheme *ui);
 void ui_theme_unload(UiTheme *ui);
+void ui_theme_update(UiTheme *ui, float dt);
 Font ui_font(const UiTheme *ui, bool bold);
 void ui_text(const UiTheme *ui, const char *text, int x, int y, int size, Color color);
 int ui_measure(const UiTheme *ui, const char *text, int size);
