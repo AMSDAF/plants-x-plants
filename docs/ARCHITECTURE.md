@@ -66,7 +66,9 @@ retorna à tela inicial; ESC na tela inicial encerra. Consulte
 
 Os atlas são carregados em `game_init` e liberados em `game_shutdown`.
 `PlayerAssets` mantém somente `male_botanical.png` e `female_botanical.png`:
-12 poses, pivô fixo nos pés, filtro pontual e compensação do zoom dos interiores.
+12 poses, pivô fixo nos pés, filtro pontual e compensação do zoom da câmera.
+A escala visual é 0,23 no exterior e 0,36 nos interiores. A Casa de Manutenção
+ocupa 68% da largura e altura do quadro, com margem ao redor.
 Sem atlas válido, a exploração desenha um marcador geométrico.
 
 `TrainerSelectAssets` mantém somente `male_portrait_idle.png` e
