@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include "battle.h"
+#include "raylib.h"
 
 typedef enum {
     BATTLE_SCREEN_NONE,
@@ -26,6 +27,7 @@ typedef struct {
 } BattleScreen;
 
 BattleScreenAction battle_screen_update(BattleScreen *screen, float dt);
-void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen);
+void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
+                        Texture2D aloe_guard, Texture2D sunflower_guard);
 
 #endif

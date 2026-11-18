@@ -47,13 +47,13 @@ static const MapObject objects[OBJECT_COUNT] = {
     [VALVE] = {{1168, 644}, WORLD_EXTERIOR},
     [POWER] = {{640, 320}, WORLD_BASEMENT},
     [ALARM] = {{445, 310}, WORLD_MAINTENANCE},
-    [NORTH_CHANNEL] = {{450, 352}, WORLD_BRIDGE_CONTROL},
-    [SOUTH_CHANNEL] = {{830, 352}, WORLD_BRIDGE_CONTROL},
+    [NORTH_CHANNEL] = {{539, 350}, WORLD_BRIDGE_CONTROL},
+    [SOUTH_CHANNEL] = {{742, 350}, WORLD_BRIDGE_CONTROL},
     [DRAIN] = {{733, 555}, WORLD_EXTERIOR},
-    [ALOE] = {{640, 320}, WORLD_DEPOT},
-    [SUNFLOWER] = {{515, 340}, WORLD_NURSERY},
+    [ALOE] = {{640, 420}, WORLD_DEPOT},
+    [SUNFLOWER] = {{640, 420}, WORLD_NURSERY},
     [CANAL_NOTE] = {{1271, 401}, WORLD_EXTERIOR},
-    [ALARM_NOTE] = {{537, 281}, WORLD_MAINTENANCE},
+    [ALARM_NOTE] = {{537, 300}, WORLD_MAINTENANCE},
     [MAINTENANCE_DOOR] = {{243, 645}, WORLD_EXTERIOR},
     [DEPOT_DOOR] = {{278, 379}, WORLD_EXTERIOR},
     [NURSERY_DOOR] = {{1396, 330}, WORLD_EXTERIOR},
@@ -62,13 +62,13 @@ static const MapObject objects[OBJECT_COUNT] = {
     [LOCKED_HATCH] = {{846, 416}, WORLD_MAINTENANCE},
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
     [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
-    [LOWER_LIFT] = {{837, 410}, WORLD_BASEMENT},
-    [RELAY_PANEL] = {{790, 340}, WORLD_NURSERY},
+    [LOWER_LIFT] = {{900, 445}, WORLD_BASEMENT},
+    [RELAY_PANEL] = {{782, 315}, WORLD_NURSERY},
     [ENTRANCE_SIGN] = {{487, 787}, WORLD_EXTERIOR},
     [BRIDGE_SIGN] = {{770, 625}, WORLD_EXTERIOR},
     [GARDENER] = {{630, 507}, WORLD_EXTERIOR},
     [TECHNICIAN] = {{868, 600}, WORLD_EXTERIOR},
-    [RESEARCHER] = {{882, 477}, WORLD_NURSERY}
+    [RESEARCHER] = {{790, 485}, WORLD_NURSERY}
 };
 
 static const Rectangle exterior = {0, 0, MAP_WIDTH, MAP_HEIGHT};
@@ -202,13 +202,40 @@ static const Sector rooms[WORLD_LOCATION_COUNT] = {
 /* Pegadas das mobílias da oficina, alinhadas à ilustração no espaço do mapa. */
 static const Rectangle maintenance_furniture[] = {
     {307, 260, 56, 91},  /* Armário de vasos à esquerda. */
-    {400, 277, 90, 71},  /* Painel e bancada de parede. */
-    {580, 316, 146, 39}, /* Prateleira central. */
+    {397, 270, 112, 78}, /* Painel e bancada de parede. */
+    {574, 319, 160, 40}, /* Base da prateleira central. */
     {870, 260, 96, 97},  /* Caldeira e tubulações. */
+    {831, 316, 45, 42},  /* Caixote junto às ferramentas. */
     {302, 392, 146, 52}, /* Bancada de trabalho. */
-    {361, 449, 38, 41},  /* Banco. */
-    {306, 495, 75, 62},  /* Caixas inferiores. */
+    {380, 455, 48, 48},  /* Banco, com a base alinhada aos pés. */
+    {305, 493, 62, 63},  /* Caixote de madeira inferior esquerdo. */
+    {360, 508, 75, 50},  /* Baú verde inferior. */
+    {792, 372, 111, 90}, /* Escotilha metálica no piso. */
     {917, 423, 58, 132}  /* Estante lateral. */
+};
+
+/* Pegadas dos mÃ³veis sÃ³lidos dos interiores, medidas no espaÃ§o de cada sala. */
+static const Rectangle depot_furniture[] = {
+    {302, 270, 78, 125}, {300, 375, 160, 74}, {415, 270, 370, 73},
+    {850, 265, 80, 125}, {925, 405, 55, 155}, {300, 495, 112, 68}
+};
+static const Rectangle basement_furniture[] = {
+    {300, 327, 148, 48}, {414, 320, 270, 45}, {658, 318, 245, 58},
+    {910, 325, 67, 132}, {300, 426, 77, 130}, {918, 430, 58, 125},
+    {300, 548, 300, 28}, {680, 548, 300, 28}
+};
+static const Rectangle nursery_furniture[] = {
+    {300, 325, 168, 123}, {478, 302, 126, 48}, {690, 325, 150, 35},
+    {806, 292, 102, 76}, {925, 325, 54, 113}, {300, 464, 188, 67},
+    {770, 395, 145, 78}, {817, 476, 155, 62}
+};
+static const Rectangle bridge_control_furniture[] = {
+    {305, 355, 160, 92}, {500, 325, 82, 59}, {586, 304, 113, 63},
+    {708, 325, 82, 59}, {897, 325, 76, 125}, {302, 480, 105, 76},
+    {900, 480, 75, 76}
+};
+static const Rectangle interior_south_walls[] = {
+    {300, 555, 290, 24}, {690, 555, 290, 24}
 };
 
 static Texture2D load_map_texture(const char *path, int width, int height)
@@ -223,6 +250,14 @@ static Texture2D load_map_texture(const char *path, int width, int height)
     return texture;
 }
 
+static Texture2D load_sprite_texture(const char *path)
+{
+    if (!FileExists(path)) return (Texture2D){0};
+    Texture2D texture = LoadTexture(path);
+    if (texture.id) SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+    return texture;
+}
+
 void world_assets_load(WorldAssets *assets)
 {
     *assets = (WorldAssets){
@@ -232,7 +267,14 @@ void world_assets_load(WorldAssets *assets)
         .maintenance_interior = load_map_texture(
             "assets/maps/maintenance_house_interior_v2.png", 1672, 941),
         .courtyard_detail = load_map_texture("assets/maps/courtyard_detail/courtyard_complete.png",
-                                            COURTYARD_DETAIL_WIDTH, COURTYARD_DETAIL_HEIGHT)
+                                            COURTYARD_DETAIL_WIDTH, COURTYARD_DETAIL_HEIGHT),
+        .depot_interior = load_map_texture("assets/maps/depot_interior.png", 1672, 941),
+        .basement_interior = load_map_texture("assets/maps/basement_interior.png", 1672, 941),
+        .bridge_control_interior = load_map_texture(
+            "assets/maps/bridge_control_interior.png", 1672, 941),
+        .nursery_interior = load_map_texture("assets/maps/nursery_interior.png", 1672, 941),
+        .aloe_guard = load_sprite_texture("assets/sprites/aloe_guard.png"),
+        .sunflower_guard = load_sprite_texture("assets/sprites/sunflower_guard.png")
     };
     if (assets->courtyard_detail.id) {
         SetTextureFilter(assets->courtyard_detail, TEXTURE_FILTER_BILINEAR);
@@ -248,6 +290,12 @@ void world_assets_unload(WorldAssets *assets)
     if (assets->tiles.id) UnloadTexture(assets->tiles);
     if (assets->maintenance_interior.id) UnloadTexture(assets->maintenance_interior);
     if (assets->courtyard_detail.id) UnloadTexture(assets->courtyard_detail);
+    if (assets->depot_interior.id) UnloadTexture(assets->depot_interior);
+    if (assets->basement_interior.id) UnloadTexture(assets->basement_interior);
+    if (assets->bridge_control_interior.id) UnloadTexture(assets->bridge_control_interior);
+    if (assets->nursery_interior.id) UnloadTexture(assets->nursery_interior);
+    if (assets->aloe_guard.id) UnloadTexture(assets->aloe_guard);
+    if (assets->sunflower_guard.id) UnloadTexture(assets->sunflower_guard);
     *assets = (WorldAssets){0};
 }
 
@@ -389,21 +437,58 @@ static bool blocks(Rectangle feet, Rectangle obstacle, bool open)
 Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
 {
     Rectangle b = world->bounds;
-    /* Caixa de 16 x 8 pixels centrada no ponto dos pés. */
-    if (feet.x < b.x + 8) feet.x = b.x + 8;
-    if (feet.x > b.x + b.width - 8) feet.x = b.x + b.width - 8;
-    if (feet.y < b.y + 4) feet.y = b.y + 4;
-    if (feet.y > b.y + b.height - 4) feet.y = b.y + b.height - 4;
+    float edge_margin = world->location == WORLD_EXTERIOR ? 18.0f : 12.0f;
+    if (feet.x < b.x + edge_margin) feet.x = b.x + edge_margin;
+    if (feet.x > b.x + b.width - edge_margin) feet.x = b.x + b.width - edge_margin;
+    if (feet.y < b.y + edge_margin) feet.y = b.y + edge_margin;
+    if (feet.y > b.y + b.height - edge_margin) feet.y = b.y + b.height - edge_margin;
 
-    Rectangle box = {feet.x - 8, feet.y - 4, 16, 8};
+    /* Pega mais a largura real do personagem para nÃ£o atravessar caixas pelo canto. */
+    Rectangle box = {feet.x - 12, feet.y - 7, 24, 14};
+    const Rectangle *furniture = NULL;
+    size_t furniture_count = 0;
+    switch (world->location) {
+        case WORLD_MAINTENANCE:
+            furniture = maintenance_furniture;
+            furniture_count = sizeof(maintenance_furniture) / sizeof(maintenance_furniture[0]);
+            break;
+        case WORLD_DEPOT:
+            furniture = depot_furniture;
+            furniture_count = sizeof(depot_furniture) / sizeof(depot_furniture[0]);
+            break;
+        case WORLD_BASEMENT:
+            furniture = basement_furniture;
+            furniture_count = sizeof(basement_furniture) / sizeof(basement_furniture[0]);
+            break;
+        case WORLD_NURSERY:
+            furniture = nursery_furniture;
+            furniture_count = sizeof(nursery_furniture) / sizeof(nursery_furniture[0]);
+            break;
+        case WORLD_BRIDGE_CONTROL:
+            furniture = bridge_control_furniture;
+            furniture_count = sizeof(bridge_control_furniture) / sizeof(bridge_control_furniture[0]);
+            break;
+        default: break;
+    }
+    for (size_t i = 0; i < furniture_count; i++)
+        if (CheckCollisionRecs(box, furniture[i])) return previous;
+    if (world->location != WORLD_EXTERIOR) {
+        for (size_t i = 0; i < sizeof(interior_south_walls) / sizeof(interior_south_walls[0]); i++)
+            if (CheckCollisionRecs(box, interior_south_walls[i])) return previous;
+    }
+
     for (Object npc = GARDENER; npc <= RESEARCHER; npc++) {
         if (objects[npc].location != world->location) continue;
         Vector2 base = objects[npc].position;
-        if (CheckCollisionRecs(box, (Rectangle){base.x - 8, base.y - 4, 16, 8})) return previous;
+        if (CheckCollisionRecs(box, (Rectangle){base.x - 11, base.y - 6, 22, 12})) return previous;
     }
-    if (world->location == WORLD_MAINTENANCE) {
-        for (unsigned int i = 0; i < sizeof(maintenance_furniture) / sizeof(maintenance_furniture[0]); i++)
-            if (CheckCollisionRecs(box, maintenance_furniture[i])) return previous;
+    if (world->location == WORLD_DEPOT && !world->maintenance_key) {
+        Vector2 guard = objects[ALOE].position;
+        if (CheckCollisionRecs(box, (Rectangle){guard.x - 28, guard.y - 18, 56, 28})) return previous;
+    }
+    if (world->location == WORLD_NURSERY && !world->guardian_defeated) {
+        Vector2 guard = objects[SUNFLOWER].position;
+        if (CheckCollisionRecs(box, (Rectangle){guard.x - 28, guard.y - 18, 56, 28})) return previous;
     }
     if (world->location == WORLD_EXTERIOR) {
         if (blocks(box, canal, world_bridge_open(world))) return previous;
@@ -442,8 +527,8 @@ static void travel(World *world, Vector2 *feet, WorldLocation location, Vector2 
     world->bounds = exterior;
     if (location != WORLD_EXTERIOR) {
         Rectangle room = rooms[location].bounds;
-        world->bounds = (Rectangle){room.x + 5, room.y + ROOM_HEADER_HEIGHT,
-                                    room.width - 10, room.height - ROOM_HEADER_HEIGHT - 5};
+        world->bounds = (Rectangle){room.x + 24, room.y + 136,
+                                    room.width - 48, room.height - 174};
     }
     *feet = destination;
     world_snap_camera(world, destination);
@@ -579,7 +664,10 @@ WorldEncounter world_interact(World *world, Vector2 *feet)
             }
             break;
         case BASEMENT_HATCH:
-            travel(world, feet, WORLD_MAINTENANCE, objects[LOCKED_HATCH].position);
+            /* Aparece no piso abaixo da escotilha, fora do colisor do alçapão. */
+            travel(world, feet, WORLD_MAINTENANCE,
+                   (Vector2){objects[LOCKED_HATCH].position.x,
+                             objects[LOCKED_HATCH].position.y + 54});
             break;
         case UPPER_LIFT:
             if (world->basement_visited && !world->light)
@@ -639,11 +727,17 @@ Camera2D world_camera(const World *world)
 {
     if (world->location != WORLD_EXTERIOR) {
         Rectangle room = rooms[world->location].bounds;
+        float zoom = fmaxf(GAME_SCREEN_WIDTH / room.width,
+                           GAME_SCREEN_HEIGHT / room.height);
+        /* Mantém a Casa de Manutenção como cenário enquadrado, com margem ao redor. */
+        if (world->location == WORLD_MAINTENANCE || world->location == WORLD_DEPOT ||
+            world->location == WORLD_BASEMENT || world->location == WORLD_BRIDGE_CONTROL ||
+            world->location == WORLD_NURSERY)
+            zoom *= 0.68f;
         return (Camera2D){
             .offset = {GAME_SCREEN_WIDTH / 2.0f, GAME_SCREEN_HEIGHT / 2.0f},
             .target = {room.x + room.width / 2, room.y + room.height / 2},
-            /* Mantém o tamanho da sala, sem ampliá-la para preencher a tela. */
-            .zoom = 1.0f
+            .zoom = zoom
         };
     }
     return (Camera2D){
@@ -711,6 +805,35 @@ static void draw_guard(const UiTheme *ui, Object object, const char *name, Color
     DrawCircle(x, y - 23, 22, color);
     DrawCircle(x, y - 22, 11, frame);
     centered_text(ui, name, x, y + 22, 18, ink);
+}
+
+static void draw_aloe_guard(const UiTheme *ui, Texture2D texture, Object object, const char *name)
+{
+    Vector2 base = objects[object].position;
+    float time = (float)GetTime();
+    float bob = sinf(time * 2.4f) * 1.6f;
+    float sway = sinf(time * 1.7f) * 1.2f;
+    const float width = 140.0f;
+    const float height = 116.0f;
+    DrawEllipse((int)base.x, (int)(base.y + 4), 28, 7, Fade(ink, 0.32f));
+    Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
+    Rectangle destination = {base.x, base.y + bob, width, height};
+    DrawTexturePro(texture, source, destination, (Vector2){width / 2, height}, sway, WHITE);
+    centered_text(ui, name, (int)base.x, (int)base.y + 10, 18, ink);
+}
+
+static void draw_sunflower_guard(const UiTheme *ui, Texture2D texture, Object object, const char *name)
+{
+    Vector2 base = objects[object].position;
+    float time = (float)GetTime();
+    float sway = sinf(time * 1.6f) * 1.0f;
+    const float height = 190.0f;
+    const float width = height * (float)texture.width / (float)texture.height;
+    DrawEllipse((int)base.x, (int)(base.y + 4), 28, 7, Fade(ink, 0.32f));
+    Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
+    Rectangle destination = {base.x, base.y, width, height};
+    DrawTexturePro(texture, source, destination, (Vector2){width / 2, height}, sway, WHITE);
+    centered_text(ui, name, (int)base.x, (int)base.y + 10, 18, ink);
 }
 
 static void draw_room_portal(const UiTheme *ui, Object object, const char *label, bool locked)
@@ -900,11 +1023,20 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
     const Sector *room = &rooms[world->location];
     Rectangle b = room->bounds;
 
-    if (world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id) {
+    Texture2D interior = assets->basement_interior;
+    if (world->location == WORLD_MAINTENANCE) interior = assets->maintenance_interior;
+    if (world->location == WORLD_DEPOT) interior = assets->depot_interior;
+    if (world->location == WORLD_BRIDGE_CONTROL) interior = assets->bridge_control_interior;
+    if (world->location == WORLD_NURSERY) interior = assets->nursery_interior;
+    if ((world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id) ||
+        (world->location == WORLD_DEPOT && assets->depot_interior.id) ||
+        (world->location == WORLD_BASEMENT && assets->basement_interior.id) ||
+        (world->location == WORLD_BRIDGE_CONTROL && assets->bridge_control_interior.id) ||
+        (world->location == WORLD_NURSERY && assets->nursery_interior.id)) {
         /* Recorta a margem preta da referência e enquadra a sala no mapa. */
-        DrawTexturePro(assets->maintenance_interior,
+        DrawTexturePro(interior,
                        (Rectangle){84, 13, 1504, 907}, b, (Vector2){0}, 0, WHITE);
-        draw_maintenance_details(world);
+        if (world->location == WORLD_MAINTENANCE) draw_maintenance_details(world);
     } else {
         draw_sector(room);
         DrawRectangleRec((Rectangle){b.x, b.y, b.width, ROOM_HEADER_HEIGHT}, room->trim);
@@ -924,37 +1056,80 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
             }
             break;
         case WORLD_DEPOT:
-            for (int i = 0; i < 3; i++) {
-                DrawRectangle(330, 283 + 75 * i, 115, 44, Fade(room->trim, 0.45f));
-                DrawRectangle(835, 283 + 75 * i, 115, 44, Fade(room->trim, 0.45f));
+            if (!assets->depot_interior.id) {
+                for (int i = 0; i < 3; i++) {
+                    DrawRectangle(330, 283 + 75 * i, 115, 44, Fade(room->trim, 0.45f));
+                    DrawRectangle(835, 283 + 75 * i, 115, 44, Fade(room->trim, 0.45f));
+                }
             }
-            if (!world->maintenance_key) draw_guard(ui, ALOE, "Babosa guardiã", (Color){73, 162, 120, 255});
-            else centered_text(ui, "Chave da manutenção obtida", 640, 325, 22, ink);
+            if (!world->maintenance_key) {
+                if (assets->aloe_guard.id)
+                    draw_aloe_guard(ui, assets->aloe_guard, ALOE, "Babosa guardiã");
+                else
+                    draw_guard(ui, ALOE, "Babosa guardiã", (Color){73, 162, 120, 255});
+            }
+            else centered_text(ui, "Chave da manutenção obtida", 640, 480, 22, ink);
             break;
         case WORLD_BASEMENT:
-            draw_switch(ui, POWER, "Distribuidor de energia", world->light);
-            draw_switch(ui, LOWER_LIFT, "Elevador", !world->light);
-            draw_room_portal(ui, BASEMENT_HATCH, "Subir pela escotilha", false);
+            if (assets->basement_interior.id) {
+                /* Luzes de estado alinhadas ao painel e Ã  grade do elevador da arte. */
+                DrawCircle(615, 330, 5, world->light ? (Color){91, 190, 78, 255}
+                                                      : (Color){207, 68, 48, 255});
+                DrawCircle(900, 419, 5, world->light ? (Color){207, 68, 48, 255}
+                                                      : (Color){91, 190, 78, 255});
+            } else {
+                draw_switch(ui, POWER, "Distribuidor de energia", world->light);
+                draw_switch(ui, LOWER_LIFT, "Elevador", !world->light);
+                draw_room_portal(ui, BASEMENT_HATCH, "Subir pela escotilha", false);
+            }
             break;
         case WORLD_NURSERY:
-            DrawRectangle(306, 284, 116, 194, Fade(DARKGREEN, 0.27f));
-            DrawRectangle(875, 284, 99, 194, Fade(DARKGREEN, 0.27f));
-            if (!world->guardian_defeated) draw_guard(ui, SUNFLOWER, "Girassol guardião", GOLD);
-            draw_switch(ui, RELAY_PANEL, "Central de relés", world->guardian_defeated);
+            if (assets->nursery_interior.id) {
+                for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
+                    Color led = !world->guardian_defeated ? (Color){90, 96, 79, 255}
+                        : ((world->relay_mask & (1u << i)) ? (Color){109, 221, 103, 255}
+                                                           : (Color){202, 164, 73, 255});
+                    DrawRectangle(773 + (i % 4) * 9, 320 + (i / 4) * 7, 5, 4, led);
+                }
+            } else {
+                DrawRectangle(306, 284, 116, 194, Fade(DARKGREEN, 0.27f));
+                DrawRectangle(875, 284, 99, 194, Fade(DARKGREEN, 0.27f));
+            }
+            if (!world->guardian_defeated) {
+                if (assets->sunflower_guard.id)
+                    draw_sunflower_guard(ui, assets->sunflower_guard, SUNFLOWER, "Girassol guardião");
+                else
+                    draw_guard(ui, SUNFLOWER, "Girassol guardião", GOLD);
+            }
+            if (!assets->nursery_interior.id)
+                draw_switch(ui, RELAY_PANEL, "Central de relés", world->guardian_defeated);
             break;
         case WORLD_BRIDGE_CONTROL:
-            DrawRectangle(450, 410, 380, 9, frame);
-            DrawRectangle(450, 410, 190, 9, world->north_channel ? water_color : frame);
-            DrawRectangle(640, 410, 190, 9, world->south_channel ? water_color : frame);
-            draw_switch(ui, NORTH_CHANNEL, TextFormat("Canal norte (+%d)", NORTH_PRESSURE), world->north_channel);
-            draw_switch(ui, SOUTH_CHANNEL, TextFormat("Canal sul (+%d)", SOUTH_PRESSURE), world->south_channel);
-            centered_text(ui, TextFormat("Dreno externo %s", world->drain_open ? "aberto" : "fechado"),
-                          640, 443, 20, ink);
+            if (assets->bridge_control_interior.id) {
+                DrawCircle(539, 378, 6, world->north_channel ? (Color){91, 190, 78, 255}
+                                                              : (Color){88, 94, 83, 255});
+                DrawCircle(742, 378, 6, world->south_channel ? (Color){91, 190, 78, 255}
+                                                              : (Color){88, 94, 83, 255});
+                centered_text(ui, TextFormat("%d / %d", world_bridge_pressure(world),
+                                         BRIDGE_TARGET_PRESSURE), 640, 320, 17, ink);
+            } else {
+                DrawRectangle(450, 410, 380, 9, frame);
+                DrawRectangle(450, 410, 190, 9, world->north_channel ? water_color : frame);
+                DrawRectangle(640, 410, 190, 9, world->south_channel ? water_color : frame);
+                draw_switch(ui, NORTH_CHANNEL, TextFormat("Canal norte (+%d)", NORTH_PRESSURE), world->north_channel);
+                draw_switch(ui, SOUTH_CHANNEL, TextFormat("Canal sul (+%d)", SOUTH_PRESSURE), world->south_channel);
+                centered_text(ui, TextFormat("Dreno externo %s", world->drain_open ? "aberto" : "fechado"),
+                              640, 443, 20, ink);
+            }
             break;
         default: break;
     }
     if (world->location != WORLD_BASEMENT &&
-        !(world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id))
+        !((world->location == WORLD_MAINTENANCE && assets->maintenance_interior.id) ||
+          (world->location == WORLD_DEPOT && assets->depot_interior.id) ||
+          (world->location == WORLD_BASEMENT && assets->basement_interior.id) ||
+          (world->location == WORLD_BRIDGE_CONTROL && assets->bridge_control_interior.id) ||
+          (world->location == WORLD_NURSERY && assets->nursery_interior.id)))
         draw_room_portal(ui, INTERIOR_DOOR, "Voltar ao pátio", false);
 }
 
@@ -962,7 +1137,9 @@ static void draw_npc(Texture2D atlas, int sprite, Vector2 base, Camera2D camera)
 {
     Vector2 screen = GetWorldToScreen2D(base, camera);
     base = GetScreenToWorld2D((Vector2){roundf(screen.x), roundf(screen.y)}, camera);
-    float scale = 1 / camera.zoom;
+    /* Mantém a NPC na escala visual do explorador em interiores e no exterior. */
+    float character_screen_scale = camera.zoom > 1.01f ? 0.36f : 0.23f;
+    float scale = (256.0f * character_screen_scale * 0.82f / 56.0f) / camera.zoom;
     DrawEllipse((int)roundf(base.x), (int)roundf(base.y), 14 * scale, 4 * scale, Fade(ink, 0.28f));
     if (atlas.id) {
         Rectangle source = {64 * sprite, 384, 48, 56};

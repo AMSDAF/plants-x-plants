@@ -5,6 +5,7 @@
 #include "ai.h"
 #include "plant_data.h"
 #include "raylib.h"
+#include <math.h>
 
 static const Color ink = {28, 58, 46, 255};
 static const Color paper = {253, 245, 216, 255};
@@ -307,11 +308,28 @@ static void draw_setup(const UiTheme *ui, const BattleScreen *screen)
     draw_button(ui, setup_confirm, "ENTER  Confirmar fórmula", true);
 }
 
-static void draw_plant(const UiTheme *ui, const Plant *plant, int x, int y)
+static void draw_plant(const UiTheme *ui, const Plant *plant, int x, int y,
+                       Texture2D aloe_guard, Texture2D sunflower_guard)
 {
     DrawEllipse(x, y + 56, 73, 14, Fade(ink, 0.25f));
     if (!Plant_IsAlive(plant)) {
         ui_text(ui, "Derrotada", x - 49, y + 17, 20, ink);
+        return;
+    }
+
+    Texture2D botanical_boss = (Texture2D){0};
+    if (plant->id == SPECIES_ALOE) botanical_boss = aloe_guard;
+    if (plant->id == SPECIES_SUNFLOWER) botanical_boss = sunflower_guard;
+    if (botanical_boss.id) {
+        float time = (float)GetTime();
+        float bob = plant->id == SPECIES_SUNFLOWER ? 0.0f : sinf(time * 2.4f) * 2.0f;
+        float sway = sinf(time * 1.7f) * 1.2f;
+        const float height = plant->id == SPECIES_SUNFLOWER ? 220.0f : 165.0f;
+        const float width = height * (float)botanical_boss.width / (float)botanical_boss.height;
+        Rectangle source = {0, 0, (float)botanical_boss.width, (float)botanical_boss.height};
+        Rectangle destination = {x, y + 56 + bob, width, height};
+        DrawTexturePro(botanical_boss, source, destination,
+                       (Vector2){width / 2, height}, sway, WHITE);
         return;
     }
 
@@ -343,10 +361,15 @@ static void draw_plant(const UiTheme *ui, const Plant *plant, int x, int y)
             DrawEllipse(x + 23, y - 26, 27, 18, color);
             DrawEllipse(x, y - 37, 15, 30, color);
         }
+        if (plant->id == SPECIES_FERN) {
+            /* Raiz visível até a sombra para assentar a samambaia no chão. */
+            DrawEllipse(x, y + 52, 15, 5, DARKGREEN);
+        }
     }
 }
 
-static void draw_team(const UiTheme *ui, const Team *team, const char *name, int x, bool has_turn)
+static void draw_team(const UiTheme *ui, const Team *team, const char *name, int x,
+                      bool has_turn, Texture2D aloe_guard, Texture2D sunflower_guard)
 {
     const Plant *active = &team->plants[team->active_index];
     float hp_fraction = (float)active->current_hp / active->max_hp;
@@ -358,7 +381,7 @@ static void draw_team(const UiTheme *ui, const Team *team, const char *name, int
              x + 20, 151, 20, ink);
     DrawRectangle(x + 20, 182, 504, 12, LIGHTGRAY);
     DrawRectangle(x + 20, 182, (int)(504 * hp_fraction), 12, hp_fraction > 0.25f ? DARKGREEN : RED);
-    draw_plant(ui, active, x + 272, 284);
+    draw_plant(ui, active, x + 272, 284, aloe_guard, sunflower_guard);
 
     for (int i = 0; i < team->count; i++) {
         const Plant *plant = &team->plants[i];
@@ -370,7 +393,8 @@ static void draw_team(const UiTheme *ui, const Team *team, const char *name, int
     }
 }
 
-void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen)
+void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
+                        Texture2D aloe_guard, Texture2D sunflower_guard)
 {
     const BattleState *battle = &screen->battle;
     ClearBackground((Color){210, 232, 195, 255});
@@ -388,8 +412,10 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen)
     ui_text(ui, screen->campaign_battle ? "Batalha na estufa" : "Arena Versus", 64, 29, 38, ink);
     ui_text(ui, screen->campaign_battle ? "ESC · Estufa" : "ESC · Menu", 1060, 43, 20, ink);
 
-    draw_team(ui, &battle->player_team, side_name(screen, 0), 64, !ended && battle->current_turn == 0);
-    draw_team(ui, &battle->enemy_team, side_name(screen, 1), 672, !ended && battle->current_turn == 1);
+    draw_team(ui, &battle->player_team, side_name(screen, 0), 64,
+              !ended && battle->current_turn == 0, aloe_guard, sunflower_guard);
+    draw_team(ui, &battle->enemy_team, side_name(screen, 1), 672,
+              !ended && battle->current_turn == 1, aloe_guard, sunflower_guard);
 
     DrawRectangle(64, 450, 1152, 42, ink);
     ui_text(ui, battle->last_message, 80, 461, 20, paper);

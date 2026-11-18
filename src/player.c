@@ -133,8 +133,9 @@ void player_draw(const UiTheme *ui, const Player *player, const PlayerAssets *as
                             BOTANICAL_CELL, BOTANICAL_CELL};
         Vector2 screen_feet = GetWorldToScreen2D(player->feet, camera);
         Vector2 feet = GetScreenToWorld2D((Vector2){roundf(screen_feet.x), roundf(screen_feet.y)}, camera);
-        /* O zoom dos cômodos não aumenta o personagem na tela. */
-        float scale = 0.23f / camera.zoom;
+        /* Aumenta o explorador nos interiores e compensa o zoom sem deformar o sprite. */
+        float screen_scale = camera.zoom > 1.01f ? 0.36f : 0.23f;
+        float scale = screen_scale / camera.zoom;
         Rectangle destination = {feet.x - BOTANICAL_CELL / 2.0f * scale,
                                  feet.y - BOTANICAL_ANCHOR_Y * scale,
                                  BOTANICAL_CELL * scale, BOTANICAL_CELL * scale};

@@ -269,7 +269,8 @@ void game_draw(const Game *game)
             versus_screen_draw(ui, &game->versus, &game->versus_assets, game->menu.logo, game->menu.logo_source);
             break;
         case GAME_BATTLE:
-            battle_screen_draw(ui, &game->battle_screen);
+            battle_screen_draw(ui, &game->battle_screen, game->world_assets.aloe_guard,
+                               game->world_assets.sunflower_guard);
             break;
         case GAME_TRAINER_SELECT:
             trainer_select_screen_draw(ui, &game->trainer_select, &game->trainer_select_assets);

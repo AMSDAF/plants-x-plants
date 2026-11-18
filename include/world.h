@@ -29,6 +29,12 @@ typedef struct {
     Texture2D tiles;
     Texture2D maintenance_interior;
     Texture2D courtyard_detail;
+    Texture2D depot_interior;
+    Texture2D basement_interior;
+    Texture2D bridge_control_interior;
+    Texture2D nursery_interior;
+    Texture2D aloe_guard;
+    Texture2D sunflower_guard;
 } WorldAssets;
 
 typedef struct {
