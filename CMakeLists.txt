@@ -133,3 +133,19 @@ target_link_libraries(versus_screen_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(versus_screen_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# O mesmo canvas atende à janela real e aos alvos de verificação da interface.
+foreach(view_target plants_x_plants selection_scene_check menu_screen_check
+        trainer_background_check name_entry_check versus_screen_check)
+    if(TARGET ${view_target})
+        target_sources(${view_target} PRIVATE src/game_canvas.c)
+    endif()
+endforeach()
+
+add_executable(game_canvas_check EXCLUDE_FROM_ALL
+    tools/check_game_canvas.c src/game_canvas.c src/world.c)
+target_include_directories(game_canvas_check PRIVATE include)
+target_link_libraries(game_canvas_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(game_canvas_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()

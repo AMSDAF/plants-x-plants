@@ -1,6 +1,7 @@
 /* Verifica nomes, foco, transições e sessão com os módulos reais e OpenGL. */
 #include "game.h"
 #include "selection_ui.h"
+#include "game_canvas.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -115,6 +116,24 @@ static void check_names(void)
         assert(font.glyphs[GetGlyphIndex(font,accents[i])].value==accents[i]);
 }
 
+static void capture_native(Game *game, const char *path)
+{
+    Game before = *game;
+    GameCanvas canvas = {0};
+    assert(game_canvas_resize(&canvas, 1920, 1080, 1920, 1080));
+    BeginDrawing();
+    game_canvas_begin(&canvas);
+    game_draw(game);
+    game_canvas_present(&canvas);
+    EndDrawing();
+    assert(memcmp(&before, game, sizeof(before)) == 0);
+    Image image = LoadImageFromTexture(canvas.target.texture);
+    ImageFlipVertical(&image);
+    assert(ExportImage(image, path));
+    UnloadImage(image);
+    game_canvas_unload(&canvas);
+}
+
 static void walk_axis(Game *game, bool horizontal, float target)
 {
     float *position = horizontal ? &game->player.feet.x : &game->player.feet.y;
@@ -224,6 +243,12 @@ static void approach_nursery(Game *game)
 static void check_greenhouse(Game *game)
 {
     World *world = &game->world;
+    assert(world->detail_enabled && game->world_assets.courtyard_detail.id);
+    key(game, KEY_F8);
+    assert(!world->detail_enabled);
+    key(game, KEY_F8);
+    assert(world->detail_enabled);
+    capture_native(game, "build/name_entry_preview/exploration_1080p.png");
     World camera_test;
     world_init(&camera_test);
     Vector2 far_corner = {world->bounds.width, world->bounds.height};
@@ -324,14 +349,27 @@ static void check_greenhouse(Game *game)
     Camera2D room_camera = world_camera(world);
     assert(room_camera.zoom > 1.0f && room_camera.offset.x == GAME_SCREEN_WIDTH / 2.0f);
     assert(room_camera.offset.y == GAME_SCREEN_HEIGHT / 2.0f);
+    assert(game->world_assets.maintenance_interior.id);
+    Vector2 previous = {780, 380};
+    Vector2 blocked = world_constrain(world, previous, (Vector2){650, 335});
+    assert(blocked.x == previous.x && blocked.y == previous.y);
+    Vector2 clear = world_constrain(world, previous, (Vector2){780, 340});
+    assert(clear.x == 780 && clear.y == 340);
+    walk_axis(game, true, 780); /* Corredor livre ao lado da prateleira central. */
     walk_axis(game, false, 205);
     assert(game->player.feet.y >= world->bounds.y + 4);
-    interact_at(game, 826, 320);
+    interact_at(game, 846, 416);
     assert(world->location == WORLD_MAINTENANCE && !world->basement_visited);
     capture(game, target, "build/name_entry_preview/greenhouse_maintenance.png");
-    interact_at(game, 445, 320);
-    interact_at(game, 445, 460);
+    capture_native(game, "build/name_entry_preview/maintenance_1080p.png");
+    WorldAssets saved_assets = game->world_assets;
+    game->world_assets.maintenance_interior.id = 0;
+    capture(game, target, "build/name_entry_preview/maintenance_fallback.png");
+    game->world_assets = saved_assets;
+    interact_at(game, 445, 310);
+    interact_at(game, 537, 281);
     assert(!world->alarm && world->alarm_note);
+    walk_axis(game, false, 370); /* Contorna a prateleira antes de voltar à porta. */
     interact_at(game, 640, 572);
     assert(world->location == WORLD_EXTERIOR);
     leave_maintenance_path(game);
@@ -356,7 +394,7 @@ static void check_greenhouse(Game *game)
     walk_axis(game, false, 470);
     walk_axis(game, true, 429);
     enter_maintenance(game);
-    interact_at(game, 826, 320);
+    interact_at(game, 846, 416);
     assert(world->location == WORLD_BASEMENT && world->basement_visited);
     capture(game, target, "build/name_entry_preview/greenhouse_basement.png");
     interact_at(game, 837, 410);
@@ -529,6 +567,7 @@ int main(void)
         key(&game,KEY_TAB); assert(game.name_entry.focus==1);
         input(2,KEY_LEFT_SHIFT,0); key(&game,KEY_TAB); input(1,KEY_LEFT_SHIFT,0); tick(&game);
         assert(game.name_entry.focus==0);
+        capture_native(&game, TextFormat("build/name_entry_preview/name_1080p_%d.png", gender));
         click(&game,950,570); /* Confirmar por mouse transfere nome e personagem. */
         assert(game.screen==GAME_EXPLORATION && game.campaign.ready);
         assert(game.campaign.trainer==(Trainer)gender && game.player.trainer==(Trainer)gender);

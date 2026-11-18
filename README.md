@@ -191,6 +191,8 @@ Na seleção **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique 
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
 - **Shift na estufa:** correr enquanto se move.
+- **F8 na estufa:** comparar o mapa original e a versão completa com mais detalhe.
+- **F11:** alternar a tela cheia; o desenho agora usa a resolução física do viewport.
 - **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a central ao se aproximar.
 - **ESC na seleção ou exploração:** voltar ao menu, sem fechar o jogo.
 - **ESC no menu:** voltar à tela inicial.
@@ -214,6 +216,10 @@ Vença o Girassol no viveiro e registre as duas pistas espalhadas pelo mapa.
 Na central, use **1–8** ou clique nos relés e pressione **Enter** para validar
 uma regra por vez. Se uma regra anterior falhar, a central volta para ela.
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
+
+Os quatro quadrantes melhorados estão integrados ao mapa completo, com
+3010 × 1694 pixels. O background original foi preservado. Veja a resolução real,
+o preparo e as verificações em [COURTYARD_DETAIL.md](docs/COURTYARD_DETAIL.md).
 
 Os atlas preparados em `assets/sprites/trainers/` já estão prontos para execução; Python não é necessário para jogar. Execute a partir da raiz para localizar os recursos. Um atlas ausente ou inválido gera diagnóstico no console e um marcador jogável.
 

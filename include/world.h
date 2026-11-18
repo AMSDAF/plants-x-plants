@@ -26,6 +26,7 @@ typedef struct {
     Texture2D bridge_open;
     Texture2D tiles;
     Texture2D maintenance_interior;
+    Texture2D courtyard_detail;
 } WorldAssets;
 
 typedef struct {
@@ -44,6 +45,7 @@ typedef struct {
     bool north_channel;
     bool south_channel;
     bool drain_open;
+    bool detail_enabled;
     const char *dialogue_title;
     const char *dialogue_pages[2];
     int dialogue_page;

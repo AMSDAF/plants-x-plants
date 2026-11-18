@@ -1,6 +1,7 @@
 /* Desenha a estufa e resolve os obstáculos a partir das proposições do cenário. */
 #include "world.h"
 #include "game_view.h"
+#include "courtyard_detail_data.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -228,8 +229,15 @@ void world_assets_load(WorldAssets *assets)
         .bridge_open = load_map_texture("assets/maps/botanical_bridge.png", 158, 113),
         .tiles = load_map_texture("assets/maps/botanical_tiles.png", 512, 512),
         .maintenance_interior = load_map_texture(
-            "assets/maps/maintenance_house_interior_v2.png", 1672, 941)
+            "assets/maps/maintenance_house_interior_v2.png", 1672, 941),
+        .courtyard_detail = load_map_texture("assets/maps/courtyard_detail/courtyard_complete.png",
+                                            COURTYARD_DETAIL_WIDTH, COURTYARD_DETAIL_HEIGHT)
     };
+    if (assets->courtyard_detail.id) {
+        SetTextureFilter(assets->courtyard_detail, TEXTURE_FILTER_BILINEAR);
+        /* Impede o filtro de buscar pixels da borda oposta nas margens transparentes. */
+        SetTextureWrap(assets->courtyard_detail, TEXTURE_WRAP_CLAMP);
+    }
 }
 
 void world_assets_unload(WorldAssets *assets)
@@ -238,6 +246,7 @@ void world_assets_unload(WorldAssets *assets)
     if (assets->bridge_open.id) UnloadTexture(assets->bridge_open);
     if (assets->tiles.id) UnloadTexture(assets->tiles);
     if (assets->maintenance_interior.id) UnloadTexture(assets->maintenance_interior);
+    if (assets->courtyard_detail.id) UnloadTexture(assets->courtyard_detail);
     *assets = (WorldAssets){0};
 }
 
@@ -247,7 +256,8 @@ void world_init(World *world)
         .bounds = exterior,
         .camera_position = {exterior.x, exterior.y},
         .alarm = true,
-        .drain_open = true
+        .drain_open = true,
+        .detail_enabled = true
     };
 }
 
@@ -825,6 +835,12 @@ static void draw_exterior(const World *world, const WorldAssets *assets)
     if (assets->courtyard.id) {
         DrawTexturePro(assets->courtyard, (Rectangle){0, 0, MAP_WIDTH, MAP_HEIGHT},
                        exterior, (Vector2){0}, 0, WHITE);
+        if (world->detail_enabled && assets->courtyard_detail.id) {
+            DrawTexturePro(assets->courtyard_detail,
+                           (Rectangle){0, 0, assets->courtyard_detail.width, assets->courtyard_detail.height},
+                           (Rectangle){0, 0, COURTYARD_DETAIL_WORLD_WIDTH, COURTYARD_DETAIL_WORLD_HEIGHT},
+                           (Vector2){0}, 0, WHITE);
+        }
     } else {
         DrawRectangleRec(exterior, (Color){164, 187, 125, 255});
         for (unsigned int i = 0; i < sizeof(fallback_paths) / sizeof(fallback_paths[0]); i++)

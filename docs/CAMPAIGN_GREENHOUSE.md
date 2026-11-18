@@ -10,12 +10,21 @@ A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
 uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
 manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
 O exterior usa a ilustração do Complexo Botânico em seu tamanho nativo.
+Os quatro quadrantes melhorados compõem a versão completa de maior resolução,
+aplicada sobre a base preservada. **F8** alterna a comparação do mapa inteiro;
+**F11** permite observá-la em tela cheia na resolução física da tela.
+Consulte [COURTYARD_DETAIL.md](COURTYARD_DETAIL.md) para resolução e validação.
 Os limites de circulação acompanham os contornos do piso. O jogador começa
 do lado interno do portão sul e pode caminhar na diagonal e deslizar junto
 às bordas. Os NPCs e objetos interativos são desenhados sobre o cenário.
 O cenário ocupa toda a área do jogo. Sobre ele, o HUD indica o setor, o
 objetivo atual e as pistas reunidas. Ao se aproximar de um objeto, a ação
 aparece junto dele.
+
+A casa de manutenção usa a ilustração `maintenance_house_interior_v2.png`,
+com colisões nas bases dos móveis. O painel do alarme, a pista e a escotilha
+seguem as posições desse interior; o percurso contorna a prateleira central.
+Essa arte interna é carregada separadamente do mapa exterior melhorado.
 
 Leia as placas com **E** e fale com a jardineira no pátio, o técnico perto
 da ponte e a pesquisadora no viveiro. As falas acompanham o progresso na

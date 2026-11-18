@@ -1,0 +1,33 @@
+{
+  "source": "assets/maps/botanical_courtyard.png",
+  "source_sha256": "013f480edc08918b7151a6f3bb741354dc5617740824f0115b94be36908ae04a",
+  "generated_sha256": "c9b2be186294d2c6e1472c0743ac1386c37690e2e0dd7e4025b7cd992ca72d5b",
+  "generated_size": [
+    1627,
+    967
+  ],
+  "world_rect": [
+    0,
+    0,
+    900,
+    535
+  ],
+  "core_rect": [
+    0,
+    0,
+    836,
+    471
+  ],
+  "overlap": 64,
+  "actual_scale": [
+    1.8077777777777777,
+    1.8074766355140186
+  ],
+  "blend_method": "local_lighting_match_and_minimum_error_seam",
+  "seam_world_y_range": [
+    465.0,
+    503.0
+  ],
+  "seam_feather": 16,
+  "status": "approved_northwest_reference"
+}

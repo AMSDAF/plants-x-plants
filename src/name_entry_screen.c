@@ -2,6 +2,7 @@
 #include "name_entry_screen.h"
 #include "selection_ui.h"
 #include "name_unicode_data.h"
+#include "game_canvas.h"
 #include <math.h>
 #include <string.h>
 
@@ -185,7 +186,7 @@ static void draw_name_ui(const NameEntryScreen *screen)
     selection_ui_panel(field,4,screen->focus==0 ? orange : ink);
     selection_ui_panel((Rectangle){field.x+4,field.y+4,field.width-8,field.height-8},4,
                        Fade((Color){255,249,222,255},alpha));
-    BeginScissorMode((int)field.x+12,(int)field.y+8,(int)field.width-24,(int)field.height-16);
+    game_canvas_begin_scissor((Rectangle){field.x+12, field.y+8, field.width-24, field.height-16});
     DrawText(screen->draft,(int)field.x+16,(int)field.y+20,30,ink);
     if (screen->focus==0 && screen->caret_time<.5f) {
         int x=(int)fminf(field.x+field.width-20,field.x+18+MeasureText(screen->draft,30));

@@ -219,6 +219,7 @@ void game_update(Game *game)
             break;
         }
         case GAME_EXPLORATION:
+            if (IsKeyPressed(KEY_F8)) game->world.detail_enabled = !game->world.detail_enabled;
             if (game->world.dialogue_title) {
                 world_update_dialogue(&game->world);
             } else if (game->world.relay_panel_open) {
@@ -283,6 +284,11 @@ void game_draw(const Game *game)
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, true);
             EndMode2D();
             world_draw_interface(&game->world, game->player.feet);
+            if (game->world.location == WORLD_EXTERIOR && game->world_assets.courtyard_detail.id) {
+                DrawRectangle(1032, 58, 230, 28, Fade(BLACK, 0.82f));
+                DrawText(game->world.detail_enabled ? "F8  Detalhe: ligado" : "F8  Detalhe: desligado",
+                         1042, 64, 16, RAYWHITE);
+            }
             if (!game->world.completed && !game->world.relay_panel_open && !game->world.dialogue_title &&
                 game->player.trainer == TRAINER_MALE && !game->player_assets.botanical_sheets[TRAINER_MALE].id) {
                 const char *version = game->player.use_walk6 && game->player_assets.male_walk6.id

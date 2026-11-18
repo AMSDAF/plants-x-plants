@@ -5,21 +5,9 @@
  */
 
 #include "game.h"
+#include "game_canvas.h"
 
 #include "raylib.h"
-#include <math.h>
-
-static Rectangle game_viewport(void)
-{
-    int width = GetScreenWidth();
-    int height = GetScreenHeight();
-    float scale = fminf(fmaxf(1.0f, width) / GAME_SCREEN_WIDTH,
-                        fmaxf(1.0f, height) / GAME_SCREEN_HEIGHT);
-    float view_width = GAME_SCREEN_WIDTH * scale;
-    float view_height = GAME_SCREEN_HEIGHT * scale;
-    return (Rectangle){floorf((width - view_width) / 2.0f),
-                       floorf((height - view_height) / 2.0f), view_width, view_height};
-}
 
 int main(void)
 {
@@ -38,37 +26,36 @@ int main(void)
     /* O fechamento por ESC sera tratado pelo estado do jogo. */
     SetExitKey(KEY_NULL);
 
-    RenderTexture2D canvas = LoadRenderTexture(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
-    if (!IsRenderTextureValid(canvas)) {
+    GameCanvas canvas = {0};
+    if (!game_canvas_resize(&canvas, GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight())) {
         CloseWindow();
         return 1;
     }
-    SetTextureFilter(canvas.texture, TEXTURE_FILTER_POINT);
-    Rectangle canvas_source = {0, 0, GAME_SCREEN_WIDTH, -GAME_SCREEN_HEIGHT};
 
     Game game;
     game_init(&game);
+    int result = 0;
 
     while (!WindowShouldClose() && !game.exit_requested) {
         if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
-        Rectangle viewport = game_viewport();
-        float mouse_scale = GAME_SCREEN_WIDTH / viewport.width;
-        SetMouseOffset(-(int)viewport.x, -(int)viewport.y);
-        SetMouseScale(mouse_scale, mouse_scale);
+        if (!game_canvas_resize(&canvas, GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight())) {
+            TraceLog(LOG_ERROR, "Nao foi possivel preparar a resolucao de exibicao.");
+            result = 1;
+            break;
+        }
+        game_canvas_map_mouse(&canvas);
         game_update(&game);
 
         BeginDrawing();
-        BeginTextureMode(canvas);
+        game_canvas_begin(&canvas);
         game_draw(&game);
-        EndTextureMode();
-        ClearBackground(BLACK);
-        DrawTexturePro(canvas.texture, canvas_source, viewport, (Vector2){0}, 0, WHITE);
+        game_canvas_present(&canvas);
         EndDrawing();
     }
 
     game_shutdown(&game);
-    UnloadRenderTexture(canvas);
+    game_canvas_unload(&canvas);
     CloseWindow();
 
-    return 0;
+    return result;
 }

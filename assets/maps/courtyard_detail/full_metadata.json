@@ -1,0 +1,129 @@
+{
+  "source": "assets/maps/botanical_courtyard.png",
+  "source_sha256": "013f480edc08918b7151a6f3bb741354dc5617740824f0115b94be36908ae04a",
+  "output": "assets/maps/courtyard_detail/courtyard_complete.png",
+  "output_size": [
+    3010,
+    1694
+  ],
+  "world_size": [
+    1672,
+    941
+  ],
+  "scale": 1.8,
+  "quadrants": [
+    {
+      "id": "northwest",
+      "world_box": [
+        0,
+        0,
+        900,
+        535
+      ],
+      "generated_size": [
+        1627,
+        967
+      ],
+      "native_density": [
+        1.8077777777777777,
+        1.8074766355140186
+      ],
+      "prepared_box": [
+        0,
+        0,
+        1620,
+        963
+      ],
+      "generated_sha256": "c9b2be186294d2c6e1472c0743ac1386c37690e2e0dd7e4025b7cd992ca72d5b"
+    },
+    {
+      "id": "northeast",
+      "world_box": [
+        772,
+        0,
+        1672,
+        535
+      ],
+      "generated_size": [
+        1627,
+        967
+      ],
+      "native_density": [
+        1.8077777777777777,
+        1.8074766355140186
+      ],
+      "prepared_box": [
+        1390,
+        0,
+        3010,
+        963
+      ],
+      "generated_sha256": "d0eb77b626899a10440803e3e7f780ff833787d521c827b5ec64f951107380dc"
+    },
+    {
+      "id": "southwest",
+      "world_box": [
+        0,
+        407,
+        900,
+        941
+      ],
+      "generated_size": [
+        1628,
+        966
+      ],
+      "native_density": [
+        1.808888888888889,
+        1.8089887640449438
+      ],
+      "prepared_box": [
+        0,
+        733,
+        1620,
+        1694
+      ],
+      "generated_sha256": "8598fb86b37cb982179a70cf543ae5e574278dbfe01443c9f22d714a50f51639"
+    },
+    {
+      "id": "southeast",
+      "world_box": [
+        772,
+        407,
+        1672,
+        941
+      ],
+      "generated_size": [
+        1628,
+        966
+      ],
+      "native_density": [
+        1.808888888888889,
+        1.8089887640449438
+      ],
+      "prepared_box": [
+        1390,
+        733,
+        3010,
+        1694
+      ],
+      "generated_sha256": "6b0a3f4963d3dc7fd301550b90d11ab693bfc8605fb9204bd0ae43f04aa4b5d4"
+    }
+  ],
+  "blend_method": "local_lighting_match_and_complementary_minimum_error_seams",
+  "seam_feather_world": 8,
+  "seams": {
+    "top_vertical_x": [
+      802.7777709960938,
+      890.5556030273438
+    ],
+    "bottom_vertical_x": [
+      783.3333740234375,
+      845.0
+    ],
+    "horizontal_y": [
+      429.4444580078125,
+      525.5555419921875
+    ]
+  },
+  "status": "four_quadrants_complete"
+}
