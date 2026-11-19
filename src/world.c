@@ -237,6 +237,7 @@ static const Rectangle bridge_control_furniture[] = {
 static const Rectangle interior_south_walls[] = {
     {300, 555, 290, 24}, {690, 555, 290, 24}
 };
+static const Rectangle interior_exit_door = {590, 555, 100, 24};
 
 static Texture2D load_map_texture(const char *path, int width, int height)
 {
@@ -477,6 +478,8 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     if (world->location != WORLD_EXTERIOR) {
         for (size_t i = 0; i < sizeof(interior_south_walls) / sizeof(interior_south_walls[0]); i++)
             if (CheckCollisionRecs(box, interior_south_walls[i])) return previous;
+        if (world->location != WORLD_BASEMENT && CheckCollisionRecs(box, interior_exit_door))
+            return previous;
     }
 
     for (Object npc = GARDENER; npc <= RESEARCHER; npc++) {
