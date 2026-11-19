@@ -214,8 +214,8 @@ Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
 O HUD de exploração usa painéis creme com bordas em degraus, fonte Atkinson
 Hyperlegible Next e uma seta em pixel art para o alvo. A instrução de
-interação aparece no centro inferior; E só é indicado quando a ação está
-disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
+interação aparece no centro inferior, com moldura de madeira e folhas e fonte
+Pixelify Sans. A frase “Pressione E para…” aparece só quando a ação está disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
 nas demais telas, sem instalação no Windows. Detalhes em [HUD_IMPLEMENTATION.md](docs/HUD_IMPLEMENTATION.md).
 
 Os diálogos usam fonte Pixelify Sans, moldura de madeira com folhas, texto à esquerda e retrato com

@@ -23,8 +23,8 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 |---|---|
 | `src/main.c` | Abrir a janela, executar o loop principal e encerrar o programa. |
 | `include/game_canvas.h`, `src/game_canvas.c` | Gerenciar o alvo na resolução física do viewport, mantendo coordenadas lógicas de 1280 × 720, enquadramento, mouse e recortes de interface. O alvo é recriado somente ao mudar de tamanho. |
-| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify de diálogo, as molduras e os três retratos de diálogo, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus. `Game` possui os recursos e os passa explicitamente às telas. |
-| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo, pistas, instrução inferior e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
+| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify dos diálogos e avisos, as molduras de interação e diálogo e os três retratos, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus. `Game` possui os recursos e os passa explicitamente às telas. |
+| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo, pistas, aviso botânico inferior com indicação textual de E e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
 | `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |

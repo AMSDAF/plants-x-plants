@@ -34,7 +34,7 @@ static void check_prompt(const UiTheme *ui, HudInteraction interaction)
     }
     assert(fabsf(bounds.x+bounds.width/2-640) <= 0.5f);
     assert(bounds.y+bounds.height == 696 && bounds.width <= 560);
-    assert(bounds.height <= 72);
+    assert(bounds.height == 76 || bounds.height == 104);
     Camera2D camera = {.offset={640, 360}, .target=interaction.target, .zoom=1};
     Rectangle normal = exploration_marker_bounds(&interaction, camera, 0);
     Rectangle raised = exploration_marker_bounds(&interaction, camera, 0.7f);
@@ -215,6 +215,7 @@ int main(void)
     assert(game.ui.regular.texture.id && game.ui.semibold.texture.id);
     assert(game.ui.regular.texture.id != GetFontDefault().texture.id);
     assert(game.ui.interaction_chevron.id);
+    assert(game.ui.interaction_frame.id && game.ui.interaction_frame_source.width > 0);
     assert(game.ui.dialogue_frame.id && game.ui.gardener_portrait.id);
     assert(game.ui.dialogue_skin.id);
     Image skin = LoadImageFromTexture(game.ui.dialogue_skin);
@@ -271,6 +272,11 @@ int main(void)
     game.player.feet = (Vector2){1271, 401};
     world_snap_camera(&game.world, game.player.feet);
     capture(&game, &canvas, "exterior_1080p", 1920, 1080);
+    game.player.feet = (Vector2){600,507};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "interaction_lia_720p", 1280, 720);
+    capture(&game, &canvas, "interaction_lia_1080p", 1920, 1080);
+    capture(&game, &canvas, "interaction_lia_1440p", 2560, 1440);
     World saved_world = game.world;
     Vector2 saved_feet = game.player.feet;
     static const struct {
@@ -303,6 +309,12 @@ int main(void)
     game.world = saved_world;
     game.player.feet = saved_feet;
     UiTheme saved = game.ui;
+    game.ui.interaction_frame = (Texture2D){0};
+    capture(&game, &canvas, "interaction_missing_frame", 1280, 720);
+    game.ui = saved;
+    game.ui.dialogue_font = (Font){0};
+    capture(&game, &canvas, "interaction_missing_font", 1280, 720);
+    game.ui = saved;
     game.ui = (UiTheme){0};
     capture(&game, &canvas, "font_fallback", 1280, 720);
     game.ui = saved;
@@ -432,6 +444,7 @@ int main(void)
     game_shutdown(&game);
     assert(!game.ui.regular.texture.id && !game.ui.semibold.texture.id);
     assert(!game.ui.interaction_chevron.id);
+    assert(!game.ui.interaction_frame.id);
     assert(!game.ui.dialogue_frame.id && !game.ui.gardener_portrait.id);
     assert(!game.ui.dialogue_skin.id);
     assert(!game.ui.technician_portrait.id && !game.ui.researcher_portrait.id);

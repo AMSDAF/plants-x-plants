@@ -2,20 +2,28 @@
 
 Implementa a direção escolhida em [HUD_REDESIGN_PLAN.md](HUD_REDESIGN_PLAN.md):
 painéis creme com texto verde-escuro, interação no centro inferior e seta
-apontando para o alvo. As imagens de conceito e seus prompts foram removidos
-após a integração; a direção visual está registrada no plano.
+apontando para o alvo. A direção visual está registrada no plano; a moldura aprovada para avisos
+e seu prompt acompanham os recursos de produção em `assets/ui/`.
 
 ## Comportamento
 
 O objetivo e o local ficam no canto superior esquerdo; as pistas, no superior
 direito. O rodapé mostra um único painel, centralizado em x = 640, com margem
-inferior de 24 pixels lógicos. O aviso de interação é compacto: uma borda
-simples de dois pixels, preenchimento creme, tecla E de 28 × 28 e apenas a
-mensagem de ação em fonte 20. O título de contexto, o divisor, as molduras
-extras e a sombra foram retirados desse aviso. A largura acompanha a mensagem,
-entre 160 e 560 pixels; a altura é 44 ou 72, conforme a quebra de linha.
-A tecla E aparece somente quando a ação está disponível. Bloqueios e pistas
-registradas mantêm sua explicação, sem sugerir uma ação indisponível.
+inferior de 24 pixels lógicos. O aviso usa madeira com folhas em dois cantos,
+fundo creme e Pixelify Sans de 28 pixels, compartilhando a estética dos diálogos.
+Quando a ação está disponível, mostra `Pressione "E" para ...`, com a inicial
+do verbo em minúscula. Não há tecla em quadrado, ícone adicional ou título repetido.
+Bloqueios e avisos informativos mostram somente a explicação. Quando há
+duas frases, o estado e a orientação ficam em linhas separadas.
+
+A largura acompanha a frase completa, entre 200 e 560 pixels. A altura é 76
+para uma linha e 104 para duas; as bordas reservam 44 pixels de cada lado do
+texto. A arte `assets/ui/interaction_frame.png` tem exterior transparente,
+é recortada pelo alfa na carga e dividida em nove regiões. Os cantos ocupam
+38 × 34 pixels lógicos e não esticam junto da mensagem. O prompt e os parâmetros
+ficam em `assets/ui/interaction_frame_prompt.json`. Textos não estão embutidos
+na imagem. Sem a moldura, usa bordas de madeira e verde com fundo creme;
+sem a Pixelify, usa a fonte de reserva do tema.
 
 A seta usa o PNG transparente `assets/ui/interaction_chevron_pixel.png`, gerado
 com a ferramenta integrada de imagens. É um chevron para baixo, sem haste,
@@ -45,7 +53,7 @@ o menu de ajuda por Tab sugerido em uma das alternativas visuais.
 
 ## Responsabilidades
 
-- `UiTheme`, pertencente a `Game`, carrega os dois pesos de Atkinson e o chevron uma
+- `UiTheme`, pertencente a `Game`, carrega os dois pesos de Atkinson, Pixelify, molduras e o chevron uma
   vez e libera os recursos no encerramento. Guarda também o relógio visual
   do marcador e é passado explicitamente às funções de desenho.
 - `ui_theme.c` centraliza fonte, medidas, painéis e quebra de linha UTF-8.
@@ -63,16 +71,16 @@ conceitos não são coladas na tela nem usadas como textura de texto.
 
 ## Fonte
 
-O HUD de exploração e a central usam Atkinson Hyperlegible Next,
-priorizando a leitura. Diálogos usam Pixelify Sans para acompanhar a moldura
+Objetivo, local, contador de pistas e central usam Atkinson Hyperlegible Next.
+Avisos de interação e diálogos usam Pixelify Sans para acompanhar a moldura
 botânica; detalhes e reservas estão em `DIALOGUE_UI.md`.
 Os demais painéis creme mantêm contorno duplo, cantos em degraus e sombra sólida.
-O aviso de interação usa borda simples e uma tecla quadrada compacta, sem sombra.
+O aviso de interação usa moldura botânica e indicação da tecla dentro da frase.
 As demais telas usam Atkinson Hyperlegible Next Regular e Semibold. Os TTFs estáticos,
 a origem e a licença SIL Open Font License estão em `assets/fonts/`.
 O atlas de 96 pixels tem acentos latinos e a pontuação usada na interface,
-com filtro bilinear. Todas as telas utilizam os mesmos auxiliares de fonte
-e medição, com a mesma fonte legível também na exploração.
+com filtro bilinear. A medição e a quebra de linha usam a mesma fonte
+escolhida para desenhar cada componente.
 Logos, cenários e personagens foram preservados.
 
 Na ausência de um peso, usa o outro; na ausência de ambos, usa a fonte padrão
@@ -94,7 +102,7 @@ cmake --build build --target plants_x_plants exploration_hud_check name_entry_ch
 `exploration_hud_check` cobre fontes e acentos reais, estado disponível,
 bloqueado e registrado, ausência de alvo, suspensão por diálogo/central,
 seleção consistente com E, bloqueio sem efeitos, centralização, dimensão da
-seta independente do zoom, retorno à fonte de reserva e desenho imutável.
+seta independente do zoom, retorno à fonte de reserva, ausência da moldura e desenho imutável.
 Captura a interface real em 720p, 1080p e 1440p em `build/hud_preview/`.
 
 As capturas incluem o menu, a seleção, o nome, o exterior e os estados da

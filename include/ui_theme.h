@@ -9,6 +9,8 @@ typedef struct {
     Font semibold;
     Font dialogue_font;
     Texture2D interaction_chevron;
+    Texture2D interaction_frame;
+    Rectangle interaction_frame_source;
     Texture2D dialogue_frame;
     Texture2D dialogue_skin;
     Rectangle dialogue_skin_source;

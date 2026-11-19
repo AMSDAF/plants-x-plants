@@ -2,19 +2,66 @@
 #include "exploration_hud.h"
 #include "game_view.h"
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 static const Color text_color = {24, 59, 48, 255};
 static const Color paper_color = {246, 235, 204, 255};
 
+static Font prompt_font(const UiTheme *ui)
+{
+    return ui && ui->dialogue_font.texture.id ? ui->dialogue_font : ui_font(ui, false);
+}
+
+static void prompt_message(const HudInteraction *interaction, char *buffer, int capacity)
+{
+    const char *message = interaction->message ? interaction->message : "";
+    if (interaction->state == HUD_INTERACTION_AVAILABLE) {
+        static const char prefix[] = "Pressione \"E\" para ";
+        snprintf(buffer, capacity, "%s%s", prefix, message);
+        /* As ações começam com verbos ASCII; nomes e acentos seguintes permanecem intactos. */
+        int first = sizeof(prefix)-1;
+        if (first < capacity && buffer[first] >= 'A' && buffer[first] <= 'Z') buffer[first] += 'a'-'A';
+    } else {
+        snprintf(buffer, capacity, "%s", message);
+        char *sentence = strstr(buffer, ". ");
+        if (sentence) sentence[1] = '\n';
+    }
+}
+
 Rectangle exploration_prompt_bounds(const UiTheme *ui, const HudInteraction *interaction)
 {
     if (interaction->state == HUD_INTERACTION_NONE) return (Rectangle){0};
-    bool available = interaction->state == HUD_INTERACTION_AVAILABLE;
-    int padding = available ? 62 : 24;
-    int message_width = ui_measure_bold(ui, interaction->message, 20);
-    float width = fminf(560, fmaxf(160, message_width + padding));
-    float height = message_width > width - padding ? 72 : 44;
+    char message[512];
+    prompt_message(interaction, message, sizeof(message));
+    float message_width = ceilf(MeasureTextEx(prompt_font(ui), message, 28, 0).x);
+    float width = fminf(560, fmaxf(200, message_width+88));
+    float height = strchr(message, '\n') || message_width > width-88 ? 104 : 76;
     return (Rectangle){roundf((GAME_SCREEN_WIDTH-width)/2), GAME_SCREEN_HEIGHT-24-height, width, height};
+}
+
+static void draw_prompt_frame(const UiTheme *ui, Rectangle bounds)
+{
+    Texture2D texture = ui ? ui->interaction_frame : (Texture2D){0};
+    Rectangle source = ui ? ui->interaction_frame_source : (Rectangle){0};
+    if (!texture.id || source.width <= 0 || source.height <= 0) {
+        DrawRectangleRec(bounds, paper_color);
+        DrawRectangleLinesEx(bounds, 3, (Color){145,76,36,255});
+        DrawRectangleLinesEx((Rectangle){bounds.x+3,bounds.y+3,bounds.width-6,bounds.height-6}, 1, text_color);
+        return;
+    }
+    /* Cantos fixos mantêm folhas e rebites na escala do conceito aprovado. */
+    float sx = source.height*0.75f, sy = source.height*0.48f;
+    float x[] = {source.x,source.x+sx,source.x+source.width-sx,source.x+source.width};
+    float y[] = {source.y,source.y+sy,source.y+source.height-sy,source.y+source.height};
+    float dx[] = {bounds.x,bounds.x+38,bounds.x+bounds.width-38,bounds.x+bounds.width};
+    float dy[] = {bounds.y,bounds.y+34,bounds.y+bounds.height-34,bounds.y+bounds.height};
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            DrawTexturePro(texture, (Rectangle){x[col],y[row],x[col+1]-x[col],y[row+1]-y[row]},
+                           (Rectangle){dx[col],dy[row],dx[col+1]-dx[col],dy[row+1]-dy[row]}, (Vector2){0}, 0, WHITE);
+        }
+    }
 }
 
 Rectangle exploration_marker_bounds(const HudInteraction *interaction, Camera2D camera, float animation_time)
@@ -56,21 +103,16 @@ static void draw_prompt(const UiTheme *ui, const HudInteraction *interaction, Ca
             arrow_shape((Rectangle){arrow.x+2, arrow.y+1, arrow.width-4, arrow.height-4}, paper_color);
         }
     }
-    /* Aviso compacto: uma borda simples, tecla e ação, sem título repetido. */
-    DrawRectangleRec(card, text_color);
-    DrawRectangleRec((Rectangle){card.x+2, card.y+2, card.width-4, card.height-4}, paper_color);
-    bool available = interaction->state == HUD_INTERACTION_AVAILABLE;
-    int left = (int)card.x + 12;
-    if (available) {
-        Rectangle key = {card.x+12, card.y+(card.height-28)/2, 28, 28};
-        DrawRectangleRec(key, text_color);
-        ui_text_bold(ui, "E", (int)(key.x+(key.width-ui_measure_bold(ui, "E", 20))/2),
-                     (int)key.y+4, 20, paper_color);
-        left += 38;
-    }
-    ui_text_wrap(ui, interaction->message,
-                 (Rectangle){left, card.y+12, card.x+card.width-left-12, card.height-24},
-                 20, text_color, true);
+    draw_prompt_frame(ui, card);
+    char message[512];
+    prompt_message(interaction, message, sizeof(message));
+    Font font = prompt_font(ui);
+    float message_width = ceilf(MeasureTextEx(font, message, 28, 0).x);
+    bool wrapped = card.height > 76;
+    float left = wrapped ? card.x+44 : roundf(card.x+(card.width-message_width)/2);
+    ui_text_wrap_font(font, message,
+                      (Rectangle){left,card.y+(wrapped ? 18 : 20),wrapped ? card.width-88 : message_width+1,card.height-36},
+                      28, text_color);
 }
 
 void exploration_hud_draw(const UiTheme *ui, const char *location, const char *objective,

@@ -59,7 +59,7 @@ static Texture2D load_pixel_marker(const char *path)
     return texture;
 }
 
-/* Imagens do diálogo são carregadas uma vez; falhas mantêm a apresentação de reserva. */
+/* Imagens da interface são carregadas uma vez; falhas mantêm a apresentação de reserva. */
 static Texture2D load_dialogue_asset(const char *path, Rectangle *visible)
 {
     if (!FileExists(path)) return (Texture2D){0};
@@ -94,6 +94,7 @@ void ui_theme_load(UiTheme *ui)
         .semibold = load_font("assets/fonts/atkinson_hyperlegible_next_semibold.ttf", codepoints, count)
     };
     ui->dialogue_font = load_dialogue_font("assets/fonts/pixelify_sans_regular.ttf", codepoints, count);
+    ui->interaction_frame = load_dialogue_asset("assets/ui/interaction_frame.png", &ui->interaction_frame_source);
     ui->dialogue_frame = load_dialogue_asset("assets/ui/dialogue_frame.png", NULL);
     ui->dialogue_skin = load_dialogue_asset("assets/ui/dialogue_skin.png", &ui->dialogue_skin_source);
     ui->gardener_portrait = load_dialogue_asset("assets/sprites/npcs/gardener_portrait.png",
@@ -123,6 +124,7 @@ void ui_theme_unload(UiTheme *ui)
     if (ui->semibold.texture.id) UnloadFont(ui->semibold);
     if (ui->dialogue_font.texture.id) UnloadFont(ui->dialogue_font);
     if (ui->interaction_chevron.id) UnloadTexture(ui->interaction_chevron);
+    if (ui->interaction_frame.id) UnloadTexture(ui->interaction_frame);
     if (ui->dialogue_frame.id) UnloadTexture(ui->dialogue_frame);
     if (ui->dialogue_skin.id) UnloadTexture(ui->dialogue_skin);
     if (ui->gardener_portrait.id) UnloadTexture(ui->gardener_portrait);
