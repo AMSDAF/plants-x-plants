@@ -159,6 +159,20 @@ static const struct {
 #undef WALK_AREA
 
 static const Rectangle crossing = {899, 525, 160, 38};
+/* Placa de orientação no pátio: colisor acompanha o poste e a base. */
+static const Rectangle courtyard_sign_collider = {483, 414, 43, 37};
+/* Faixas de contato dos bancos: só as pernas/base encostam no piso. */
+static const Rectangle courtyard_obstacles[] = {
+    {461, 300, 61, 17},  /* Banco sob o canteiro superior esquerdo. */
+    {792, 300, 67, 18},  /* Banco sob o canteiro superior direito. */
+    {578, 409, 63, 18},  /* Banco central esquerdo. */
+    {666, 409, 63, 18},  /* Banco central direito. */
+    {459, 708, 62, 18},  /* Banco inferior esquerdo. */
+    {634, 708, 63, 18},  /* Banco inferior direito. */
+    /* Pegada contínua da base hidráulica. O limite sul termina antes do
+       ponto de interação (1168, 644), permitindo chegar por baixo. */
+    {1080, 620, 175, 61}
+};
 static const float passage_top = 525;
 static const float passage_bottom = 563;
 static const float interaction_radius = 55;
@@ -500,6 +514,11 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
         if (CheckCollisionRecs(box, (Rectangle){guard.x - 28, guard.y - 18, 56, 28})) return previous;
     }
     if (world->location == WORLD_EXTERIOR) {
+        /* A placa está desenhada na arte do mapa; mantenha o pé do jogador
+           fora do poste/base, assim como fazemos com os móveis interiores. */
+        if (CheckCollisionRecs(box, courtyard_sign_collider)) return previous;
+        for (unsigned int i = 0; i < sizeof(courtyard_obstacles) / sizeof(courtyard_obstacles[0]); i++)
+            if (CheckCollisionRecs(box, courtyard_obstacles[i])) return previous;
         if (blocks(box, canal, world_bridge_open(world))) return previous;
         if (CheckCollisionPointRec(feet, crossing)) return feet;
         for (unsigned int i = 0; i < sizeof(walk_areas) / sizeof(walk_areas[0]); i++)
