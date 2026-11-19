@@ -14,13 +14,14 @@
 #include "battle_screen.h"
 #include "game_view.h"
 #include "ui_theme.h"
+#include "intro_screen.h"
 
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
 
 typedef enum {
     GAME_MENU, GAME_TRAINER_SELECT, GAME_NAME_ENTRY,
-    GAME_EXPLORATION, GAME_BATTLE
+    GAME_EXPLORATION, GAME_BATTLE, GAME_INTRO
 } GameScreen;
 
 /* Sessão de campanha somente em memória; o rascunho permanece na tela de nome. */
@@ -28,6 +29,7 @@ typedef struct {
     Trainer trainer;
     char player_name[PLAYER_NAME_CAPACITY];
     bool has_team;
+    bool has_formula;
     Team team;
     LogicFormula formula;
     int boosted_move_index;
@@ -44,6 +46,7 @@ typedef struct {
     TrainerSelectAssets trainer_select_assets;
     TrainerSelectScreen trainer_select;
     NameEntryScreen name_entry;
+    IntroScreen intro;
     CampaignSession campaign;
     WorldEncounter encounter;
     BattleScreen battle_screen;

@@ -1,5 +1,6 @@
 /* Valida entradas, transições, fallback e composição com os módulos reais e OpenGL. */
 #include "game.h"
+#include "check_intro_flow.h"
 #include "male_portrait_idle_data.h"
 #include "female_portrait_idle_data.h"
 #undef NDEBUG
@@ -141,6 +142,7 @@ static void confirm_campaign_name(Game *game)
         while (*name) assert(name_entry_append(&game->name_entry,*name++));
     }
     key(game,KEY_ENTER);
+    check_complete_intro(game, key);
 }
 
 int main(void)

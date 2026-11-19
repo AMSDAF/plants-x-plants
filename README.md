@@ -6,13 +6,13 @@ Monte sua equipe, evolua suas plantas e escolha seu caminho por diferentes bioma
 
 ## Status
 
-A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pressionar **ENTER**. Depois do nome, a campanha inicia a Estufa Lógica, com exploração e batalhas contra guardiões. A progressão posterior de campanha é planejada.
+A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pressionar **ENTER**. Depois do nome, um prólogo apresenta o pedido de ajuda de Lia, o aceite, a escolha de três entre seis plantas e a viagem até a vila. A chegada abre a Estufa Lógica, com exploração e batalhas contra guardiões. A progressão posterior de campanha é planejada.
 
 ## Modos de jogo
 
 ### Campanha
 
-O jogador começa com uma planta no estágio de mudinha e constrói sua equipe durante a jornada, recrutando plantas que enfrentou.
+O jogador começa escolhendo três companheiras entre Cacto, Girassol, Babosa, Rosa, Hera e Bambu. A evolução e o recrutamento durante a jornada permanecem planejados.
 
 A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativas.
 
@@ -29,10 +29,10 @@ A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativa
 
 | Etapa | Progressão |
 |---|---|
-| Início | Escolha de uma planta inicial no estágio de mudinha. |
-| Tutorial | Após a primeira luta, recrutamento de uma das plantas enfrentadas. Uma segunda luta apresenta a troca de plantas. |
-| Primeira arena | Escolha de rota, recrutamento da terceira planta e evolução da equipe para o segundo estágio após a vitória. |
-| Segunda arena | Nova escolha de rota, recrutamento da quarta planta e evolução da equipe para o estágio final após a vitória. |
+| Início | Prólogo e escolha de três entre seis plantas iniciais. |
+| Tutorial | Apresentação dos ataques e das trocas com a equipe inicial. |
+| Primeira arena | Escolha de rota e evolução da equipe para o segundo estágio após a vitória (planejado). |
+| Segunda arena | Nova escolha de rota e evolução da equipe para o estágio final após a vitória (planejado). |
 | Arena final | Batalha contra o boss da rota escolhida, com a equipe completa. |
 
 A vida da equipe é recuperada entre arenas.
@@ -49,7 +49,7 @@ Os biomas e seus efeitos ainda serão definidos.
 
 ## Recrutamento e evolução
 
-Após a primeira luta do tutorial e as vitórias nas duas primeiras arenas, o jogador escolhe uma das plantas enfrentadas para integrar sua equipe.
+Recrutamento e evolução ainda não estão implementados. Com a equipe inicial de três plantas, os momentos de recrutamento durante a campanha serão redefinidos, respeitando o limite de quatro integrantes.
 
 Cada espécie possui três estágios evolutivos:
 
@@ -183,7 +183,7 @@ cmake --build build --target menu_screen_check
 
 As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
 
-Na tela **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para entrar na Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna à tela inicial. Os retratos animados de repouso preservam a proporção e o alinhamento dos pés.
+Na tela **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para abrir o prólogo antes da Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna à tela inicial. Os retratos animados de repouso preservam a proporção e o alinhamento dos pés.
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
 - **Shift na estufa:** correr enquanto se move.
@@ -282,10 +282,15 @@ cmake --build build --target selection_scene_check
 
 O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
 
-Na campanha, o primeiro encontro com um guardião abre a montagem da equipe e
-da fórmula de fortalecimento. Escolha de duas a quatro plantas com **Q/W/E/R**, **setas**
-e **Espaço**, ou clique nos cartões. **Backspace** remove uma reserva; **ENTER**
-confirma. Na fórmula, **Q/W** escolhem condições, **E** muda o operador,
+Após o nome, **ENTER** completa o texto da carta e, no próximo toque, avança.
+O pedido de Lia é seguido do aceite, da escolha de exatamente três entre seis
+plantas e da viagem à vila. Use **setas/WASD** e **Espaço**, ou clique nos cartões,
+para selecionar ou remover plantas; **ENTER** confirma somente com três escolhidas.
+**Voltar/ESC** retorna à etapa anterior. A primeira planta escolhida começa ativa.
+A chegada abre o mapa existente da estufa; não há um mapa adicional de vila.
+
+Na campanha, o primeiro encontro com um guardião preserva a equipe inicial e
+abre somente a configuração da fórmula de fortalecimento. Na fórmula, **Q/W** escolhem condições, **E** muda o operador,
 **1/2** escolhem qual golpe receberá o bônus, e **ENTER** confirma. Durante a
 batalha, **1/2** usam os golpes da espécie e **Q/W/E/R** trocam a planta ativa.
 **ENTER** no resultado ou **ESC** retorna à estufa. Consulte
@@ -332,3 +337,16 @@ O ambiente validado exibiu um aviso de depreciação vindo do CMakeLists.txt da 
 **Avisos sobre arquivos-fonte vazios**
 
 Nesta etapa, alguns módulos contêm apenas comentários e podem gerar avisos com `-Wpedantic`. Eles serão implementados nas próximas tarefas.
+
+### Verificar a introdução
+
+```powershell
+cmake --build build --target intro_check battle_check
+.\build\intro_check.exe
+.\build\battle_check.exe
+```
+
+O primeiro alvo verifica o fluxo do nome à chegada, as seis candidatas, a seleção
+de três, o retorno entre etapas, o reinício da sessão e a equipe na primeira batalha.
+As capturas ficam em `build/intro_preview/`. O prólogo reutiliza o fundo e as
+fontes existentes, com silhuetas provisórias das plantas desenhadas em código.

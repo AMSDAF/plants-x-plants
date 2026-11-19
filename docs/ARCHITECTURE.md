@@ -4,7 +4,7 @@ Este documento explica a organização do projeto e a responsabilidade de cada a
 
 O jogo será desenvolvido em C com raylib. A estrutura inicial prioriza simplicidade, divisão de tarefas e separação entre as regras do jogo e a interface gráfica.
 
-> ENTER na tela inicial abre a seleção de personagem, seguida do nome e da Estufa Lógica. As batalhas são encontros contra guardiões da campanha.
+> ENTER na tela inicial abre a seleção de personagem, seguida do nome, do prólogo e da Estufa Lógica. As batalhas são encontros contra guardiões da campanha.
 
 ## Estrutura de pastas
 
@@ -37,6 +37,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 |---|---|
 | `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial em pixel art e relógios contínuos de grama e mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. ENTER abre a seleção de personagem; ESC solicita encerramento. O coordenador protege as transições até soltar entradas. |
 | `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões e controles geométricos em pixel art sobre `TrainerBackgroundAssets`, retratos de repouso com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa metadados dos atlas de repouso para igualar altura e pés. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
+| `include/intro_screen.h`, `src/intro_screen.c` | Pedido de Lia, aceite, seleção de três entre seis plantas, viagem e montagem validada da equipe inicial. Reutiliza os recursos do fundo e a interface, sem carregar recursos próprios ou resolver combate. |
 | `include/name_entry_screen.h`, `src/name_entry_screen.c` | Rascunho UTF-8 de até 12 codepoints, foco, edição e transição reversível de 0,6 s; reutiliza o cartão/retrato e os relógios da seleção. |
 | `include/selection_ui.h`, `src/selection_ui.c` | Paleta, geometria em degraus, cantos laranja e cursor pulsante compartilhados entre seleção e nome, centralização de texto e descarte de entrada. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
@@ -54,11 +55,15 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `tools/prepare_trainer_selection_background.py`, `include/trainer_background_data.h` | Extração e reconstrução local da nova fonte; poses e fases próprias, sem alterar recursos do menu aprovado. |
 | `tools/check_trainer_background.c`, `tools/preview_trainer_selection_background.py` | Capturas OpenGL do ciclo completo, verificação da prévia e montagem de GIF/contatos em `build/trainer_selection_preview/`. Consulte [os detalhes do fundo](TRAINER_SELECTION_BACKGROUND.md). |
 
-`Game` mantém os estados de tela inicial, seleção, entrada de nome, exploração
+`Game` mantém os estados de tela inicial, seleção, entrada de nome, prólogo, exploração
 e batalha, além de `CampaignSession` com personagem, nome e equipe somente em
 memória. ENTER na tela inicial abre diretamente a seleção. A confirmação do
-personagem abre o nome; um nome válido inicia a exploração. O primeiro guardião
-abre a montagem da equipe e da fórmula. Os encontros seguintes reutilizam a
+personagem abre o nome; um nome válido inicia o prólogo. A abertura apresenta
+o pedido de Lia, o aceite, a escolha de três entre seis espécies e a viagem.
+A chegada abre o mapa existente da estufa como primeiro destino na vila.
+O primeiro guardião preserva a equipe e abre somente a montagem da fórmula.
+`CampaignSession.has_team` indica a equipe inicial pronta; `has_formula` indica
+a configuração de combate concluída. Os encontros seguintes reutilizam a
 equipe restaurada e a fórmula. `NameEntryScreen` preserva o rascunho ao voltar,
 enquanto os relógios da seleção continuam. `game.c` aguarda a soltura das teclas
 e do mouse após transições, sem bloquear a janela. ESC na seleção ou exploração
@@ -112,7 +117,7 @@ Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a in
 
 Uma ação inválida não deve alterar a batalha nem consumir o turno.
 
-O jogador escolhe de duas a quatro das 12 espécies catalogadas em `plant_data.c`; os guardiões têm equipes predefinidas.
+A abertura oferece Cacto, Girassol, Babosa, Rosa, Hera e Bambu, com três escolhas distintas obrigatórias. O catálogo completo continua com 12 espécies. Os guardiões usam equipes predefinidas com o mesmo tamanho da equipe do jogador.
 Cada equipe associa duas condições e um operador a um dos dois espaços de golpe.
 Quando a fórmula é verdadeira, o golpe daquele espaço recebe um bônus de poder;
 o efeito acompanha a equipe quando sua planta ativa muda. `battle_screen.c`
@@ -155,7 +160,7 @@ Ela não deve calcular dano, decidir o vencedor ou alterar diretamente a vida da
 
 1. `main.c` abre a janela e inicializa o jogo.
 2. A cada quadro, chama as funções de atualização e desenho de `game.c`.
-3. `game.c` direciona a execução para tela inicial, seleção de personagem, entrada de nome, exploração ou batalha de campanha.
+3. `game.c` direciona a execução para tela inicial, seleção de personagem, entrada de nome, prólogo, exploração ou batalha de campanha.
 4. Durante uma batalha, a interface captura a ação do jogador ou a IA escolhe uma ação.
 5. `battle.c` valida e resolve a ação, atualizando o estado da batalha.
 6. A interface desenha o estado atualizado.
@@ -219,7 +224,7 @@ O combate da campanha inclui:
 - Identificação do vencedor e retorno à exploração.
 - Visual provisório, sem depender de sprites finalizados.
 
-Após personagem e nome, a campanha abre um mapa com câmera, fachadas e interiores conectados
+Após personagem, nome e prólogo, a campanha abre um mapa com câmera, fachadas e interiores conectados
 por portas e escotilha. Guardiões e controles distribuídos liberam
 a central de relés, que valida nove restrições antes da saída.
 A progressão por arenas,

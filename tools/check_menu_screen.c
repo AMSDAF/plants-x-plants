@@ -1,5 +1,6 @@
 /* Verifica composição, grama, mascote e navegação com o jogo e OpenGL reais. */
 #include "game.h"
+#include "check_intro_flow.h"
 #include "menu_mascot_data.h"
 #include "menu_grass_data.h"
 #include "menu_tree_data.h"
@@ -246,6 +247,7 @@ static void confirm_campaign_name(Game *game)
         while (*name) assert(name_entry_append(&game->name_entry,*name++));
     }
     key(game,KEY_ENTER);
+    check_complete_intro(game, key);
 }
 
 int main(void)

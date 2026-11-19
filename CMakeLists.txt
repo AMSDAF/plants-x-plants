@@ -156,6 +156,24 @@ foreach(ui_target plants_x_plants selection_scene_check menu_screen_check
     endif()
 endforeach()
 
+# Inclui o prólogo nos alvos que utilizam o coordenador de telas.
+foreach(intro_target plants_x_plants selection_scene_check menu_screen_check
+        trainer_background_check name_entry_check exploration_hud_check)
+    if(TARGET ${intro_target})
+        target_sources(${intro_target} PRIVATE src/intro_screen.c)
+    endif()
+endforeach()
+
+# A abertura usa os mesmos módulos do executável principal.
+get_target_property(INTRO_CHECK_SOURCES plants_x_plants SOURCES)
+list(REMOVE_ITEM INTRO_CHECK_SOURCES src/main.c)
+add_executable(intro_check EXCLUDE_FROM_ALL tools/check_intro.c ${INTRO_CHECK_SOURCES})
+target_include_directories(intro_check PRIVATE include)
+target_link_libraries(intro_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(intro_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Regras compartilhadas da campanha, sem janela nem dependência da raylib.
 add_executable(battle_check EXCLUDE_FROM_ALL
     tools/check_battle.c src/plant.c src/plant_data.c src/battle.c src/ai.c)

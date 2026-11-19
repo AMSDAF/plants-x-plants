@@ -57,12 +57,12 @@ static void start_encounter(Game *game, WorldEncounter encounter)
 
     BattleScreen *screen = &game->battle_screen;
     *screen = (BattleScreen){
-        .setup_side = configured ? -1 : 0,
+        .setup_side = game->campaign.has_formula ? -1 : 0,
         .choosing_team = !configured,
         .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
     };
     Battle_Init(&screen->battle, team, guardian_team(encounter, team.count));
-    if (configured) {
+    if (game->campaign.has_formula) {
         screen->battle.formulas[0] = game->campaign.formula;
         screen->battle.boosted_move_indices[0] = game->campaign.boosted_move_index;
     }
@@ -83,6 +83,7 @@ static void leave_encounter(Game *game)
         game->campaign.formula = screen->battle.formulas[0];
         game->campaign.boosted_move_index = screen->battle.boosted_move_indices[0];
         game->campaign.has_team = true;
+        game->campaign.has_formula = true;
     }
     if (screen->battle.state == BATTLE_STATE_PLAYER_WIN) {
         world_finish_encounter(&game->world, game->encounter);
@@ -120,12 +121,27 @@ void game_update(Game *game)
         else if (action==NAME_ENTRY_CONFIRM && name_entry_confirm(&game->name_entry,game->campaign.player_name)) {
             game->campaign.trainer=game->trainer_select.selected;
             game->campaign.has_team=false;
+            game->campaign.has_formula=false;
+            game->campaign.team=(Team){0};
+            intro_screen_init(&game->intro);
             world_init(&game->world);
             player_init(&game->player,game->campaign.trainer,world_spawn());
             world_snap_camera(&game->world, game->player.feet);
-            change_screen(game,GAME_EXPLORATION);
+            change_screen(game,GAME_INTRO);
         }
         if (!transition_input_down()) game->input_blocked=false;
+        return;
+    }
+    if (game->screen == GAME_INTRO) {
+        IntroAction action = intro_screen_update(&game->intro, !game->input_blocked, GetFrameTime());
+        if (action == INTRO_BACK) {
+            name_entry_begin(&game->name_entry, true);
+            change_screen(game, GAME_NAME_ENTRY);
+        } else if (action == INTRO_FINISH && intro_screen_team(&game->intro, &game->campaign.team)) {
+            game->campaign.has_team = true;
+            change_screen(game, GAME_EXPLORATION);
+        }
+        if (!transition_input_down()) game->input_blocked = false;
         return;
     }
     if (game->input_blocked) {
@@ -184,7 +200,8 @@ void game_update(Game *game)
             if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
             break;
         }
-        case GAME_NAME_ENTRY: break; /* Atualizada acima para manter os relógios contínuos. */
+        case GAME_INTRO:
+        case GAME_NAME_ENTRY: break; /* Atualizadas acima para manter os relógios contínuos. */
     }
 }
 
@@ -202,6 +219,9 @@ void game_draw(const Game *game)
             break;
         case GAME_NAME_ENTRY:
             name_entry_draw(ui, &game->name_entry,&game->trainer_select,&game->trainer_select_assets);
+            break;
+        case GAME_INTRO:
+            intro_screen_draw(ui, &game->intro, &game->trainer_select_assets, game->campaign.player_name);
             break;
         case GAME_EXPLORATION: {
             ClearBackground(BLACK);

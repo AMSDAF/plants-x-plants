@@ -1,5 +1,6 @@
 /* Verifica nomes, foco, transições e sessão com os módulos reais e OpenGL. */
 #include "game.h"
+#include "check_intro_flow.h"
 #include "selection_ui.h"
 #include "game_canvas.h"
 #undef NDEBUG
@@ -656,6 +657,7 @@ int main(void)
         assert(game.name_entry.focus==0);
         capture_native(&game, TextFormat("build/name_entry_preview/name_1080p_%d.png", gender));
         click(&game,950,570); /* Confirmar por mouse transfere nome e personagem. */
+        check_complete_intro(&game, key);
         assert(game.screen==GAME_EXPLORATION);
         assert(game.campaign.trainer==(Trainer)gender && game.player.trainer==(Trainer)gender);
         assert(strcmp(game.campaign.player_name,gender ? "João" : "Antônio")==0);
@@ -686,7 +688,7 @@ int main(void)
     key(&game,KEY_ENTER); settle(&game);
     assert(strcmp(game.name_entry.draft,"João")==0 && game.name_entry.focus==0);
     key(&game,KEY_TAB); key(&game,KEY_TAB); assert(game.name_entry.focus==2);
-    key(&game,KEY_ENTER); assert(game.screen==GAME_EXPLORATION);
+    key(&game,KEY_ENTER); check_complete_intro(&game, key); assert(game.screen==GAME_EXPLORATION);
     check_greenhouse(&game);
     /* Botão Voltar focado por teclado e soltura de mouse mantido na entrada. */
     game.screen=GAME_TRAINER_SELECT; game.input_blocked=false;
