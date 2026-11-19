@@ -212,8 +212,9 @@ Na central, use **1–8** ou clique nos relés e pressione **Enter** para valida
 uma regra por vez. Se uma regra anterior falhar, a central volta para ela.
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
-O HUD de exploração usa painéis creme com bordas em degraus, fonte Atkinson
-Hyperlegible Next e uma seta em pixel art para o alvo. A instrução de
+O HUD de exploração usa molduras botânicas de madeira, fundo creme, fonte
+Pixelify Sans e uma seta em pixel art para o alvo. Objetivo/local, pistas e
+condições da ponte e do viveiro seguem a mesma estética. A instrução de
 interação aparece no centro inferior, com moldura de madeira e folhas e fonte
 Pixelify Sans. A frase “Pressione E para…” aparece só quando a ação está disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
 nas demais telas, sem instalação no Windows. Detalhes em [HUD_IMPLEMENTATION.md](docs/HUD_IMPLEMENTATION.md).

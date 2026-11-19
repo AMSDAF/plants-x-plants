@@ -306,6 +306,22 @@ int main(void)
         assert(selected.state != HUD_INTERACTION_NONE);
         capture(&game, &canvas, marker_samples[i].name, 1280, 720);
     }
+    world_init(&game.world);
+    game.player.feet = (Vector2){868,578};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "botanical_bridge_closed_720p", 1280, 720);
+    capture(&game, &canvas, "botanical_bridge_closed_1080p", 1920, 1080);
+    capture(&game, &canvas, "botanical_bridge_closed_1440p", 2560, 1440);
+    game.world.north_channel = true;
+    game.world.drain_open = false;
+    capture(&game, &canvas, "botanical_bridge_open", 1280, 720);
+    game.player.feet = (Vector2){1271,401};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "botanical_nursery_closed", 1280, 720);
+    game.world.water = true;
+    game.world.light = true;
+    game.world.alarm = false;
+    capture(&game, &canvas, "botanical_nursery_open", 1280, 720);
     game.world = saved_world;
     game.player.feet = saved_feet;
     UiTheme saved = game.ui;

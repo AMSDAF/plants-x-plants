@@ -27,6 +27,8 @@ void ui_theme_load(UiTheme *ui);
 void ui_theme_unload(UiTheme *ui);
 void ui_theme_update(UiTheme *ui, float dt);
 Font ui_font(const UiTheme *ui, bool bold);
+Font ui_pixel_font(const UiTheme *ui);
+void ui_botanical_panel(const UiTheme *ui, Rectangle bounds);
 void ui_text(const UiTheme *ui, const char *text, int x, int y, int size, Color color);
 int ui_measure(const UiTheme *ui, const char *text, int size);
 void ui_text_bold(const UiTheme *ui, const char *text, int x, int y, int size, Color color);

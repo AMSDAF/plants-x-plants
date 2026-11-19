@@ -7,8 +7,18 @@ e seu prompt acompanham os recursos de produção em `assets/ui/`.
 
 ## Comportamento
 
-O objetivo e o local ficam no canto superior esquerdo; as pistas, no superior
-direito. O rodapé mostra um único painel, centralizado em x = 640, com margem
+Objetivo/local, pistas e condições dos desafios compartilham a moldura botânica
+e a Pixelify Sans. O objetivo e o local ficam no canto superior esquerdo; as pistas,
+no superior direito. O local usa fonte 20 e o objetivo 28, com painel de 94 pixels
+ou 130 quando o objetivo quebra em duas linhas. O contador mede 204 × 72, com
+rótulo em 22 e quantidade em 28.
+
+O quadro de condições fica abaixo das pistas, em `(822,106)`, com largura 438:
+182 pixels de altura para ponte e 216 para a porta do viveiro. Título, estado,
+condições e regra usam fontes 26, 20, 24 e 20. Os estados mantêm cores verdes
+ou âmbar, e as condições continuam com indicadores de sucesso ou pendência.
+A moldura é compartilhada por `ui_botanical_panel`; nenhuma regra é calculada
+nessa função de desenho. O rodapé mostra um único painel, centralizado em x = 640, com margem
 inferior de 24 pixels lógicos. O aviso usa madeira com folhas em dois cantos,
 fundo creme e Pixelify Sans de 28 pixels, compartilhando a estética dos diálogos.
 Quando a ação está disponível, mostra `Pressione "E" para ...`, com a inicial
@@ -71,8 +81,8 @@ conceitos não são coladas na tela nem usadas como textura de texto.
 
 ## Fonte
 
-Objetivo, local, contador de pistas e central usam Atkinson Hyperlegible Next.
-Avisos de interação e diálogos usam Pixelify Sans para acompanhar a moldura
+O HUD de exploração e os diálogos usam Pixelify Sans. A central e as demais
+telas continuam com Atkinson Hyperlegible Next. A Pixelify acompanha a moldura
 botânica; detalhes e reservas estão em `DIALOGUE_UI.md`.
 Os demais painéis creme mantêm contorno duplo, cantos em degraus e sombra sólida.
 O aviso de interação usa moldura botânica e indicação da tecla dentro da frase.

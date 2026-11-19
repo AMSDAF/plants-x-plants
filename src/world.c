@@ -1362,15 +1362,15 @@ static void draw_relay_panel(const UiTheme *ui, const World *world)
 
 static void draw_condition(const UiTheme *ui, int x, int y, bool met, const char *label)
 {
-    Color color = met ? (Color){45, 100, 61, 255} : (Color){139, 89, 33, 255};
-    DrawRectangleLines(x, y + 2, 13, 13, color);
+    Color color = met ? (Color){45,100,61,255} : (Color){139,89,33,255};
+    DrawRectangleLinesEx((Rectangle){x,y+7,16,16}, 1, color);
     if (met) {
-        DrawLine(x + 3, y + 8, x + 5, y + 10, color);
-        DrawLine(x + 5, y + 10, x + 10, y + 5, color);
+        DrawLine(x+3,y+15,x+6,y+18,color);
+        DrawLine(x+6,y+18,x+12,y+11,color);
     } else {
-        DrawLine(x + 4, y + 8, x + 9, y + 8, color);
+        DrawRectangle(x+5,y+14,6,2,color);
     }
-    ui_text(ui, label, x + 22, y, 18, ink);
+    DrawTextEx(ui_pixel_font(ui), label, (Vector2){x+28,y}, 24, 0, ink);
 }
 
 static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object object, Vector2 feet)
@@ -1382,17 +1382,18 @@ static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object ob
     bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1270 && feet.y <= 475;
     if (!bridge && !nursery) return (Rectangle){0};
 
-    int top = 78;
-    Rectangle card = {916, top, 346, bridge ? 119 : 142};
-    int left = (int)card.x + 13;
-    int right = (int)(card.x + card.width) - 13;
+    const int top = 106;
+    Rectangle card = {822,top,438,bridge ? 182 : 216};
+    int left = (int)card.x+34;
+    int right = (int)(card.x+card.width)-34;
     bool open = bridge ? world_bridge_open(world) : world_gate_open(world);
-    Color status_color = open ? (Color){45, 100, 61, 255} : (Color){139, 89, 33, 255};
-    ui_panel(card);
-    ui_text(ui, bridge ? "Ponte" : "Porta do viveiro", left, top + 10, 21, ink);
+    Color status_color = open ? (Color){45,100,61,255} : (Color){139,89,33,255};
+    Font font = ui_pixel_font(ui);
+    ui_botanical_panel(ui, card);
+    DrawTextEx(font, bridge ? "Ponte" : "Porta do viveiro", (Vector2){left,top+16}, 26, 0, ink);
     const char *status = bridge ? (open ? "Estendida" : "Recolhida") : (open ? "Aberta" : "Fechada");
-    ui_text(ui, status, right - ui_measure(ui, status, 16), top + 13, 16, status_color);
-    DrawLine(left, top + 35, right, top + 35, Fade(frame, 0.26f));
+    DrawTextEx(font, status, (Vector2){right-ceilf(MeasureTextEx(font,status,20,0).x),top+21}, 20, 0, status_color);
+    DrawLine(left,top+56,right,top+56,Fade(frame,0.26f));
 
     const char *rule;
     if (bridge) {
@@ -1402,17 +1403,17 @@ static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object ob
             : world->north_channel ? "Dois canais abertos" : "Nenhum canal aberto";
         const char *pressure_label = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
             : pressure > BRIDGE_TARGET_PRESSURE ? "alta" : "correta";
-        draw_condition(ui, left, top + 44, one_channel, channels);
-        draw_condition(ui, left, top + 67, pressure == BRIDGE_TARGET_PRESSURE,
+        draw_condition(ui, left, top + 70, one_channel, channels);
+        draw_condition(ui, left, top + 104, pressure == BRIDGE_TARGET_PRESSURE,
                        TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, pressure_label));
         rule = TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE);
     } else {
-        draw_condition(ui, left, top + 44, world->water, world->water ? "Água liberada" : "Água fechada");
-        draw_condition(ui, left, top + 67, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
-        draw_condition(ui, left, top + 90, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
+        draw_condition(ui, left, top + 70, world->water, world->water ? "Água liberada" : "Água fechada");
+        draw_condition(ui, left, top + 104, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
+        draw_condition(ui, left, top + 138, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
         rule = world->gate_unlocked ? "Trava acionada · porta liberada" : "Água E Luz E NÃO Alarme";
     }
-    ui_text(ui, rule, left, top + (int)card.height - 24, 16, ink);
+    DrawTextEx(font, rule, (Vector2){left,top+card.height-39}, 20, 0, ink);
     return card;
 }
 

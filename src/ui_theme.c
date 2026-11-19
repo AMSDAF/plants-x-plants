@@ -144,6 +144,36 @@ Font ui_font(const UiTheme *ui, bool bold)
     return GetFontDefault();
 }
 
+Font ui_pixel_font(const UiTheme *ui)
+{
+    return ui && ui->dialogue_font.texture.id ? ui->dialogue_font : ui_font(ui, false);
+}
+
+void ui_botanical_panel(const UiTheme *ui, Rectangle bounds)
+{
+    Texture2D texture = ui ? ui->interaction_frame : (Texture2D){0};
+    Rectangle source = ui ? ui->interaction_frame_source : (Rectangle){0};
+    if (!texture.id || source.width <= 0 || source.height <= 0) {
+        DrawRectangleRec(bounds, (Color){246,235,204,255});
+        DrawRectangleLinesEx(bounds, 3, (Color){145,76,36,255});
+        DrawRectangleLinesEx((Rectangle){bounds.x+3,bounds.y+3,bounds.width-6,bounds.height-6}, 1, (Color){24,59,48,255});
+        return;
+    }
+    /* Cantos fixos mantêm folhas e rebites na escala do conceito aprovado. */
+    float sx = source.height*0.75f, sy = source.height*0.48f;
+    float x[] = {source.x,source.x+sx,source.x+source.width-sx,source.x+source.width};
+    float y[] = {source.y,source.y+sy,source.y+source.height-sy,source.y+source.height};
+    float dx[] = {bounds.x,bounds.x+38,bounds.x+bounds.width-38,bounds.x+bounds.width};
+    float dy[] = {bounds.y,bounds.y+34,bounds.y+bounds.height-34,bounds.y+bounds.height};
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            DrawTexturePro(texture, (Rectangle){x[col],y[row],x[col+1]-x[col],y[row+1]-y[row]},
+                           (Rectangle){dx[col],dy[row],dx[col+1]-dx[col],dy[row+1]-dy[row]}, (Vector2){0}, 0, WHITE);
+        }
+    }
+}
+
+
 static int measure(const UiTheme *ui, const char *text, int size, bool bold)
 {
     return (int)ceilf(MeasureTextEx(ui_font(ui, bold), text, size, 0).x);
