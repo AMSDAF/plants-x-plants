@@ -32,8 +32,8 @@ static void check_prompt(const UiTheme *ui, HudInteraction interaction)
         return;
     }
     assert(fabsf(bounds.x+bounds.width/2-640) <= 0.5f);
-    assert(bounds.y+bounds.height == 696 && bounds.width <= 640);
-    assert(bounds.height <= 104);
+    assert(bounds.y+bounds.height == 696 && bounds.width <= 560);
+    assert(bounds.height <= 72);
     Camera2D camera = {.offset={640, 360}, .target=interaction.target, .zoom=1};
     Rectangle normal = exploration_marker_bounds(&interaction, camera, 0);
     Rectangle raised = exploration_marker_bounds(&interaction, camera, 0.7f);

@@ -10,12 +10,10 @@ Rectangle exploration_prompt_bounds(const UiTheme *ui, const HudInteraction *int
 {
     if (interaction->state == HUD_INTERACTION_NONE) return (Rectangle){0};
     bool available = interaction->state == HUD_INTERACTION_AVAILABLE;
-    int padding = available ? 120 : 48;
-    int message_width = ui_measure_bold(ui, interaction->message, available ? 24 : 22);
-    int label_width = ui_measure(ui, interaction->context, 18);
-    int content_width = message_width > label_width ? message_width : label_width;
-    float width = fminf(640, fmaxf(400, content_width + padding));
-    float height = message_width > width - padding ? 104 : 76;
+    int padding = available ? 62 : 24;
+    int message_width = ui_measure_bold(ui, interaction->message, 20);
+    float width = fminf(560, fmaxf(160, message_width + padding));
+    float height = message_width > width - padding ? 72 : 44;
     return (Rectangle){roundf((GAME_SCREEN_WIDTH-width)/2), GAME_SCREEN_HEIGHT-24-height, width, height};
 }
 
@@ -58,26 +56,21 @@ static void draw_prompt(const UiTheme *ui, const HudInteraction *interaction, Ca
             arrow_shape((Rectangle){arrow.x+2, arrow.y+1, arrow.width-4, arrow.height-4}, paper_color);
         }
     }
-    ui_panel(card);
+    /* Aviso compacto: uma borda simples, tecla e ação, sem título repetido. */
+    DrawRectangleRec(card, text_color);
+    DrawRectangleRec((Rectangle){card.x+2, card.y+2, card.width-4, card.height-4}, paper_color);
     bool available = interaction->state == HUD_INTERACTION_AVAILABLE;
-    int left = (int)card.x + (available ? 112 : 24);
-    const char *suffix = interaction->state == HUD_INTERACTION_BLOCKED ? " · Indisponível"
-                        : interaction->state == HUD_INTERACTION_INFO ? " · Já registrada" : "";
-    ui_text(ui, TextFormat("%s%s", interaction->context, suffix), left, (int)card.y+10, 18, text_color);
+    int left = (int)card.x + 12;
     if (available) {
-        Rectangle key = {card.x+22, card.y+(card.height-44)/2, 46, 44};
-        DrawRectangleRec((Rectangle){key.x+2, key.y+2, key.width, key.height}, text_color);
+        Rectangle key = {card.x+12, card.y+(card.height-28)/2, 28, 28};
         DrawRectangleRec(key, text_color);
-        DrawRectangleLinesEx((Rectangle){key.x+2, key.y+2, key.width-4, key.height-4}, 2,
-                             (Color){104, 135, 125, 255});
-        ui_text_bold(ui, "E", (int)(key.x+(key.width-ui_measure_bold(ui, "E", 28))/2),
-                     (int)key.y+6, 28, paper_color);
-        DrawLine((int)card.x+89, (int)card.y+16, (int)card.x+89, (int)(card.y+card.height-16),
-                 (Color){172, 153, 114, 255});
+        ui_text_bold(ui, "E", (int)(key.x+(key.width-ui_measure_bold(ui, "E", 20))/2),
+                     (int)key.y+4, 20, paper_color);
+        left += 38;
     }
     ui_text_wrap(ui, interaction->message,
-                 (Rectangle){left, card.y+34, card.x+card.width-left-20, card.height-40},
-                 available ? 24 : 22, text_color, true);
+                 (Rectangle){left, card.y+12, card.x+card.width-left-12, card.height-24},
+                 20, text_color, true);
 }
 
 void exploration_hud_draw(const UiTheme *ui, const char *location, const char *objective,

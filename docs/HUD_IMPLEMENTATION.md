@@ -9,10 +9,13 @@ após a integração; a direção visual está registrada no plano.
 
 O objetivo e o local ficam no canto superior esquerdo; as pistas, no superior
 direito. O rodapé mostra um único painel, centralizado em x = 640, com margem
-inferior de 24 pixels lógicos. Sua largura varia entre 400 e 640; a altura é
-76 ou 104, conforme a quebra de linha. A tecla E aparece somente se a ação
-estiver disponível. Bloqueios e pistas registradas mostram seu estado e a
-explicação, sem sugerir uma ação indisponível.
+inferior de 24 pixels lógicos. O aviso de interação é compacto: uma borda
+simples de dois pixels, preenchimento creme, tecla E de 28 × 28 e apenas a
+mensagem de ação em fonte 20. O título de contexto, o divisor, as molduras
+extras e a sombra foram retirados desse aviso. A largura acompanha a mensagem,
+entre 160 e 560 pixels; a altura é 44 ou 72, conforme a quebra de linha.
+A tecla E aparece somente quando a ação está disponível. Bloqueios e pistas
+registradas mantêm sua explicação, sem sugerir uma ação indisponível.
 
 A seta usa o PNG transparente `assets/ui/interaction_chevron_pixel.png`, gerado
 com a ferramenta integrada de imagens. É um chevron para baixo, sem haste,
@@ -61,8 +64,8 @@ conceitos não são coladas na tela nem usadas como textura de texto.
 
 O HUD de exploração, os diálogos e a central usam Atkinson Hyperlegible Next,
 priorizando a leitura.
-As molduras creme têm contorno duplo, cantos em degraus e sombra sólida;
-a tecla E também usa uma caixa quadrada. Não há arredondamento suave.
+Os demais painéis creme mantêm contorno duplo, cantos em degraus e sombra sólida.
+O aviso de interação usa borda simples e uma tecla quadrada compacta, sem sombra.
 As demais telas usam Atkinson Hyperlegible Next Regular e Semibold. Os TTFs estáticos,
 a origem e a licença SIL Open Font License estão em `assets/fonts/`.
 O atlas de 96 pixels tem acentos latinos e a pontuação usada na interface,
