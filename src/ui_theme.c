@@ -1,6 +1,7 @@
 /* Carrega tipografia com acentos e desenha painéis e textos com medidas consistentes. */
 #include "ui_theme.h"
 #include <math.h>
+#include <limits.h>
 #include <string.h>
 
 static Font load_font(const char *path, const int *codepoints, int count)
@@ -12,6 +13,16 @@ static Font load_font(const char *path, const int *codepoints, int count)
     Font font = LoadFontEx(path, 96, (int *)codepoints, count);
     if (font.texture.id == GetFontDefault().texture.id) return (Font){0};
     if (font.texture.id) SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+    return font;
+}
+
+/* A fonte exclusiva dos diálogos conserva os traços e a grade da arte pixel. */
+static Font load_dialogue_font(const char *path, const int *codepoints, int count)
+{
+    if (!FileExists(path)) return (Font){0};
+    Font font = LoadFontEx(path, 28, (int *)codepoints, count);
+    if (font.texture.id == GetFontDefault().texture.id) return (Font){0};
+    if (font.texture.id) SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
     return font;
 }
 
@@ -48,6 +59,27 @@ static Texture2D load_pixel_marker(const char *path)
     return texture;
 }
 
+/* Imagens do diálogo são carregadas uma vez; falhas mantêm a apresentação de reserva. */
+static Texture2D load_dialogue_asset(const char *path, Rectangle *visible)
+{
+    if (!FileExists(path)) return (Texture2D){0};
+    Image image = LoadImage(path);
+    if (!image.data) return (Texture2D){0};
+    Rectangle bounds = GetImageAlphaBorder(image, 0.1f);
+    if (image.width < 32 || image.height < 32 || bounds.width <= 0 || bounds.height <= 0) {
+        TraceLog(LOG_WARNING, "Arte de dialogo invalida: %s", path);
+        UnloadImage(image);
+        return (Texture2D){0};
+    }
+    Texture2D texture = LoadTextureFromImage(image);
+    UnloadImage(image);
+    if (texture.id) {
+        SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+        if (visible) *visible = bounds;
+    }
+    return texture;
+}
+
 void ui_theme_load(UiTheme *ui)
 {
     int codepoints[512];
@@ -61,6 +93,15 @@ void ui_theme_load(UiTheme *ui)
         .regular = load_font("assets/fonts/atkinson_hyperlegible_next_regular.ttf", codepoints, count),
         .semibold = load_font("assets/fonts/atkinson_hyperlegible_next_semibold.ttf", codepoints, count)
     };
+    ui->dialogue_font = load_dialogue_font("assets/fonts/pixelify_sans_regular.ttf", codepoints, count);
+    ui->dialogue_frame = load_dialogue_asset("assets/ui/dialogue_frame.png", NULL);
+    ui->dialogue_skin = load_dialogue_asset("assets/ui/dialogue_skin.png", &ui->dialogue_skin_source);
+    ui->gardener_portrait = load_dialogue_asset("assets/sprites/npcs/gardener_portrait.png",
+                                               &ui->gardener_portrait_source);
+    ui->technician_portrait = load_dialogue_asset("assets/sprites/npcs/technician_portrait.png",
+                                                 &ui->technician_portrait_source);
+    ui->researcher_portrait = load_dialogue_asset("assets/sprites/npcs/researcher_portrait.png",
+                                                 &ui->researcher_portrait_source);
     const char *marker_path = "assets/ui/interaction_chevron_pixel.png";
     if (FileExists(marker_path)) {
         ui->interaction_chevron = load_pixel_marker(marker_path);
@@ -80,7 +121,13 @@ void ui_theme_unload(UiTheme *ui)
 {
     if (ui->regular.texture.id) UnloadFont(ui->regular);
     if (ui->semibold.texture.id) UnloadFont(ui->semibold);
+    if (ui->dialogue_font.texture.id) UnloadFont(ui->dialogue_font);
     if (ui->interaction_chevron.id) UnloadTexture(ui->interaction_chevron);
+    if (ui->dialogue_frame.id) UnloadTexture(ui->dialogue_frame);
+    if (ui->dialogue_skin.id) UnloadTexture(ui->dialogue_skin);
+    if (ui->gardener_portrait.id) UnloadTexture(ui->gardener_portrait);
+    if (ui->technician_portrait.id) UnloadTexture(ui->technician_portrait);
+    if (ui->researcher_portrait.id) UnloadTexture(ui->researcher_portrait);
     *ui = (UiTheme){0};
 }
 
@@ -137,23 +184,43 @@ void ui_panel(Rectangle bounds)
     pixel_box((Rectangle){bounds.x+6, bounds.y+6, bounds.width-12, bounds.height-12}, 2, (Color){246, 235, 204, 255});
 }
 
-int ui_text_wrap(const UiTheme *ui, const char *text, Rectangle bounds, int size, Color color, bool bold)
+/* Revela codepoints inteiros depois de calcular a quebra com a fala completa. */
+static void draw_revealed_line(Font font, char *line, Vector2 position, int size, Color color, int *visible)
 {
+    int count = GetCodepointCount(line);
+    int shown = *visible < count ? *visible : count;
+    int offset = 0;
+    for (int i = 0; i < shown; i++) {
+        int bytes = 0;
+        GetCodepointNext(line+offset, &bytes);
+        offset += bytes;
+    }
+    char saved = line[offset];
+    line[offset] = 0;
+    if (shown) DrawTextEx(font, line, position, size, 0, color);
+    line[offset] = saved;
+    *visible -= shown;
+}
+
+int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size, Color color, int visible_characters)
+{
+    int visible = visible_characters > 0 ? visible_characters : 0;
     char line[512] = {0};
     int length = 0, lines = 0;
     float y = bounds.y;
     const char *cursor = text;
     while (*cursor && y + size <= bounds.y + bounds.height) {
         if (*cursor == '\n') {
-            DrawTextEx(ui_font(ui, bold), line, (Vector2){bounds.x, y}, size, 0, color);
+            draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible);
             y += size * 1.3f;
             lines++;
             length = 0;
             line[0] = 0;
             cursor++;
+            if (visible > 0) visible--;
             continue;
         }
-        if (!length && *cursor == ' ') { cursor++; continue; }
+        if (!length && *cursor == ' ') { cursor++; if (visible > 0) visible--; continue; }
         int bytes = 0;
         GetCodepointNext(cursor, &bytes);
         bool full = length + bytes >= (int)sizeof(line);
@@ -161,15 +228,16 @@ int ui_text_wrap(const UiTheme *ui, const char *text, Rectangle bounds, int size
             memcpy(line+length, cursor, bytes);
             line[length+bytes] = 0;
         }
-        if (length && (full || measure(ui, line, size, bold) > bounds.width)) {
+        if (length && (full || (int)ceilf(MeasureTextEx(font, line, size, 0).x) > bounds.width)) {
             line[length] = 0;
             int split = length;
             while (split > 0 && line[split] != ' ') split--;
             if (split == 0) split = length;
             line[split] = 0;
-            DrawTextEx(ui_font(ui, bold), line, (Vector2){bounds.x, y}, size, 0, color);
+            draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible);
             y += size * 1.3f;
             lines++;
+            if (split < length && visible > 0) visible--;
             int remaining = split < length ? length-split-1 : 0;
             if (remaining) memmove(line, line+split+1, remaining);
             length = remaining;
@@ -180,8 +248,18 @@ int ui_text_wrap(const UiTheme *ui, const char *text, Rectangle bounds, int size
         cursor += bytes;
     }
     if (length && y + size <= bounds.y + bounds.height) {
-        DrawTextEx(ui_font(ui, bold), line, (Vector2){bounds.x, y}, size, 0, color);
+        draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible);
         lines++;
     }
     return lines;
+}
+
+int ui_text_wrap_font(Font font, const char *text, Rectangle bounds, int size, Color color)
+{
+    return ui_text_wrap_reveal(font, text, bounds, size, color, INT_MAX);
+}
+
+int ui_text_wrap(const UiTheme *ui, const char *text, Rectangle bounds, int size, Color color, bool bold)
+{
+    return ui_text_wrap_font(ui_font(ui, bold), text, bounds, size, color);
 }

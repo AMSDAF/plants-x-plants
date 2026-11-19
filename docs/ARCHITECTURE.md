@@ -23,8 +23,9 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 |---|---|
 | `src/main.c` | Abrir a janela, executar o loop principal e encerrar o programa. |
 | `include/game_canvas.h`, `src/game_canvas.c` | Gerenciar o alvo na resolução física do viewport, mantendo coordenadas lógicas de 1280 × 720, enquadramento, mouse e recortes de interface. O alvo é recriado somente ao mudar de tamanho. |
-| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus. `Game` possui os recursos e os passa explicitamente às telas. |
+| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify de diálogo, as molduras e os três retratos de diálogo, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus. `Game` possui os recursos e os passa explicitamente às telas. |
 | `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo, pistas, instrução inferior e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
+| `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |
 
@@ -40,7 +41,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/selection_ui.h`, `src/selection_ui.c` | Paleta, geometria em degraus, cantos laranja e cursor pulsante compartilhados entre seleção e nome, centralização de texto e descarte de entrada. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
-| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels), câmera de tela inteira e HUD contextual sobre o mapa. |
+| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, relógio e entrada dos diálogos, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels), câmera de tela inteira e HUD contextual sobre o mapa. |
 | `tools/prepare_courtyard_detail.py`, `include/courtyard_detail_data.h` | Unir os quatro quadrantes em 3010 × 1694, com iluminação local da base e costuras de menor diferença. Preserva a fonte e o primeiro resultado aprovado. `WorldAssets` carrega a textura completa opcional; `World.detail_enabled` permite comparação por F8. |
 | `tools/check_game_canvas.c` | Verificar resolução física, HiDPI, enquadramento, mouse, recorte, câmera, quadrante, ausência de recurso e ponte em OpenGL. |
 | `tools/check_exploration_hud.c` | Verificar tipografia, acentos, estados e alvo compartilhado da interação, centralização, seta, resoluções, fonte de reserva e desenho imutável. Capturas em `build/hud_preview/`. |

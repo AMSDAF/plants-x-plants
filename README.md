@@ -218,6 +218,15 @@ interação aparece no centro inferior; E só é indicado quando a ação está
 disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
 nas demais telas, sem instalação no Windows. Detalhes em [HUD_IMPLEMENTATION.md](docs/HUD_IMPLEMENTATION.md).
 
+Os diálogos usam fonte Pixelify Sans, moldura de madeira com folhas, texto à esquerda e retrato com
+nome à direita. Lia (jardineira), Bento (técnico) e Íris (pesquisadora) têm retratos próprios.
+Cada um se apresenta no primeiro contato e usa o nome escolhido pelo jogador.
+Os pedidos de ajuda, as dicas seguintes e os agradecimentos acompanham o progresso.
+Ao resolver a central, Íris agradece antes da tela de conclusão.
+Se uma imagem faltar, aparece a inicial do personagem. O texto aparece letra por letra; E/Enter completa a fala e,
+no próximo toque, avança ou fecha. ESC fecha a conversa. Textos e nomes continuam dinâmicos. Consulte
+[DIALOGUE_UI.md](docs/DIALOGUE_UI.md).
+
 Os quatro quadrantes melhorados estão integrados ao mapa completo, com
 3010 × 1694 pixels. O background original foi preservado. Veja a resolução real,
 o preparo e as verificações em [COURTYARD_DETAIL.md](docs/COURTYARD_DETAIL.md).

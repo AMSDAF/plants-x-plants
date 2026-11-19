@@ -153,9 +153,9 @@ void game_update(Game *game)
         case GAME_EXPLORATION:
             if (IsKeyPressed(KEY_F8)) game->world.detail_enabled = !game->world.detail_enabled;
             if (game->world.dialogue_title) {
-                world_update_dialogue(&game->world);
+                world_update_dialogue(&game->world, GetFrameTime());
             } else if (game->world.relay_panel_open) {
-                world_update_relay_panel(&game->world);
+                world_update_relay_panel(&game->world, game->campaign.player_name);
             } else if (IsKeyPressed(KEY_ESCAPE) || (game->world.completed && IsKeyPressed(KEY_ENTER))) {
                 change_screen(game, GAME_MENU);
             } else if (!game->world.completed) {
@@ -163,7 +163,7 @@ void game_update(Game *game)
                 player_update(&game->player, &game->world, dt);
                 world_follow_camera(&game->world, game->player.feet, dt);
                 if (IsKeyPressed(KEY_E)) {
-                    WorldEncounter encounter = world_interact(&game->world, &game->player.feet);
+                    WorldEncounter encounter = world_interact(&game->world, &game->player.feet, game->campaign.player_name);
                     if (game->world.relay_panel_open || game->world.dialogue_title)
                         game->player.moving = false;
                     if (encounter != WORLD_ENCOUNTER_NONE) start_encounter(game, encounter);

@@ -31,10 +31,11 @@ com colisões nas bases dos móveis. O painel do alarme, a pista e a escotilha
 seguem as posições desse interior; o percurso contorna a prateleira central.
 Essa arte interna é carregada separadamente do mapa exterior melhorado.
 
-Leia as placas com **E** e fale com a jardineira no pátio, o técnico perto
-da ponte e a pesquisadora no viveiro. As falas acompanham o progresso na
-campanha. Na caixa de diálogo, **E** ou **Enter** avança ou encerra a conversa,
-e **Esc** fecha a caixa.
+Leia as placas com **E** e fale com Lia, a jardineira no pátio, Bento, o técnico
+perto da ponte, e Íris, a pesquisadora no viveiro. As falas acompanham o progresso na
+campanha: pedidos de ajuda dão lugar a agradecimentos e dicas da etapa seguinte.
+Na caixa de diálogo, **E** ou **Enter** completa o texto em animação; outro toque
+avança ou encerra a conversa. **Esc** fecha a caixa.
 
 1. Entre no depósito e vença a Babosa para receber a **Chave da Manutenção**.
 2. Na casa de manutenção, desative o alarme, registre a pista e abra a
@@ -45,6 +46,16 @@ e **Esc** fecha a caixa.
 4. A válvula da água e a segunda pista ficam do outro lado da ponte. A porta
    do viveiro abre quando `Água E Luz E NÃO Alarme` vale. Depois da primeira
    entrada, a porta permanece liberada.
+
+## Placas e pistas
+
+A placa de entrada orienta até Lia e indica depósito e manutenção em relação ao
+pátio. O aviso extra junto à ponte foi removido: Bento e o painel de condições
+já explicam os canais e a pressão.
+
+A placa dos canais revela a regra 3 (`E = B XOR F`) e o bilhete da manutenção
+revela a regra 8 (`SE D, ENTÃO C`). As duas leituras explicam o significado da
+regra, registram a pista e continuam disponíveis para releitura.
 
 ## Ponte
 
@@ -76,7 +87,7 @@ a composição escolhida. Uma derrota ou recuo leva o jogador de volta ao
 pátio, preservando o progresso do mapa.
 
 Vencer o Girassol no viveiro libera a central. Uma regra pede a pista dos
-canais e outra pede a pista da cabine do alarme. O painel tem oito relés e
+canais e outra pede a pista do bilhete na casa de manutenção. O painel tem oito relés e
 nove restrições simultâneas. Elas combinam XOR, equivalência, implicação e
 uma contagem exata de relés ligados. Há uma única configuração válida
 entre as 256 possíveis.
@@ -87,7 +98,9 @@ essas regras forem verdadeiras. Se uma tentativa falhar, a central mostra
 a primeira regra violada. As nove precisam valer juntas na última etapa.
 Use **seta esquerda** para rever a regra anterior e **Esc** para fechar
 a central. A etapa, a configuração e as tentativas são preservadas ao sair
-do painel. Depois de resolver, **Enter** ou **Esc** retorna ao menu.
+do painel. Depois de resolver, Íris agradece em uma conversa com o nome do jogador.
+Ao fechar essa conversa, a tela de conclusão permite voltar ao menu com
+**Enter** ou **Esc**.
 
 ## Implementação e teste
 

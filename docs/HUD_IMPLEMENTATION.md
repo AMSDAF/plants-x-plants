@@ -37,7 +37,8 @@ horizontal com o objeto. Não há texto de interação junto ao alvo, círculo
 amarelo nem marca desenhada no chão.
 
 Sem alvo, o painel e a seta somem. Diálogo, central de relés e resultado
-substituem o HUD de exploração. As condições da ponte e do viveiro também
+substituem o HUD de exploração. Os diálogos usam a moldura botânica e o layout
+descrito em [DIALOGUE_UI.md](DIALOGUE_UI.md). As condições da ponte e do viveiro também
 usam painéis creme. O rodapé permanente de controles e as etiquetas F6/F8
 foram retirados da cena; os atalhos continuam funcionando. Não foi criado
 o menu de ajuda por Tab sugerido em uma das alternativas visuais.
@@ -62,8 +63,9 @@ conceitos não são coladas na tela nem usadas como textura de texto.
 
 ## Fonte
 
-O HUD de exploração, os diálogos e a central usam Atkinson Hyperlegible Next,
-priorizando a leitura.
+O HUD de exploração e a central usam Atkinson Hyperlegible Next,
+priorizando a leitura. Diálogos usam Pixelify Sans para acompanhar a moldura
+botânica; detalhes e reservas estão em `DIALOGUE_UI.md`.
 Os demais painéis creme mantêm contorno duplo, cantos em degraus e sombra sólida.
 O aviso de interação usa borda simples e uma tecla quadrada compacta, sem sombra.
 As demais telas usam Atkinson Hyperlegible Next Regular e Semibold. Os TTFs estáticos,
