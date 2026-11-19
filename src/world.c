@@ -1258,14 +1258,6 @@ static void draw_sign(Texture2D atlas, Object object)
     }
 }
 
-void world_draw_bridge_sign_foreground(const World *world, const WorldAssets *assets, Vector2 feet)
-{
-    Vector2 base = objects[BRIDGE_SIGN].position;
-    if (world->location == WORLD_EXTERIOR && feet.y < base.y &&
-        feet.x >= base.x - 23 && feet.x <= base.x + 23)
-        draw_sign(assets->tiles, BRIDGE_SIGN);
-}
-
 void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets)
 {
     if (world->location == WORLD_EXTERIOR) {
