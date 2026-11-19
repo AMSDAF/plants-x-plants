@@ -31,8 +31,6 @@ typedef enum {
     INTERIOR_DOOR,
     LOCKED_HATCH,
     BASEMENT_HATCH,
-    UPPER_LIFT,
-    LOWER_LIFT,
     RELAY_PANEL,
     ENTRANCE_SIGN,
     GARDENER,
@@ -64,8 +62,6 @@ static const MapObject objects[OBJECT_COUNT] = {
     [INTERIOR_DOOR] = {{640, 565}, WORLD_MAINTENANCE},
     [LOCKED_HATCH] = {{846, 416}, WORLD_MAINTENANCE},
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
-    [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
-    [LOWER_LIFT] = {{900, 445}, WORLD_BASEMENT},
     [RELAY_PANEL] = {{782, 315}, WORLD_NURSERY},
     [ENTRANCE_SIGN] = {{487, 787}, WORLD_EXTERIOR},
     [GARDENER] = {{630, 507}, WORLD_EXTERIOR},
@@ -222,7 +218,8 @@ static const Rectangle depot_furniture[] = {
     {850, 265, 80, 125}, {925, 405, 55, 155}, {300, 495, 112, 68}
 };
 static const Rectangle basement_furniture[] = {
-    {300, 327, 148, 48}, {414, 320, 270, 45}, {658, 318, 245, 58},
+    {300, 260, 114, 82}, /* Parede de tijolos à esquerda, acima do piso livre. */
+    {414, 320, 270, 45}, {658, 318, 245, 58},
     {910, 325, 67, 132}, {300, 426, 77, 130}, {918, 430, 58, 125},
     {300, 548, 300, 28}, {680, 548, 300, 28}
 };
@@ -637,7 +634,7 @@ static void talk_to_gardener(World *world, const char *player_name)
         second = "O depósito é o prédio grande de telhado terracota, acima de mim. Vença a Babosa e leve a chave até a casa de manutenção.";
     } else if (!world->light) {
         first = "Você trouxe a chave! Obrigada. Agora falta acender o refletor. Entre na manutenção e desça pela escotilha.";
-        second = "No subsolo, ligue a energia no painel e volte pela escotilha. O elevador para quando a energia vai para o refletor.";
+        second = "No subsolo, ligue o refletor no painel. Depois, volte pela mesma escotilha; o caminho continua livre.";
     } else if (world->alarm) {
         first = "Olha o refletor aceso! As plantas já estavam sentindo falta. Pode me ajudar com mais uma coisa? O alarme ainda está ligado.";
         second = world->water ?
@@ -711,9 +708,7 @@ static void talk_to_researcher(World *world, const char *player_name)
 
 static HudInteractionState interaction_state(const World *world, Object object)
 {
-    if ((object == UPPER_LIFT && !world->basement_visited) ||
-        ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light) ||
-        (object == LOCKED_HATCH && !world->maintenance_key) ||
+    if ((object == LOCKED_HATCH && !world->maintenance_key) ||
         (object == NURSERY_DOOR && !world_gate_open(world)) ||
         (object == RELAY_PANEL && !world->guardian_defeated)) return HUD_INTERACTION_BLOCKED;
     return HUD_INTERACTION_AVAILABLE;
@@ -773,13 +768,6 @@ WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_na
             travel(world, feet, WORLD_MAINTENANCE,
                    (Vector2){objects[LOCKED_HATCH].position.x,
                              objects[LOCKED_HATCH].position.y + 54});
-            break;
-        case UPPER_LIFT:
-            if (world->basement_visited && !world->light)
-                travel(world, feet, WORLD_BASEMENT, objects[LOWER_LIFT].position);
-            break;
-        case LOWER_LIFT:
-            if (!world->light) travel(world, feet, WORLD_EXTERIOR, objects[UPPER_LIFT].position);
             break;
         case RELAY_PANEL: world->relay_panel_open = world->guardian_defeated; break;
         case ENTRANCE_SIGN:
@@ -1047,14 +1035,10 @@ static void draw_tiled_exterior(const World *world, Texture2D atlas)
     draw_map_sprite(atlas, (Rectangle){216, 316, 23, 30}, objects[CANAL_NOTE].position, 11);
     draw_map_sprite(atlas, (Rectangle){248, 316, 18, 16}, objects[DRAIN].position, 9);
     draw_map_sprite(atlas, (Rectangle){376, 316, 25, 20}, objects[VALVE].position, 12);
-    draw_map_sprite(atlas, (Rectangle){408, 316, 19, 23}, objects[UPPER_LIFT].position, 9);
     Vector2 drain = objects[DRAIN].position;
     DrawCircle((int)drain.x + 14, (int)drain.y - 27, 4, world->drain_open ? LIME : ORANGE);
     Vector2 valve = objects[VALVE].position;
     DrawCircle((int)valve.x + 22, (int)valve.y - 35, 4, world->water ? LIME : ORANGE);
-    Vector2 lift = objects[UPPER_LIFT].position;
-    bool lift_available = world->basement_visited && !world->light;
-    DrawCircle((int)lift.x + 16, (int)lift.y - 37, 4, lift_available ? LIME : ORANGE);
 }
 
 static void draw_exterior(const UiTheme *ui, const World *world, const WorldAssets *assets)
@@ -1089,12 +1073,10 @@ static void draw_exterior(const UiTheme *ui, const World *world, const WorldAsse
     }
 
     if (assets->courtyard.id && assets->tiles.id) {
-        draw_map_sprite(assets->tiles, (Rectangle){408, 316, 19, 23}, objects[UPPER_LIFT].position, 9);
         DrawCircle(744, 538, 3, world->drain_open ? LIME : ORANGE);
         DrawCircle(1194, 638, 3, world->water ? LIME : ORANGE);
     } else {
         draw_switch(ui, DRAIN, "Dreno", world->drain_open);
-        draw_switch(ui, UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
     }
 }
 
@@ -1172,14 +1154,11 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
             break;
         case WORLD_BASEMENT:
             if (assets->basement_interior.id) {
-                /* Luzes de estado alinhadas ao painel e Ã  grade do elevador da arte. */
+                /* Indicador do painel que alimenta o refletor. */
                 DrawCircle(615, 330, 5, world->light ? (Color){91, 190, 78, 255}
                                                       : (Color){207, 68, 48, 255});
-                DrawCircle(900, 419, 5, world->light ? (Color){207, 68, 48, 255}
-                                                      : (Color){91, 190, 78, 255});
             } else {
                 draw_switch(ui, POWER, "Distribuidor de energia", world->light);
-                draw_switch(ui, LOWER_LIFT, "Elevador", !world->light);
                 draw_room_portal(ui, BASEMENT_HATCH, "Subir pela escotilha", false);
             }
             break;
@@ -1451,8 +1430,6 @@ static const char *interaction_hint(const World *world, Object object)
         [INTERIOR_DOOR] = "Voltar ao pátio",
         [LOCKED_HATCH] = "Descer pela escotilha",
         [BASEMENT_HATCH] = "Subir pela escotilha",
-        [UPPER_LIFT] = "Descer pelo elevador",
-        [LOWER_LIFT] = "Subir pelo elevador",
         [RELAY_PANEL] = "Abrir central de relés",
         [ENTRANCE_SIGN] = "Ler placa do jardim",
         [GARDENER] = "Falar com Lia",
@@ -1460,10 +1437,7 @@ static const char *interaction_hint(const World *world, Object object)
         [RESEARCHER] = "Falar com Íris"
     };
     if (object == DRAIN) return world->drain_open ? "Fechar dreno" : "Abrir dreno";
-    if (object == POWER) return world->light ? "Alimentar elevador" : "Alimentar refletor";
-    if (object == UPPER_LIFT && !world->basement_visited) return "Elevador travado. Use a escotilha primeiro.";
-    if ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light)
-        return "Elevador sem energia. Volte pela escotilha.";
+    if (object == POWER) return world->light ? "Desligar refletor" : "Ligar refletor";
     if (object == LOCKED_HATCH && !world->maintenance_key)
         return "Escotilha trancada. A Babosa guarda a chave.";
     if (object == NURSERY_DOOR && !world_gate_open(world))
@@ -1487,7 +1461,7 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [ALARM_NOTE]="Bilhete da manutenção", [MAINTENANCE_DOOR]="Casa de manutenção",
         [DEPOT_DOOR]="Depósito", [NURSERY_DOOR]="Viveiro", [BRIDGE_CONTROL_DOOR]="Controle da ponte",
         [INTERIOR_DOOR]="Saída", [LOCKED_HATCH]="Escotilha de manutenção", [BASEMENT_HATCH]="Escotilha",
-        [UPPER_LIFT]="Elevador", [LOWER_LIFT]="Elevador", [RELAY_PANEL]="Central de relés",
+        [RELAY_PANEL]="Central de relés",
         [ENTRANCE_SIGN]="Placa do jardim", [GARDENER]="Lia",
         [TECHNICIAN]="Bento", [RESEARCHER]="Íris"
     };
@@ -1500,7 +1474,7 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
         [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},
         [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
-        [UPPER_LIFT]={430, 434}, [LOWER_LIFT]={900, 426}, [RELAY_PANEL]={782, 296},
+        [RELAY_PANEL]={782, 296},
         [ENTRANCE_SIGN]={483, 747},
         [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
     };

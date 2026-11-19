@@ -385,8 +385,7 @@ static void check_greenhouse(Game *game)
     walk_axis(game, true, 630);
     assert(game->player.feet.x < 622); /* Os pés da jardineira bloqueiam a passagem. */
     walk_axis(game, false, 479);
-    interact_at(game, 429, 479);
-    assert(world->location == WORLD_EXTERIOR && !world->basement_visited);
+    assert(world_interaction_view(world, (Vector2){429,479}).state == HUD_INTERACTION_NONE);
     enter_maintenance(game);
     Camera2D room_camera = world_camera(world);
     assert(fabsf(room_camera.zoom - (1280.0f / 720.0f) * 0.68f) < 0.001f);
@@ -461,16 +460,16 @@ static void check_greenhouse(Game *game)
     interact_at(game, 846, 416);
     assert(world->location == WORLD_BASEMENT && world->basement_visited);
     capture(game, target, "build/name_entry_preview/greenhouse_basement.png");
-    walk_axis(game, false, 480);
-    interact_at(game, 890, 445);
-    assert(world->location == WORLD_EXTERIOR);
-    key(game, KEY_E);
+    Vector2 clear_floor = world_constrain(world, (Vector2){350,390}, (Vector2){350,360});
+    assert(clear_floor.x == 350 && clear_floor.y == 360);
+    assert(world_interaction_view(world, (Vector2){890,445}).state == HUD_INTERACTION_NONE);
+    interact_at(game, 640, 572);
+    assert(world->location == WORLD_MAINTENANCE);
+    interact_at(game, 846, 416);
     assert(world->location == WORLD_BASEMENT);
     interact_at(game, 640, 320);
     assert(world->light);
-    walk_axis(game, false, 480);
-    interact_at(game, 890, 445);
-    assert(world->location == WORLD_BASEMENT); /* O refletor desligou o elevador. */
+    assert(world_interaction_view(world, (Vector2){890,445}).state == HUD_INTERACTION_NONE);
     interact_at(game, 640, 572);
     assert(world->location == WORLD_MAINTENANCE);
     interact_at(game, 640, 572);
@@ -620,7 +619,7 @@ static void check_greenhouse(Game *game)
     key(game, KEY_ENTER);
     assert(game->screen == GAME_MENU);
     UnloadRenderTexture(target);
-    puts("PASS: diálogos, placas, prédios, guardiões, chave, elevador, ponte, pistas e saída.");
+    puts("PASS: diálogos, placas, prédios, guardiões, chave, subsolo, ponte, pistas e saída.");
 }
 
 int main(void)

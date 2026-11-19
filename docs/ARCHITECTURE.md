@@ -218,7 +218,7 @@ O combate da campanha inclui:
 - Visual provisório, sem depender de sprites finalizados.
 
 Após personagem e nome, a campanha abre um mapa com câmera, fachadas e interiores conectados
-por portas, escotilha e elevador. Guardiões e controles distribuídos liberam
+por portas e escotilha. Guardiões e controles distribuídos liberam
 a central de relés, que valida nove restrições antes da saída.
 A progressão por arenas,
 recrutamento e evolução permanece planejada.

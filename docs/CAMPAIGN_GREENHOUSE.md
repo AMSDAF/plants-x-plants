@@ -7,7 +7,7 @@ Use **WASD** ou **setas** para mover, segure **Shift** para correr e pressione
 ## Prédios e acesso ao viveiro
 
 A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
-uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
+uma porta, atravessar a escotilha ou voltar ao pátio após uma derrota. A casa de
 manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
 Os interiores mantêm 720 × 420 unidades lógicas, centralizados com margens
 e zoom 1, sem ampliação para preencher a tela, inclusive no modo tela cheia.
@@ -40,9 +40,9 @@ avança ou encerra a conversa. **Esc** fecha a caixa.
 1. Entre no depósito e vença a Babosa para receber a **Chave da Manutenção**.
 2. Na casa de manutenção, desative o alarme, registre a pista e abra a
    escotilha com a chave. A escotilha dá o primeiro acesso ao subsolo.
-3. No subsolo, o distribuidor alimenta o elevador ou o refletor. O elevador
-   vira um atalho após a primeira descida. Quando a energia vai para o
-   refletor, a escotilha continua disponível para voltar.
+3. No subsolo, ligue o refletor no painel de energia e retorne pela escotilha.
+   A escotilha conecta o subsolo à casa de manutenção em ambos os sentidos,
+   independentemente do estado do refletor.
 4. A válvula da água e a segunda pista ficam do outro lado da ponte. A porta
    do viveiro abre quando `Água E Luz E NÃO Alarme` vale. Depois da primeira
    entrada, a porta permanece liberada.
@@ -120,7 +120,7 @@ cmake --build build --target plants_x_plants name_entry_check
 
 O teste percorre a missão depois de confirmar o nome. Verifica a colisão
 das fachadas e paredes, as oito combinações da ponte e suas duas soluções,
-a escotilha e o elevador antes e depois da chave, o retorno
+a escotilha antes e depois da chave, o retorno
 com progresso após derrota, o acesso ao viveiro e a coleta de pistas.
 Também valida a solução única entre as 256 configurações da central, o
 avanço guiado, o retorno a uma regra quebrada e a conclusão.
