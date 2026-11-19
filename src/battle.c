@@ -19,6 +19,16 @@ static int has_low_hp(const Team *team)
     return Plant_IsAlive(plant) && plant->current_hp <= plant->max_hp / 2;
 }
 
+static int calculate_damage(const Move *move, const Plant *attacker, const Plant *defender)
+{
+    /* O protótipo não usa níveis; o multiplicador fica neutro até incluir críticos. */
+    const double multipliers = 1.0;
+    const double defense = defender->defense > 0 ? defender->defense : 1.0;
+    const double base_damage = ((double)move->power * attacker->attack / defense / 2.0) + 2.0;
+    int damage = (int)(base_damage * multipliers);
+    return damage > 0 ? damage : 1;
+}
+
 static int evaluate_condition(LogicCondition condition, const Team *own, const Team *enemy)
 {
     switch (condition) {
@@ -52,23 +62,26 @@ LogicEvaluation Battle_EvaluateFormula(const BattleState *battle, int side, Logi
     return value;
 }
 
-const Move *Battle_LogicMove(LogicOperator operator)
+int Battle_GetFormulaPowerBonus(LogicOperator operator)
 {
-    static const Move moves[LOGIC_OPERATOR_COUNT] = {
-        [LOGIC_AND] = {"Golpe Lógico", 60, 100},
-        [LOGIC_OR] = {"Golpe Lógico", 45, 100},
-        [LOGIC_XOR] = {"Golpe Lógico", 55, 100}
-    };
-    if (operator < 0 || operator >= LOGIC_OPERATOR_COUNT) return NULL;
-    return &moves[operator];
+    static const int power_bonus[LOGIC_OPERATOR_COUNT] = {60, 45, 55};
+    if (operator < 0 || operator >= LOGIC_OPERATOR_COUNT) return 0;
+    return power_bonus[operator];
 }
 
-const Move *Battle_GetAvailableLogicMove(const BattleState *battle)
+int Battle_GetMovePower(const BattleState *battle, int side, int move_index)
 {
-    if (battle->state != BATTLE_STATE_ONGOING) return NULL;
-    LogicFormula formula = battle->formulas[battle->current_turn];
-    if (!Battle_EvaluateFormula(battle, battle->current_turn, formula).result) return NULL;
-    return Battle_LogicMove(formula.operator);
+    if (side < 0 || side > 1 || move_index < 0 || move_index >= MAX_MOVES) return 0;
+
+    const Team *team = side == 0 ? &battle->player_team : &battle->enemy_team;
+    if (team->active_index < 0 || team->active_index >= team->count) return 0;
+    const Move *move = &team->plants[team->active_index].moves[move_index];
+    LogicFormula formula = battle->formulas[side];
+    if (move_index != battle->boosted_move_indices[side] ||
+        !Battle_EvaluateFormula(battle, side, formula).result)
+        return move->power;
+
+    return move->power + Battle_GetFormulaPowerBonus(formula.operator);
 }
 
 void Battle_Init(BattleState *battle, Team player_team, Team enemy_team)
@@ -83,7 +96,7 @@ void Battle_Init(BattleState *battle, Team player_team, Team enemy_team)
 
 int Battle_ExecuteMove(BattleState *battle, int move_index)
 {
-    if (battle->state != BATTLE_STATE_ONGOING || move_index < 0 || move_index > BATTLE_LOGIC_MOVE_INDEX)
+    if (battle->state != BATTLE_STATE_ONGOING || move_index < 0 || move_index >= MAX_MOVES)
         return 0;
 
     Team *attacker_team = battle->current_turn == 0 ? &battle->player_team : &battle->enemy_team;
@@ -94,9 +107,9 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
     if (!attacker || !defender || !Plant_IsAlive(attacker) || !Plant_IsAlive(defender))
         return 0;
 
-    const Move *move = move_index == BATTLE_LOGIC_MOVE_INDEX
-        ? Battle_GetAvailableLogicMove(battle) : &attacker->moves[move_index];
-    if (!move) return 0;
+    const Move *move = &attacker->moves[move_index];
+    Move effective_move = *move;
+    effective_move.power = Battle_GetMovePower(battle, battle->current_turn, move_index);
     if (move->accuracy < 100 && rand() % 100 >= move->accuracy) {
         snprintf(battle->last_message, sizeof(battle->last_message),
                  "%s errou %s!", attacker->name_pt, move->name);
@@ -104,15 +117,15 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
         return 1;
     }
 
-    int raw_damage = move->power + attacker->attack - defender->defense / 2;
-    if (raw_damage < 5) raw_damage = 5;
+    int raw_damage = calculate_damage(&effective_move, attacker, defender);
 
     int previous_hp = defender->current_hp;
     Plant_TakeDamage(defender, raw_damage);
     int damage = previous_hp - defender->current_hp;
     int knocked_out = !Plant_IsAlive(defender);
     snprintf(battle->last_message, sizeof(battle->last_message),
-             "%s usou %s: %d de dano.%s", attacker->name_pt, move->name,
+             "%s usou %s%s: %d de dano.%s", attacker->name_pt, move->name,
+             effective_move.power > move->power ? " fortalecido" : "",
              damage, knocked_out ? " Planta derrotada!" : "");
 
     Battle_CheckConditions(battle);

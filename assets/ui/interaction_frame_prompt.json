@@ -1,0 +1,21 @@
+{
+  "generator": "image_gen (built-in)",
+  "prompt": "Use case: ui-mockup. Generate ONE isolated blank compact HUD interaction prompt frame for Plants x Plants, using attached dialogue skin as the exact visual style reference. This is a concept asset to preview a small game interaction notice, NOT a large dialogue box. A single shallow horizontal cream parchment plaque approximately 6 times wider than tall. Thin honey/terracotta wooden bevel, dark brown outside contour, fine forest-green inner hairline, restrained wood grain, tiny leaf clusters at only top-left and bottom-right corners, small brass corner fastenings. Closely match reference's delicate warm wood and cream colors and pixel-art workmanship. Botanical but compact, decoration should not overwhelm a short label. Interior is completely empty opaque cream with enough room for a keycap and label drawn later. No portrait compartment, no vertical divider, no nameplate, NO TEXT OR LETTERS OR NUMBERS, no keycap, no icons, no arrows. Entire frame front-on and axis aligned; consistent pixel-art grid; small clipped outer corners. Genuine transparent alpha outside the outer dark contour with no white fringe, NO white backdrop and no checkerboard drawn in. Center this one wide short plaque on the canvas with transparent padding. Requested design base approximately480x80 pixels. Preserve cream opaque inside; transparent exterior only. Do not generate an atlas or multiple frames.",
+  "font": "assets/fonts/pixelify_sans_regular.ttf",
+  "file": "assets/ui/interaction_frame.png",
+  "description": "Moldura aprovada para avisos de interação. Texto dinâmico em Pixelify Sans, sem tecla em quadrado.",
+  "rendering": {
+    "source": "Região visível calculada pelo alfa na carga",
+    "source_corners": "x = 75% da altura útil; y = 48% da altura útil",
+    "logical_corners": {
+      "x": 38,
+      "y": 34
+    },
+    "font_size": 28,
+    "maximum_width": 560,
+    "heights": [
+      76,
+      104
+    ]
+  }
+}

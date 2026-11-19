@@ -23,8 +23,9 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 |---|---|
 | `src/main.c` | Abrir a janela, executar o loop principal e encerrar o programa. |
 | `include/game_canvas.h`, `src/game_canvas.c` | Gerenciar o alvo na resolução física do viewport, mantendo coordenadas lógicas de 1280 × 720, enquadramento, mouse e recortes de interface. O alvo é recriado somente ao mudar de tamanho. |
-| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus. `Game` possui os recursos e os passa explicitamente às telas. |
-| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo, pistas, instrução inferior e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
+| `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify dos diálogos e do HUD, as molduras de interação e diálogo e os três retratos, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus ou botânicas compartilhadas. `Game` possui os recursos e os passa explicitamente às telas. |
+| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo, pistas, aviso botânico inferior com indicação textual de E e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
+| `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |
 
@@ -40,7 +41,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/selection_ui.h`, `src/selection_ui.c` | Paleta, geometria em degraus, cantos laranja e cursor pulsante compartilhados entre seleção e nome, centralização de texto e descarte de entrada. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
-| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, avaliação das fórmulas, colisão da caixa dos pés e das portas interiores, câmera de tela inteira, HUD contextual e profundidade do aviso da ponte. |
+| `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, relógio e entrada dos diálogos, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels) e das portas interiores, câmera de tela inteira, HUD contextual e profundidade do aviso da ponte. |
 | `tools/prepare_courtyard_detail.py`, `include/courtyard_detail_data.h` | Unir os quatro quadrantes em 3010 × 1694, com iluminação local da base e costuras de menor diferença. Preserva a fonte e o primeiro resultado aprovado. `WorldAssets` carrega a textura completa opcional; `World.detail_enabled` permite comparação por F8. |
 | `tools/check_game_canvas.c` | Verificar resolução física, HiDPI, enquadramento, mouse, recorte, câmera, quadrante, ausência de recurso e ponte em OpenGL. |
 | `tools/check_exploration_hud.c` | Verificar tipografia, acentos, estados e alvo compartilhado da interação, centralização, seta, resoluções, fonte de reserva e desenho imutável. Capturas em `build/hud_preview/`. |
@@ -112,11 +113,13 @@ Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a in
 Uma ação inválida não deve alterar a batalha nem consumir o turno.
 
 O jogador escolhe de duas a quatro das 12 espécies catalogadas em `plant_data.c`; os guardiões têm equipes predefinidas.
-O Golpe Lógico tem uma fórmula por equipe. `battle_screen.c` coleta as duas
-condições e o operador antes da partida e mostra os valores durante os turnos.
-`battle.c` interpreta a fórmula, resolve a disponibilidade e executa o golpe
-pela mesma função usada para os golpes das espécies. A CPU consulta essa
-disponibilidade antes de escolher uma ação. Os encontros seguintes preservam a fórmula do jogador.
+Cada equipe associa duas condições e um operador a um dos dois espaços de golpe.
+Quando a fórmula é verdadeira, o golpe daquele espaço recebe um bônus de poder;
+o efeito acompanha a equipe quando sua planta ativa muda. `battle_screen.c`
+coleta a fórmula e o espaço escolhido e mostra os valores durante os turnos.
+`battle.c` avalia a fórmula e aplica o bônus ao executar um golpe normal. A CPU
+considera o mesmo bônus ao escolher uma ação. Os encontros seguintes preservam
+a configuração do jogador.
 
 ### Adversário controlado pelo computador
 
@@ -217,7 +220,7 @@ O combate da campanha inclui:
 - Visual provisório, sem depender de sprites finalizados.
 
 Após personagem e nome, a campanha abre um mapa com câmera, fachadas e interiores conectados
-por portas, escotilha e elevador. Guardiões e controles distribuídos liberam
+por portas e escotilha. Guardiões e controles distribuídos liberam
 a central de relés, que valida nove restrições antes da saída.
 A progressão por arenas,
 recrutamento e evolução permanece planejada.

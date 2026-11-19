@@ -212,11 +212,21 @@ Na central, use **1–8** ou clique nos relés e pressione **Enter** para valida
 uma regra por vez. Se uma regra anterior falhar, a central volta para ela.
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
-O HUD de exploração usa painéis creme com bordas em degraus, fonte Atkinson
-Hyperlegible Next e uma seta em pixel art para o alvo. A instrução de
-interação aparece no centro inferior; E só é indicado quando a ação está
-disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
+O HUD de exploração usa molduras botânicas de madeira, fundo creme, fonte
+Pixelify Sans e uma seta em pixel art para o alvo. Objetivo/local, pistas e
+condições da ponte e do viveiro seguem a mesma estética. A instrução de
+interação aparece no centro inferior, com moldura de madeira e folhas e fonte
+Pixelify Sans. A frase “Pressione E para…” aparece só quando a ação está disponível. A fonte Atkinson Hyperlegible Next acompanha o jogo e é usada
 nas demais telas, sem instalação no Windows. Detalhes em [HUD_IMPLEMENTATION.md](docs/HUD_IMPLEMENTATION.md).
+
+Os diálogos usam fonte Pixelify Sans, moldura de madeira com folhas, texto à esquerda e retrato com
+nome à direita. Lia (jardineira), Bento (técnico) e Íris (pesquisadora) têm retratos próprios.
+Cada um se apresenta no primeiro contato e usa o nome escolhido pelo jogador.
+Os pedidos de ajuda, as dicas seguintes e os agradecimentos acompanham o progresso.
+Ao resolver a central, Íris agradece antes da tela de conclusão.
+Se uma imagem faltar, aparece a inicial do personagem. O texto aparece letra por letra; E/Enter completa a fala e,
+no próximo toque, avança ou fecha. ESC fecha a conversa. Textos e nomes continuam dinâmicos. Consulte
+[DIALOGUE_UI.md](docs/DIALOGUE_UI.md).
 
 Os quatro quadrantes melhorados estão integrados ao mapa completo, com
 3010 × 1694 pixels. O background original foi preservado. Veja a resolução real,
@@ -273,11 +283,11 @@ cmake --build build --target selection_scene_check
 O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
 
 Na campanha, o primeiro encontro com um guardião abre a montagem da equipe e
-do **Golpe Lógico**. Escolha de duas a quatro plantas com **Q/W/E/R**, **setas**
+da fórmula de fortalecimento. Escolha de duas a quatro plantas com **Q/W/E/R**, **setas**
 e **Espaço**, ou clique nos cartões. **Backspace** remove uma reserva; **ENTER**
-confirma. Na fórmula, **Q/W** escolhem condições, **E** muda o operador e
-**ENTER** confirma. Durante a batalha, **1/2** usam os golpes da espécie,
-**3** usa o Golpe Lógico e **Q/W/E/R** trocam a planta ativa.
+confirma. Na fórmula, **Q/W** escolhem condições, **E** muda o operador,
+**1/2** escolhem qual golpe receberá o bônus, e **ENTER** confirma. Durante a
+batalha, **1/2** usam os golpes da espécie e **Q/W/E/R** trocam a planta ativa.
 **ENTER** no resultado ou **ESC** retorna à estufa. Consulte
 [o relatório do combate](docs/BATTLE_PROTOTYPE.md).
 

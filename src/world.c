@@ -1,10 +1,14 @@
 /* Desenha a estufa e resolve os obstáculos a partir das proposições do cenário. */
 #include "world.h"
+#include "dialogue_ui.h"
 #include "ui_theme.h"
 #include "game_view.h"
 #include "courtyard_detail_data.h"
 #include <math.h>
 #include <stddef.h>
+#include <stdio.h>
+
+static void open_dialogue(World *world, const char *title, const char *first, const char *second);
 
 /* Coordenadas do exterior medidas na imagem de referência. */
 enum { MAP_WIDTH = 1672, MAP_HEIGHT = 941 };
@@ -27,11 +31,8 @@ typedef enum {
     INTERIOR_DOOR,
     LOCKED_HATCH,
     BASEMENT_HATCH,
-    UPPER_LIFT,
-    LOWER_LIFT,
     RELAY_PANEL,
     ENTRANCE_SIGN,
-    BRIDGE_SIGN,
     GARDENER,
     TECHNICIAN,
     RESEARCHER,
@@ -61,11 +62,8 @@ static const MapObject objects[OBJECT_COUNT] = {
     [INTERIOR_DOOR] = {{640, 565}, WORLD_MAINTENANCE},
     [LOCKED_HATCH] = {{846, 416}, WORLD_MAINTENANCE},
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
-    [UPPER_LIFT] = {{429, 479}, WORLD_EXTERIOR},
-    [LOWER_LIFT] = {{900, 445}, WORLD_BASEMENT},
     [RELAY_PANEL] = {{782, 315}, WORLD_NURSERY},
     [ENTRANCE_SIGN] = {{487, 787}, WORLD_EXTERIOR},
-    [BRIDGE_SIGN] = {{770, 625}, WORLD_EXTERIOR},
     [GARDENER] = {{630, 507}, WORLD_EXTERIOR},
     [TECHNICIAN] = {{868, 600}, WORLD_EXTERIOR},
     [RESEARCHER] = {{790, 485}, WORLD_NURSERY}
@@ -220,7 +218,8 @@ static const Rectangle depot_furniture[] = {
     {850, 265, 80, 125}, {925, 405, 55, 155}, {300, 495, 112, 68}
 };
 static const Rectangle basement_furniture[] = {
-    {300, 327, 148, 48}, {414, 320, 270, 45}, {658, 318, 245, 58},
+    {300, 260, 114, 82}, /* Parede de tijolos à esquerda, acima do piso livre. */
+    {414, 320, 270, 45}, {658, 318, 245, 58},
     {910, 325, 67, 132}, {300, 426, 77, 130}, {918, 430, 58, 125},
     {300, 548, 300, 28}, {680, 548, 300, 28}
 };
@@ -393,7 +392,7 @@ static bool relay_clue_available(const World *world)
     return true;
 }
 
-void world_update_relay_panel(World *world)
+void world_update_relay_panel(World *world, const char *player_name)
 {
     if (!world->relay_panel_open) return;
     if (IsKeyPressed(KEY_ESCAPE) || clicked(close_relays)) {
@@ -423,6 +422,11 @@ void world_update_relay_panel(World *world)
         } else if (world->relay_step == WORLD_RELAY_RULE_COUNT - 1) {
             world->completed = true;
             world->relay_panel_open = false;
+            const char *name = player_name && player_name[0] ? player_name : "visitante";
+            snprintf(world->dialogue_greeting, sizeof(world->dialogue_greeting),
+                     "%s, você conseguiu! A central passou em todos os testes. Obrigada por topar essa investigação comigo!", name);
+            open_dialogue(world, "Íris", world->dialogue_greeting,
+                          "Com a central resolvida, podemos voltar a cuidar das plantas. Obrigada por ajudar a mim, à Lia e ao Bento!");
         } else {
             world->relay_step++;
         }
@@ -549,81 +553,171 @@ static void open_dialogue(World *world, const char *title, const char *first, co
     world->dialogue_title = title;
     world->dialogue_pages[0] = first;
     world->dialogue_pages[1] = second;
+    world->dialogue_pages[2] = NULL;
     world->dialogue_page = 0;
+    world->dialogue_visible_characters = 0;
+    world->dialogue_character_timer = 0;
 }
 
-void world_update_dialogue(World *world)
+/* A apresentação precede as pistas, sem descartar as páginas da missão. */
+static void open_character_dialogue(World *world, Object character, const char *player_name,
+                                    const char *title, const char *first, const char *second)
+{
+    static const char *const introductions[WORLD_NPC_COUNT] = {
+        "Você deve ser %s! Eu sou a Lia. Cuido desse jardim — e ele anda me dando trabalho por três. Ainda bem que você chegou.",
+        "Ah, você é %s? Sou o Bento. Se alguma coisa aqui emperra, me chamam. Hoje resolveram emperrar todas juntas.",
+        "%s, certo? Sou a Íris. Estudo as plantas daqui. Você precisa ver o que descobri sobre o Girassol… mas vamos por partes."
+    };
+    static const char *const greetings[WORLD_NPC_COUNT] = {
+        "Olha quem voltou, %s! %s",
+        "Ei, %s! %s",
+        "%s! %s"
+    };
+    int index = character-GARDENER;
+    const char *name = player_name && player_name[0] ? player_name : "visitante";
+    open_dialogue(world, title, first, second);
+    if (!world->npc_introduced[index]) {
+        const char *format = introductions[index];
+        if (character == RESEARCHER && world->npc_introduced[0])
+            format = "%s, certo? A Lia comentou que você vinha! Sou a Íris. Estudo as plantas daqui. Você precisa ver o que descobri sobre o Girassol… mas vamos por partes.";
+        snprintf(world->dialogue_introduction, sizeof(world->dialogue_introduction), format, name);
+        world->dialogue_pages[2] = second;
+        world->dialogue_pages[1] = first;
+        world->dialogue_pages[0] = world->dialogue_introduction;
+        world->npc_introduced[index] = true;
+    } else {
+        snprintf(world->dialogue_greeting, sizeof(world->dialogue_greeting), greetings[index], name, first);
+        world->dialogue_pages[0] = world->dialogue_greeting;
+    }
+}
+
+void world_update_dialogue(World *world, float dt)
 {
     if (!world->dialogue_title) return;
-
+    const char *message = world->dialogue_pages[world->dialogue_page];
+    int total = message ? GetCodepointCount(message) : 0;
     if (IsKeyPressed(KEY_ESCAPE)) {
         world->dialogue_title = NULL;
-    } else if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER)) {
-        if (world->dialogue_page == 0 && world->dialogue_pages[1]) world->dialogue_page = 1;
-        else world->dialogue_title = NULL;
+        return;
+    }
+    if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER)) {
+        if (world->dialogue_visible_characters < total) {
+            /* O toque que revela a fala nunca avança a página no mesmo quadro. */
+            world->dialogue_visible_characters = total;
+            world->dialogue_character_timer = 0;
+        } else if (world->dialogue_page+1 < WORLD_DIALOGUE_PAGE_COUNT && world->dialogue_pages[world->dialogue_page+1]) {
+            world->dialogue_page++;
+            world->dialogue_visible_characters = 0;
+            world->dialogue_character_timer = 0;
+        } else {
+            world->dialogue_title = NULL;
+        }
+        return;
+    }
+    if (world->dialogue_visible_characters < total && isfinite(dt) && dt > 0) {
+        float characters = world->dialogue_character_timer + dt*40.0f;
+        int added = (int)fminf(floorf(characters), total-world->dialogue_visible_characters);
+        world->dialogue_visible_characters += added;
+        world->dialogue_character_timer = world->dialogue_visible_characters < total ? characters-added : 0;
     }
 }
 
-static void talk_to_gardener(World *world)
+static void talk_to_gardener(World *world, const char *player_name)
 {
-    if (!world->maintenance_key) {
-        open_dialogue(world, "Jardineira",
-                      "A Babosa guarda a Chave da Manutenção no depósito.\nÉ o prédio de telhado terracota, a noroeste do pátio.",
-                      "A chave abre a escotilha da casa de telhado verde.\nLá embaixo você pode alimentar o refletor do viveiro.");
-    } else if (!world->light && !world->gate_unlocked) {
-        open_dialogue(world, "Jardineira",
-                      "Com a chave, você pode descer pela escotilha da manutenção.\nNo subsolo, redirecione a energia para o refletor.", NULL);
-    } else if (world->alarm && !world->gate_unlocked) {
-        open_dialogue(world, "Jardineira",
-                      "Ainda falta desligar o alarme.\nO painel fica na casa de manutenção.", NULL);
+    const char *first;
+    const char *second;
+    if (world_gate_open(world)) {
+        first = world->npc_help_thanked[0] ?
+            "O viveiro voltou a receber visitas! Dá gosto ver esse jardim ganhando vida outra vez." :
+            "Você conseguiu reabrir o viveiro! Obrigada por cuidar desse jardim comigo. As plantas ganharam uma boa companhia.";
+        second = "Passe lá para ver a Íris, do outro lado do canal. Ela precisa de ajuda com a central e adora dividir uma descoberta.";
+        world->npc_help_thanked[0] = true;
+    } else if (!world->maintenance_key) {
+        first = "Você me ajuda a cuidar do viveiro? O refletor apagou. A chave da manutenção ficou com a Babosa, no depósito.";
+        second = "O depósito é o prédio grande de telhado terracota, acima de mim. Vença a Babosa e leve a chave até a casa de manutenção.";
+    } else if (!world->light) {
+        first = "Você trouxe a chave! Obrigada. Agora falta acender o refletor. Entre na manutenção e desça pela escotilha.";
+        second = "No subsolo, ligue o refletor no painel. Depois, volte pela mesma escotilha; o caminho continua livre.";
+    } else if (world->alarm) {
+        first = "Olha o refletor aceso! As plantas já estavam sentindo falta. Pode me ajudar com mais uma coisa? O alarme ainda está ligado.";
+        second = world->water ?
+            "O painel fica dentro da casa de manutenção. Com água e luz prontas, só falta esse sossego para abrir o viveiro." :
+            "O painel fica dentro da casa de manutenção. Desligue o alarme por lá; depois podemos cuidar da água.";
+    } else if (!world_bridge_open(world)) {
+        first = "Refletor aceso, alarme quietinho... Só falta a água! Você ajuda o Bento a liberar a ponte? Ele está perto do canal.";
+        second = "A válvula fica do outro lado da ponte, perto do viveiro. Abra a água por lá e a porta do viveiro poderá ser liberada.";
     } else {
-        open_dialogue(world, "Jardineira",
-                      "Quando estiver pronto, siga para os canais.\nA válvula da água fica do outro lado da ponte.", NULL);
+        first = "A ponte já está livre! Só falta abrir a válvula do outro lado para a água chegar às plantas. Pode cuidar disso para mim?";
+        second = "Depois, entre no viveiro e procure a Íris. Ela vai gostar de conhecer quem nos ajudou a colocar tudo em ordem.";
     }
+    open_character_dialogue(world, GARDENER, player_name, "Lia", first, second);
 }
 
-static void talk_to_technician(World *world)
+static void talk_to_technician(World *world, const char *player_name)
 {
+    const char *first;
+    const char *second;
     if (world_bridge_open(world)) {
-        open_dialogue(world, "Técnico",
-                      "Pressão certa. A ponte está pronta para atravessar.", NULL);
-    } else if (world->north_channel == world->south_channel) {
-        open_dialogue(world, "Técnico",
-                      "A ponte precisa de um único canal aberto e pressão 3.\nVocê pode alternar os canais na casa de telhado azul.",
-                      "Cada canal gera uma pressão diferente.\nO dreno, do lado de fora, retira 2 unidades quando aberto.");
+        first = world->npc_help_thanked[1] ?
+            "A ponte continua firme. Viu? Ela só precisava de alguém com mais paciência do que eu." :
+            "Olha só, você conseguiu! Ponte liberada. Obrigado pela força; essa teimosa já estava me tirando do sério.";
+        if (!world->water)
+            second = "Agora atravesse e abra a válvula do outro lado, perto do viveiro. A Lia precisa dessa água para as plantas.";
+        else if (!world->light && !world->gate_unlocked)
+            second = "A água já está correndo. Falta ligar o refletor: procure a Lia e passe pela casa de manutenção.";
+        else if (world->alarm && !world->gate_unlocked)
+            second = "Água e luz prontas! Só falta desligar o alarme na manutenção para entrar no viveiro. Esse barulho não vai fazer falta.";
+        else
+            second = "Pode seguir para o viveiro, do outro lado do canal. A Íris está lá dentro e precisa de ajuda com a central.";
+        world->npc_help_thanked[1] = true;
+    } else if (!world->north_channel && !world->south_channel) {
+        first = "Você me ajuda a liberar a ponte? Precisamos de um canal aberto e pressão 3. Com os dois fechados, essa belezinha não sai do lugar.";
+        second = "Os registros ficam na casa de controle, aqui ao lado. O dreno está do lado de fora: quando aberto, tira 2 da pressão.";
+    } else if (world->north_channel && world->south_channel) {
+        first = "Opa, os dois canais estão abertos! Essa ponte só aceita um de cada vez. Pode fechar um? A pressão também precisa ficar em 3.";
+        second = "Dá uma passada na casa de controle para ajustar os registros. Depois confira o dreno, aqui fora. Sem pressa: a ponte espera.";
     } else {
-        open_dialogue(world, "Técnico",
-                      "Você já acertou o número de canais. Falta acertar a pressão.\nConfira o dreno ao lado da casa de controle.", NULL);
+        first = "Um canal só: isso! Falta acertar a pressão, que precisa ficar em 3. Dá uma olhada no dreno do lado de fora da casa de controle.";
+        second = "Com o dreno aberto, a pressão cai 2. Se não bastar, troque o canal lá dentro. Pode testar; só não abre os dois de novo.";
     }
+    open_character_dialogue(world, TECHNICIAN, player_name, "Bento", first, second);
 }
 
-static void talk_to_researcher(World *world)
+static void talk_to_researcher(World *world, const char *player_name)
 {
-    const char *hint = "Você já tem as duas pistas. Use o painel para testar os relés.";
+    const char *hint;
     if (!world->alarm_note && !world->canal_note)
-        hint = "Procure a placa nos canais e o bilhete na casa de manutenção.";
+        hint = "Para entender os relés, precisamos de duas pistas. Você procura a placa nos canais e o bilhete na casa de manutenção?";
     else if (!world->alarm_note)
-        hint = "Falta o bilhete perto do alarme, na casa de manutenção.";
+        hint = "Já temos a pista dos canais! Falta o bilhete na casa de manutenção. Pode buscar? Quero comparar o que os dois dizem.";
     else if (!world->canal_note)
-        hint = "Falta a pista da placa nos canais, no caminho até aqui.";
+        hint = "Esse bilhete foi um bom começo! Agora falta a placa nos canais, do lado de fora. Você dá uma olhada nela para mim?";
+    else
+        hint = "Você achou as duas pistas! Na central, vamos testar uma regra por vez. Ajuste os relés e use Enter para conferir.";
 
-    open_dialogue(world, "Pesquisadora",
-                  world->guardian_defeated ? hint : "O Girassol guarda a Central de Relés.\nVença o guardião para liberar o painel.",
-                  world->guardian_defeated ? NULL : hint);
+    const char *first;
+    if (!world->guardian_defeated) {
+        first = "Você me ajuda a investigar a central? O Girassol não deixa ninguém chegar ao painel. Uma batalha deve convencê-lo a sair da frente.";
+    } else if (!world->npc_help_thanked[2]) {
+        first = "Você passou pelo Girassol! Obrigada, eu já estava ensaiando uma conversa com as pétalas dele. Agora podemos cuidar da central.";
+        world->npc_help_thanked[2] = true;
+    } else if (world->relay_step > 0) {
+        first = "Olha, algumas regras já passaram! Pode continuar de onde parou; o painel guardou os ajustes. Estamos chegando lá.";
+    } else {
+        first = "Agora vem a parte que eu adoro: descobrir como os relés combinam. Você me ajuda a testar a central?";
+    }
+    open_character_dialogue(world, RESEARCHER, player_name, "Íris", first, hint);
 }
 
 static HudInteractionState interaction_state(const World *world, Object object)
 {
-    if ((object == UPPER_LIFT && !world->basement_visited) ||
-        ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light) ||
-        (object == LOCKED_HATCH && !world->maintenance_key) ||
+    if ((object == LOCKED_HATCH && !world->maintenance_key) ||
         (object == NURSERY_DOOR && !world_gate_open(world)) ||
         (object == RELAY_PANEL && !world->guardian_defeated)) return HUD_INTERACTION_BLOCKED;
-    if (object == ALARM_NOTE && world->alarm_note) return HUD_INTERACTION_INFO;
     return HUD_INTERACTION_AVAILABLE;
 }
 
-WorldEncounter world_interact(World *world, Vector2 *feet)
+WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_name)
 {
     if (world->completed || world->relay_panel_open || world->dialogue_title) return WORLD_ENCOUNTER_NONE;
     Object object = nearby_object(world, *feet);
@@ -642,9 +736,13 @@ WorldEncounter world_interact(World *world, Vector2 *feet)
         case CANAL_NOTE:
             world->canal_note = true;
             open_dialogue(world, "Placa dos canais",
-                          "Pista registrada. Na central, confira o relé E.\nEle deve ter o mesmo valor de B XOR F.", NULL);
+                          "Central de Relés — regra 3: E = (B XOR F).\nE fica ligado se B e F forem diferentes; caso contrário, fica desligado.", NULL);
             break;
-        case ALARM_NOTE: world->alarm_note = true; break;
+        case ALARM_NOTE:
+            world->alarm_note = true;
+            open_dialogue(world, "Bilhete da manutenção",
+                          "Central de Relés — regra 8: SE D, ENTÃO C.\nD ligado exige C ligado. Com D desligado, C pode ter qualquer estado.", NULL);
+            break;
         case MAINTENANCE_DOOR: travel(world, feet, WORLD_MAINTENANCE, entrance); break;
         case DEPOT_DOOR: travel(world, feet, WORLD_DEPOT, entrance); break;
         case BRIDGE_CONTROL_DOOR: travel(world, feet, WORLD_BRIDGE_CONTROL, entrance); break;
@@ -674,26 +772,14 @@ WorldEncounter world_interact(World *world, Vector2 *feet)
                    (Vector2){objects[LOCKED_HATCH].position.x,
                              objects[LOCKED_HATCH].position.y + 54});
             break;
-        case UPPER_LIFT:
-            if (world->basement_visited && !world->light)
-                travel(world, feet, WORLD_BASEMENT, objects[LOWER_LIFT].position);
-            break;
-        case LOWER_LIFT:
-            if (!world->light) travel(world, feet, WORLD_EXTERIOR, objects[UPPER_LIFT].position);
-            break;
         case RELAY_PANEL: world->relay_panel_open = world->guardian_defeated; break;
         case ENTRANCE_SIGN:
             open_dialogue(world, "Placa do jardim",
-                          "Ao norte, pátio central e depósito.\nA oeste, casa de manutenção. A leste, canais e viveiro.", NULL);
+                          "Depósito: acima e à esquerda do pátio. Manutenção: abaixo e à esquerda.\nPara começar, fale com Lia, no pátio central.", NULL);
             break;
-        case BRIDGE_SIGN:
-            open_dialogue(world, "Aviso da ponte",
-                          "Para estender a ponte, abra exatamente um canal\ne regule a pressão para 3.",
-                          "A casa azul controla os canais. O dreno fica do lado de fora.");
-            break;
-        case GARDENER: talk_to_gardener(world); break;
-        case TECHNICIAN: talk_to_technician(world); break;
-        case RESEARCHER: talk_to_researcher(world); break;
+        case GARDENER: talk_to_gardener(world, player_name); break;
+        case TECHNICIAN: talk_to_technician(world, player_name); break;
+        case RESEARCHER: talk_to_researcher(world, player_name); break;
         case OBJECT_COUNT: break;
     }
     return WORLD_ENCOUNTER_NONE;
@@ -952,14 +1038,10 @@ static void draw_tiled_exterior(const World *world, Texture2D atlas)
     draw_map_sprite(atlas, (Rectangle){216, 316, 23, 30}, objects[CANAL_NOTE].position, 11);
     draw_map_sprite(atlas, (Rectangle){248, 316, 18, 16}, objects[DRAIN].position, 9);
     draw_map_sprite(atlas, (Rectangle){376, 316, 25, 20}, objects[VALVE].position, 12);
-    draw_map_sprite(atlas, (Rectangle){408, 316, 19, 23}, objects[UPPER_LIFT].position, 9);
     Vector2 drain = objects[DRAIN].position;
     DrawCircle((int)drain.x + 14, (int)drain.y - 27, 4, world->drain_open ? LIME : ORANGE);
     Vector2 valve = objects[VALVE].position;
     DrawCircle((int)valve.x + 22, (int)valve.y - 35, 4, world->water ? LIME : ORANGE);
-    Vector2 lift = objects[UPPER_LIFT].position;
-    bool lift_available = world->basement_visited && !world->light;
-    DrawCircle((int)lift.x + 16, (int)lift.y - 37, 4, lift_available ? LIME : ORANGE);
 }
 
 static void draw_exterior(const UiTheme *ui, const World *world, const WorldAssets *assets)
@@ -994,12 +1076,10 @@ static void draw_exterior(const UiTheme *ui, const World *world, const WorldAsse
     }
 
     if (assets->courtyard.id && assets->tiles.id) {
-        draw_map_sprite(assets->tiles, (Rectangle){408, 316, 19, 23}, objects[UPPER_LIFT].position, 9);
         DrawCircle(744, 538, 3, world->drain_open ? LIME : ORANGE);
         DrawCircle(1194, 638, 3, world->water ? LIME : ORANGE);
     } else {
         draw_switch(ui, DRAIN, "Dreno", world->drain_open);
-        draw_switch(ui, UPPER_LIFT, "Elevador", world->basement_visited && !world->light);
     }
 }
 
@@ -1054,7 +1134,7 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
         case WORLD_MAINTENANCE:
             if (!assets->maintenance_interior.id) {
                 draw_switch(ui, ALARM, "Painel do alarme", world->alarm);
-                draw_note(ui, ALARM_NOTE, "Pista da cabine", world->alarm_note);
+                draw_note(ui, ALARM_NOTE, "Bilhete da manutenção", world->alarm_note);
                 draw_room_portal(ui, LOCKED_HATCH,
                                  world->maintenance_key ? "Escotilha" : "Escotilha trancada",
                                  !world->maintenance_key);
@@ -1077,14 +1157,11 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
             break;
         case WORLD_BASEMENT:
             if (assets->basement_interior.id) {
-                /* Luzes de estado alinhadas ao painel e Ã  grade do elevador da arte. */
+                /* Indicador do painel que alimenta o refletor. */
                 DrawCircle(615, 330, 5, world->light ? (Color){91, 190, 78, 255}
                                                       : (Color){207, 68, 48, 255});
-                DrawCircle(900, 419, 5, world->light ? (Color){207, 68, 48, 255}
-                                                      : (Color){91, 190, 78, 255});
             } else {
                 draw_switch(ui, POWER, "Distribuidor de energia", world->light);
-                draw_switch(ui, LOWER_LIFT, "Elevador", !world->light);
                 draw_room_portal(ui, BASEMENT_HATCH, "Subir pela escotilha", false);
             }
             break;
@@ -1194,7 +1271,6 @@ void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets
     if (world->location == WORLD_EXTERIOR) {
         draw_exterior(ui, world, assets);
         if (!assets->courtyard.id) draw_sign(assets->tiles, ENTRANCE_SIGN);
-        draw_sign(assets->tiles, BRIDGE_SIGN);
     } else {
         draw_interior(ui, world, assets);
     }
@@ -1263,7 +1339,7 @@ static void draw_relay_panel(const UiTheme *ui, const World *world)
     } else {
         ui_text(ui, "Pista necessária", 104, 378, 31, ink);
         ui_text(ui, step == CANAL_RELAY_RULE ? "Registre a pista nos canais para revelar esta regra."
-                                        : "Registre a pista na cabine do alarme para revelar esta regra.",
+                                        : "Leia o bilhete na casa de manutenção para revelar esta regra.",
                  104, 429, 20, ink);
     }
 
@@ -1276,15 +1352,15 @@ static void draw_relay_panel(const UiTheme *ui, const World *world)
 
 static void draw_condition(const UiTheme *ui, int x, int y, bool met, const char *label)
 {
-    Color color = met ? (Color){45, 100, 61, 255} : (Color){139, 89, 33, 255};
-    DrawRectangleLines(x, y + 2, 13, 13, color);
+    Color color = met ? (Color){45,100,61,255} : (Color){139,89,33,255};
+    DrawRectangleLinesEx((Rectangle){x,y+7,16,16}, 1, color);
     if (met) {
-        DrawLine(x + 3, y + 8, x + 5, y + 10, color);
-        DrawLine(x + 5, y + 10, x + 10, y + 5, color);
+        DrawLine(x+3,y+15,x+6,y+18,color);
+        DrawLine(x+6,y+18,x+12,y+11,color);
     } else {
-        DrawLine(x + 4, y + 8, x + 9, y + 8, color);
+        DrawRectangle(x+5,y+14,6,2,color);
     }
-    ui_text(ui, label, x + 22, y, 18, ink);
+    DrawTextEx(ui_pixel_font(ui), label, (Vector2){x+28,y}, 24, 0, ink);
 }
 
 static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object object, Vector2 feet)
@@ -1296,17 +1372,18 @@ static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object ob
     bool nursery = world->location == WORLD_EXTERIOR && feet.x >= 1270 && feet.y <= 475;
     if (!bridge && !nursery) return (Rectangle){0};
 
-    int top = 78;
-    Rectangle card = {916, top, 346, bridge ? 119 : 142};
-    int left = (int)card.x + 13;
-    int right = (int)(card.x + card.width) - 13;
+    const int top = 106;
+    Rectangle card = {822,top,438,bridge ? 182 : 216};
+    int left = (int)card.x+34;
+    int right = (int)(card.x+card.width)-34;
     bool open = bridge ? world_bridge_open(world) : world_gate_open(world);
-    Color status_color = open ? (Color){45, 100, 61, 255} : (Color){139, 89, 33, 255};
-    ui_panel(card);
-    ui_text(ui, bridge ? "Ponte" : "Porta do viveiro", left, top + 10, 21, ink);
+    Color status_color = open ? (Color){45,100,61,255} : (Color){139,89,33,255};
+    Font font = ui_pixel_font(ui);
+    ui_botanical_panel(ui, card);
+    DrawTextEx(font, bridge ? "Ponte" : "Porta do viveiro", (Vector2){left,top+16}, 26, 0, ink);
     const char *status = bridge ? (open ? "Estendida" : "Recolhida") : (open ? "Aberta" : "Fechada");
-    ui_text(ui, status, right - ui_measure(ui, status, 16), top + 13, 16, status_color);
-    DrawLine(left, top + 35, right, top + 35, Fade(frame, 0.26f));
+    DrawTextEx(font, status, (Vector2){right-ceilf(MeasureTextEx(font,status,20,0).x),top+21}, 20, 0, status_color);
+    DrawLine(left,top+56,right,top+56,Fade(frame,0.26f));
 
     const char *rule;
     if (bridge) {
@@ -1316,17 +1393,17 @@ static Rectangle draw_challenge(const UiTheme *ui, const World *world, Object ob
             : world->north_channel ? "Dois canais abertos" : "Nenhum canal aberto";
         const char *pressure_label = pressure < BRIDGE_TARGET_PRESSURE ? "baixa"
             : pressure > BRIDGE_TARGET_PRESSURE ? "alta" : "correta";
-        draw_condition(ui, left, top + 44, one_channel, channels);
-        draw_condition(ui, left, top + 67, pressure == BRIDGE_TARGET_PRESSURE,
+        draw_condition(ui, left, top + 70, one_channel, channels);
+        draw_condition(ui, left, top + 104, pressure == BRIDGE_TARGET_PRESSURE,
                        TextFormat("Pressão %d/%d  ·  %s", pressure, BRIDGE_TARGET_PRESSURE, pressure_label));
         rule = TextFormat("(Norte XOR Sul) E (Pressão = %d)", BRIDGE_TARGET_PRESSURE);
     } else {
-        draw_condition(ui, left, top + 44, world->water, world->water ? "Água liberada" : "Água fechada");
-        draw_condition(ui, left, top + 67, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
-        draw_condition(ui, left, top + 90, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
+        draw_condition(ui, left, top + 70, world->water, world->water ? "Água liberada" : "Água fechada");
+        draw_condition(ui, left, top + 104, world->light, world->light ? "Refletor alimentado" : "Refletor sem energia");
+        draw_condition(ui, left, top + 138, !world->alarm, world->alarm ? "Alarme ligado" : "Alarme desligado");
         rule = world->gate_unlocked ? "Trava acionada · porta liberada" : "Água E Luz E NÃO Alarme";
     }
-    ui_text(ui, rule, left, top + (int)card.height - 24, 16, ink);
+    DrawTextEx(font, rule, (Vector2){left,top+card.height-39}, 20, 0, ink);
     return card;
 }
 
@@ -1356,7 +1433,7 @@ static const char *interaction_hint(const World *world, Object object)
         [ALOE] = "Desafiar Babosa pela chave",
         [SUNFLOWER] = "Desafiar Girassol",
         [CANAL_NOTE] = "Registrar pista dos canais",
-        [ALARM_NOTE] = "Registrar pista da cabine",
+        [ALARM_NOTE] = "Ler bilhete da manutenção",
         [MAINTENANCE_DOOR] = "Entrar na casa de manutenção",
         [DEPOT_DOOR] = "Entrar no depósito",
         [NURSERY_DOOR] = "Entrar no viveiro",
@@ -1364,26 +1441,20 @@ static const char *interaction_hint(const World *world, Object object)
         [INTERIOR_DOOR] = "Voltar ao pátio",
         [LOCKED_HATCH] = "Descer pela escotilha",
         [BASEMENT_HATCH] = "Subir pela escotilha",
-        [UPPER_LIFT] = "Descer pelo elevador",
-        [LOWER_LIFT] = "Subir pelo elevador",
         [RELAY_PANEL] = "Abrir central de relés",
         [ENTRANCE_SIGN] = "Ler placa do jardim",
-        [BRIDGE_SIGN] = "Ler aviso da ponte",
-        [GARDENER] = "Falar com a jardineira",
-        [TECHNICIAN] = "Falar com o técnico",
-        [RESEARCHER] = "Falar com a pesquisadora"
+        [GARDENER] = "Falar com Lia",
+        [TECHNICIAN] = "Falar com Bento",
+        [RESEARCHER] = "Falar com Íris"
     };
     if (object == DRAIN) return world->drain_open ? "Fechar dreno" : "Abrir dreno";
-    if (object == POWER) return world->light ? "Alimentar elevador" : "Alimentar refletor";
-    if (object == UPPER_LIFT && !world->basement_visited) return "Elevador travado. Use a escotilha primeiro.";
-    if ((object == UPPER_LIFT || object == LOWER_LIFT) && world->light)
-        return "Elevador sem energia. Volte pela escotilha.";
+    if (object == POWER) return world->light ? "Desligar refletor" : "Ligar refletor";
     if (object == LOCKED_HATCH && !world->maintenance_key)
         return "Escotilha trancada. A Babosa guarda a chave.";
     if (object == NURSERY_DOOR && !world_gate_open(world))
         return "Viveiro fechado. Confira as condições.";
     if (object == CANAL_NOTE && world->canal_note) return "Reler a pista dos canais";
-    if (object == ALARM_NOTE && world->alarm_note) return "Pista da cabine registrada";
+    if (object == ALARM_NOTE && world->alarm_note) return "Reler o bilhete da manutenção";
     if (object == RELAY_PANEL && !world->guardian_defeated)
         return "Central bloqueada até você vencer o Girassol.";
     return prompts[object];
@@ -1398,12 +1469,12 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [VALVE]="Válvula da água", [POWER]="Distribuidor de energia", [ALARM]="Painel do alarme",
         [NORTH_CHANNEL]="Canal norte", [SOUTH_CHANNEL]="Canal sul", [DRAIN]="Dreno",
         [ALOE]="Babosa guardiã", [SUNFLOWER]="Girassol guardião", [CANAL_NOTE]="Pista dos canais",
-        [ALARM_NOTE]="Pista da cabine", [MAINTENANCE_DOOR]="Casa de manutenção",
+        [ALARM_NOTE]="Bilhete da manutenção", [MAINTENANCE_DOOR]="Casa de manutenção",
         [DEPOT_DOOR]="Depósito", [NURSERY_DOOR]="Viveiro", [BRIDGE_CONTROL_DOOR]="Controle da ponte",
         [INTERIOR_DOOR]="Saída", [LOCKED_HATCH]="Escotilha de manutenção", [BASEMENT_HATCH]="Escotilha",
-        [UPPER_LIFT]="Elevador", [LOWER_LIFT]="Elevador", [RELAY_PANEL]="Central de relés",
-        [ENTRANCE_SIGN]="Placa do jardim", [BRIDGE_SIGN]="Aviso da ponte", [GARDENER]="Jardineira",
-        [TECHNICIAN]="Técnico", [RESEARCHER]="Pesquisadora"
+        [RELAY_PANEL]="Central de relés",
+        [ENTRANCE_SIGN]="Placa do jardim", [GARDENER]="Lia",
+        [TECHNICIAN]="Bento", [RESEARCHER]="Íris"
     };
     /* Centro superior visível, independente do ponto usado para alcance e colisão. */
     static const Vector2 marker_anchors[OBJECT_COUNT] = {
@@ -1414,8 +1485,8 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
         [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},
         [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
-        [UPPER_LIFT]={430, 434}, [LOWER_LIFT]={900, 426}, [RELAY_PANEL]={782, 296},
-        [ENTRANCE_SIGN]={483, 747}, [BRIDGE_SIGN]={771, 565},
+        [RELAY_PANEL]={782, 296},
+        [ENTRANCE_SIGN]={483, 747},
         [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
     };
     Vector2 anchor = marker_anchors[object];
@@ -1437,15 +1508,9 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
 
 static void draw_dialogue(const UiTheme *ui, const World *world)
 {
-    Rectangle card = {48, 510, GAME_SCREEN_WIDTH - 96, 184};
-    ui_panel(card);
-    ui_text_bold(ui, world->dialogue_title, 72, 526, 26, ink);
-    DrawLine(72, 562, GAME_SCREEN_WIDTH-72, 562, Fade(frame, 0.3f));
-    ui_text_wrap(ui, world->dialogue_pages[world->dialogue_page],
-                 (Rectangle){72, 574, GAME_SCREEN_WIDTH-144, 72}, 24, ink, false);
-    bool has_next = world->dialogue_page == 0 && world->dialogue_pages[1];
-    const char *controls = has_next ? "E / Enter  Próxima     Esc  Fechar" : "E / Enter / Esc  Fechar";
-    ui_text(ui, controls, GAME_SCREEN_WIDTH-72-ui_measure(ui, controls, 18), 663, 18, frame);
+    bool has_next = world->dialogue_page+1 < WORLD_DIALOGUE_PAGE_COUNT && world->dialogue_pages[world->dialogue_page+1];
+    dialogue_ui_draw(ui, world->dialogue_title, world->dialogue_pages[world->dialogue_page], has_next,
+                     world->dialogue_visible_characters);
 }
 
 void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)

@@ -5,7 +5,10 @@
 #include "ui_theme.h"
 #include "exploration_hud.h"
 
-enum { WORLD_RELAY_COUNT = 8, WORLD_RELAY_RULE_COUNT = 9 };
+enum {
+    WORLD_RELAY_COUNT = 8, WORLD_RELAY_RULE_COUNT = 9,
+    WORLD_NPC_COUNT = 3, WORLD_DIALOGUE_PAGE_COUNT = 3
+};
 
 typedef enum {
     WORLD_ENCOUNTER_NONE,
@@ -55,8 +58,14 @@ typedef struct {
     bool drain_open;
     bool detail_enabled;
     const char *dialogue_title;
-    const char *dialogue_pages[2];
+    const char *dialogue_pages[WORLD_DIALOGUE_PAGE_COUNT];
+    char dialogue_introduction[512];
+    char dialogue_greeting[512];
+    bool npc_introduced[WORLD_NPC_COUNT];
+    bool npc_help_thanked[WORLD_NPC_COUNT];
     int dialogue_page;
+    int dialogue_visible_characters;
+    float dialogue_character_timer;
     bool relay_panel_open;
     unsigned int relay_mask;
     unsigned int relay_attempts;
@@ -75,14 +84,14 @@ bool world_bridge_open(const World *world);
 int world_bridge_pressure(const World *world);
 bool world_relays_match(unsigned int mask);
 Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet);
-WorldEncounter world_interact(World *world, Vector2 *feet);
+WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_name);
 void world_finish_encounter(World *world, WorldEncounter encounter);
 void world_return_to_courtyard(World *world, Vector2 *feet);
 void world_follow_camera(World *world, Vector2 feet, float dt);
 void world_snap_camera(World *world, Vector2 feet);
 Camera2D world_camera(const World *world);
-void world_update_relay_panel(World *world);
-void world_update_dialogue(World *world);
+void world_update_relay_panel(World *world, const char *player_name);
+void world_update_dialogue(World *world, float dt);
 void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets);
 void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet, Camera2D camera, bool foreground);
 void world_draw_bridge_sign_foreground(const World *world, const WorldAssets *assets, Vector2 feet);

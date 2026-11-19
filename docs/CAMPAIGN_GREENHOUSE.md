@@ -7,7 +7,7 @@ Use **WASD** ou **setas** para mover, segure **Shift** para correr e pressione
 ## Prédios e acesso ao viveiro
 
 A câmera acompanha o personagem no exterior e se reposiciona ao atravessar
-uma porta, usar o elevador ou voltar ao pátio após uma derrota. A casa de
+uma porta, atravessar a escotilha ou voltar ao pátio após uma derrota. A casa de
 manutenção, o depósito e o viveiro têm fachadas sólidas e interiores próprios.
 Os interiores mantêm 720 × 420 unidades lógicas, centralizados com margens
 e zoom 1, sem ampliação para preencher a tela, inclusive no modo tela cheia.
@@ -31,20 +31,31 @@ com colisões nas bases dos móveis. O painel do alarme, a pista e a escotilha
 seguem as posições desse interior; o percurso contorna a prateleira central.
 Essa arte interna é carregada separadamente do mapa exterior melhorado.
 
-Leia as placas com **E** e fale com a jardineira no pátio, o técnico perto
-da ponte e a pesquisadora no viveiro. As falas acompanham o progresso na
-campanha. Na caixa de diálogo, **E** ou **Enter** avança ou encerra a conversa,
-e **Esc** fecha a caixa.
+Leia as placas com **E** e fale com Lia, a jardineira no pátio, Bento, o técnico
+perto da ponte, e Íris, a pesquisadora no viveiro. As falas acompanham o progresso na
+campanha: pedidos de ajuda dão lugar a agradecimentos e dicas da etapa seguinte.
+Na caixa de diálogo, **E** ou **Enter** completa o texto em animação; outro toque
+avança ou encerra a conversa. **Esc** fecha a caixa.
 
 1. Entre no depósito e vença a Babosa para receber a **Chave da Manutenção**.
 2. Na casa de manutenção, desative o alarme, registre a pista e abra a
    escotilha com a chave. A escotilha dá o primeiro acesso ao subsolo.
-3. No subsolo, o distribuidor alimenta o elevador ou o refletor. O elevador
-   vira um atalho após a primeira descida. Quando a energia vai para o
-   refletor, a escotilha continua disponível para voltar.
+3. No subsolo, ligue o refletor no painel de energia e retorne pela escotilha.
+   A escotilha conecta o subsolo à casa de manutenção em ambos os sentidos,
+   independentemente do estado do refletor.
 4. A válvula da água e a segunda pista ficam do outro lado da ponte. A porta
    do viveiro abre quando `Água E Luz E NÃO Alarme` vale. Depois da primeira
    entrada, a porta permanece liberada.
+
+## Placas e pistas
+
+A placa de entrada orienta até Lia e indica depósito e manutenção em relação ao
+pátio. O aviso extra junto à ponte foi removido: Bento e o painel de condições
+já explicam os canais e a pressão.
+
+A placa dos canais revela a regra 3 (`E = B XOR F`) e o bilhete da manutenção
+revela a regra 8 (`SE D, ENTÃO C`). As duas leituras explicam o significado da
+regra, registram a pista e continuam disponíveis para releitura.
 
 ## Ponte
 
@@ -76,7 +87,7 @@ a composição escolhida. Uma derrota ou recuo leva o jogador de volta ao
 pátio, preservando o progresso do mapa.
 
 Vencer o Girassol no viveiro libera a central. Uma regra pede a pista dos
-canais e outra pede a pista da cabine do alarme. O painel tem oito relés e
+canais e outra pede a pista do bilhete na casa de manutenção. O painel tem oito relés e
 nove restrições simultâneas. Elas combinam XOR, equivalência, implicação e
 uma contagem exata de relés ligados. Há uma única configuração válida
 entre as 256 possíveis.
@@ -87,7 +98,9 @@ essas regras forem verdadeiras. Se uma tentativa falhar, a central mostra
 a primeira regra violada. As nove precisam valer juntas na última etapa.
 Use **seta esquerda** para rever a regra anterior e **Esc** para fechar
 a central. A etapa, a configuração e as tentativas são preservadas ao sair
-do painel. Depois de resolver, **Enter** ou **Esc** retorna ao menu.
+do painel. Depois de resolver, Íris agradece em uma conversa com o nome do jogador.
+Ao fechar essa conversa, a tela de conclusão permite voltar ao menu com
+**Enter** ou **Esc**.
 
 ## Implementação e teste
 
@@ -107,7 +120,7 @@ cmake --build build --target plants_x_plants name_entry_check
 
 O teste percorre a missão depois de confirmar o nome. Verifica a colisão
 das fachadas e paredes, as oito combinações da ponte e suas duas soluções,
-a escotilha e o elevador antes e depois da chave, o retorno
+a escotilha antes e depois da chave, o retorno
 com progresso após derrota, o acesso ao viveiro e a coleta de pistas.
 Também valida a solução única entre as 256 configurações da central, o
 avanço guiado, o retorno a uma regra quebrada e a conclusão.

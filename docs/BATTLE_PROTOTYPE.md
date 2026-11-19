@@ -1,47 +1,48 @@
 # Relatório do protótipo de combate
 
 Na campanha, interaja com um guardião para iniciar um encontro.
-No primeiro encontro, monte a equipe e o Golpe Lógico antes de lutar.
+No primeiro encontro, monte a equipe e escolha um golpe para fortalecer antes de lutar.
 A arena mostra a planta ativa, o HP das duas equipes, de quem é o turno e o
 resultado da última ação. As plantas são desenhadas com formas da raylib.
 
 | Comando | Ação |
 | --- | --- |
-| **1** ou **2** | Usar um dos dois golpes da planta ativa. |
-| **3** | Usar o Golpe Lógico se a fórmula estiver verdadeira. |
+| **1** ou **2** | Usar um golpe na batalha; durante a montagem, escolher qual recebe o bônus. |
 | **Q/W/E/R** | Escolher uma das quatro posições da equipe para entrar em campo. |
 | **ENTER** no resultado | Retornar à estufa. |
 | **ESC** | Retornar à estufa, inclusive durante a montagem ou a batalha. |
 
 Os golpes, as trocas e os botões do resultado também aceitam cliques.
 
-## Monte seu próprio golpe
+## Fortaleça um golpe da equipe
 
 Antes da luta, cada jogador humano combina duas condições distintas. Use
 **Q/W** para mudar as condições, **E** para mudar o operador e **Enter** para
 confirmar. Os mesmos controles estão disponíveis por clique. A fórmula vale
-para a equipe inteira, acompanha a planta ativa e é preservada no reinício.
-Para montar outra fórmula, volte ao menu e inicie uma nova partida.
+para a equipe inteira, acompanha a planta ativa e é preservada nos encontros
+seguintes. Escolha o espaço do golpe com **1/2** ou clique em um dos golpes da
+planta ativa. O mesmo espaço recebe o bônus quando qualquer planta da equipe
+entrar em campo.
 
 As condições disponíveis são ter uma reserva viva, o rival ter uma reserva
 viva, a planta ativa estar viva com até metade do HP e a planta ativa rival
 estar viva com até metade do HP. Uma reserva é uma planta viva fora da posição ativa.
 
-| Operador | Regra | Poder |
+| Operador | Regra | Bônus de poder |
 | --- | --- | --- |
-| **E** | As duas condições são verdadeiras. | 60 |
-| **OU** | Pelo menos uma condição é verdadeira. | 45 |
-| **XOR** | Exatamente uma condição é verdadeira. | 55 |
+| **E** | As duas condições são verdadeiras. | +60 |
+| **OU** | Pelo menos uma condição é verdadeira. | +45 |
+| **XOR** | Exatamente uma condição é verdadeira. | +55 |
 
-O OU oferece o menor poder por ativar em mais combinações da tabela-verdade.
-O E oferece o maior poder por exigir ambas as condições. O XOR fica entre os
-dois. Todos têm 100% de precisão e seguem a fórmula de dano dos demais golpes.
+O OU oferece o menor bônus por ativar em mais combinações da tabela-verdade.
+O E oferece o maior bônus por exigir ambas as condições. O XOR fica entre os
+dois. O golpe mantém o próprio nome e precisão; a fórmula só aumenta seu poder.
 
 Por exemplo, com **Sua ativa tem até metade do HP E O adversário tem reserva
 viva**, o golpe começa bloqueado com `F E V = F`. Se sua planta perder
 metade do HP ou mais e o rival ainda tiver reserva, a arena passa a mostrar
-`V E V = V` e libera o golpe. O motor reavalia a expressão ao receber o
-comando, de modo que tentar usar um golpe bloqueado preserva HP e turno.
+`V E V = V` e fortalece o golpe selecionado. O motor reavalia a expressão ao
+receber o comando e aplica o bônus somente enquanto ela for verdadeira.
 
 ## Equipes e turnos
 
@@ -79,18 +80,17 @@ sempre. Os demais usam um sorteio de 0 a 99 e acertam quando o número sorteado
 é menor que a precisão. Um erro de precisão é uma ação válida: gasta o turno
 e deixa o HP do alvo intacto.
 
-O motor preserva a fórmula `máx(5, poder + ataque − defesa / 2)`, com divisão
-inteira. O HP fica limitado a zero e a mensagem informa quanto HP o alvo
-perdeu. Os atributos e poderes do catálogo foram preservados. Com os valores
-atuais, **Espinho Afiado** continua sendo a opção mais forte e mais precisa
-do Cacto.
+O dano usa a fórmula sem nível `((poder × ataque ÷ defesa) ÷ 2 + 2) × multiplicadores`.
+Os multiplicadores ficam neutros por enquanto; não há bônus de tipo. O HP fica
+limitado a zero e a mensagem informa quanto HP o alvo perdeu. O poder usado
+inclui o bônus de fórmula quando as condições são verdadeiras.
 
 ## Computador e interface
 
 Cada guardião usa uma fórmula fixa de **E**, combinando uma condição de HP
-com a existência de reservas na própria equipe. Quando sua fórmula é verdadeira, o golpe
-personalizado entra na mesma comparação que os demais. A CPU escolhe o golpe
-com maior produto de poder por precisão. Esse critério
+com a existência de reservas na própria equipe. Quando sua fórmula é verdadeira,
+o bônus se aplica ao espaço de golpe definido para a equipe. A CPU escolhe o golpe
+com maior produto de poder efetivo por precisão. Esse critério
 é uma aproximação simples e ignora o HP do alvo. Para repor uma planta
 derrotada, escolhe a primeira reserva válida na ordem da equipe. A CPU só
 troca quando a substituição é obrigatória.

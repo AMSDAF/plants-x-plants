@@ -11,3 +11,11 @@ Os arquivos originais não foram modificados. A licença SIL Open Font License
 caracteres latinos, acentos e pontuação da interface. O atlas de 96 pixels
 mantém detalhe na renderização física; o jogo preserva coordenadas lógicas.
 Se uma fonte faltar, utiliza o outro peso ou a fonte padrão da raylib.
+
+## Diálogos e HUD de exploração
+
+Pixelify Sans Regular é usada nos diálogos e em todo o HUD de exploração, em atlas de 28 pixels
+com filtro pontual. As demais telas continuam com Atkinson.
+Fonte: [repositório oficial](https://github.com/eifetx/Pixelify-Sans).
+Revisão: `39df74aba80df8157546034b878e8be1eb565ced`.
+O TTF original não foi modificado; a licença acompanha `PIXELIFY_OFL.txt`.

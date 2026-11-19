@@ -62,10 +62,14 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
     };
     Battle_Init(&screen->battle, team, guardian_team(encounter, team.count));
-    if (configured) screen->battle.formulas[0] = game->campaign.formula;
+    if (configured) {
+        screen->battle.formulas[0] = game->campaign.formula;
+        screen->battle.boosted_move_indices[0] = game->campaign.boosted_move_index;
+    }
     LogicCondition condition = encounter == WORLD_ENCOUNTER_ALOE
         ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
     screen->battle.formulas[1] = (LogicFormula){condition, LOGIC_OWN_RESERVE, LOGIC_AND};
+    screen->battle.boosted_move_indices[1] = 0;
     game->encounter = encounter;
     change_screen(game, GAME_BATTLE);
 }
@@ -77,6 +81,7 @@ static void leave_encounter(Game *game)
         game->campaign.team = screen->battle.player_team;
         Team_Restore(&game->campaign.team);
         game->campaign.formula = screen->battle.formulas[0];
+        game->campaign.boosted_move_index = screen->battle.boosted_move_indices[0];
         game->campaign.has_team = true;
     }
     if (screen->battle.state == BATTLE_STATE_PLAYER_WIN) {
@@ -153,9 +158,9 @@ void game_update(Game *game)
         case GAME_EXPLORATION:
             if (IsKeyPressed(KEY_F8)) game->world.detail_enabled = !game->world.detail_enabled;
             if (game->world.dialogue_title) {
-                world_update_dialogue(&game->world);
+                world_update_dialogue(&game->world, GetFrameTime());
             } else if (game->world.relay_panel_open) {
-                world_update_relay_panel(&game->world);
+                world_update_relay_panel(&game->world, game->campaign.player_name);
             } else if (IsKeyPressed(KEY_ESCAPE) || (game->world.completed && IsKeyPressed(KEY_ENTER))) {
                 change_screen(game, GAME_MENU);
             } else if (!game->world.completed) {
@@ -163,7 +168,7 @@ void game_update(Game *game)
                 player_update(&game->player, &game->world, dt);
                 world_follow_camera(&game->world, game->player.feet, dt);
                 if (IsKeyPressed(KEY_E)) {
-                    WorldEncounter encounter = world_interact(&game->world, &game->player.feet);
+                    WorldEncounter encounter = world_interact(&game->world, &game->player.feet, game->campaign.player_name);
                     if (game->world.relay_panel_open || game->world.dialogue_title)
                         game->player.moving = false;
                     if (encounter != WORLD_ENCOUNTER_NONE) start_encounter(game, encounter);

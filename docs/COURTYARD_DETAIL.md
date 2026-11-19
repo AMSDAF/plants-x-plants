@@ -84,7 +84,7 @@ correção com o modo de execução. Capturas das quatro posições da câmera f
 em `build/courtyard_detail_preview/corner_<índice>_1080p.png`.
 
 `name_entry_check` verifica F8, portas, colisões existentes, guardiões, chave,
-elevador, ponte, pistas e conclusão da campanha. As capturas em Full HD da
+subsolo, ponte, pistas e conclusão da campanha. As capturas em Full HD da
 interface ficam em `build/name_entry_preview/`.
 
 ## Prompt da edição integrada

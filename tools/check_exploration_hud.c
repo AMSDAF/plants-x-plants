@@ -5,6 +5,7 @@
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -32,8 +33,8 @@ static void check_prompt(const UiTheme *ui, HudInteraction interaction)
         return;
     }
     assert(fabsf(bounds.x+bounds.width/2-640) <= 0.5f);
-    assert(bounds.y+bounds.height == 696 && bounds.width <= 640);
-    assert(bounds.height <= 104);
+    assert(bounds.y+bounds.height == 696 && bounds.width <= 560);
+    assert(bounds.height == 76 || bounds.height == 104);
     Camera2D camera = {.offset={640, 360}, .target=interaction.target, .zoom=1};
     Rectangle normal = exploration_marker_bounds(&interaction, camera, 0);
     Rectangle raised = exploration_marker_bounds(&interaction, camera, 0.7f);
@@ -115,7 +116,7 @@ static void check_states(Game *game)
     assert(blocked.marker_anchor.y <= game->player.feet.y-58/world_camera(world).zoom);
     assert(strstr(blocked.message, "trancada") && !strstr(blocked.message, "[E]"));
     World before = *world;
-    world_interact(world, &game->player.feet);
+    world_interact(world, &game->player.feet, game->campaign.player_name);
     assert(memcmp(&before, world, sizeof(before)) == 0);
     check_prompt(&game->ui, blocked);
 
@@ -127,7 +128,7 @@ static void check_states(Game *game)
     check_prompt(&game->ui, enabled);
     world->alarm_note = true;
     HudInteraction recorded = world_interaction_view(world, (Vector2){537, 281});
-    assert(recorded.state == HUD_INTERACTION_INFO);
+    assert(recorded.state == HUD_INTERACTION_AVAILABLE && strstr(recorded.message, "Reler"));
     check_prompt(&game->ui, recorded);
     HudInteraction none = world_interaction_view(world, (Vector2){780, 450});
     assert(none.state == HUD_INTERACTION_NONE);
@@ -137,7 +138,7 @@ static void check_states(Game *game)
     Vector2 shared = {495, 310};
     HudInteraction selected = world_interaction_view(world, shared);
     assert(selected.target.x == 537 && selected.target.y == 300);
-    world_interact(world, &shared);
+    world_interact(world, &shared, game->campaign.player_name);
     assert(world->alarm_note && world->alarm); /* E atingiu a mesma pista indicada, não o alarme próximo. */
 
     world->dialogue_title = "Conversa";
@@ -149,6 +150,57 @@ static void check_states(Game *game)
     world->completed = true;
     assert(world_interaction_view(world, game->player.feet).state == HUD_INTERACTION_NONE);
     world->completed = false;
+}
+
+/* Exercita pedidos, pistas e agradecimentos com o nome de maior largura. */
+static void check_character_copy(const UiTheme *ui)
+{
+    const Vector2 positions[WORLD_NPC_COUNT] = {{600,507}, {868,578}, {790,485}};
+    int overflow = 0;
+    BeginDrawing();
+    for (int character = 0; character < WORLD_NPC_COUNT; character++) {
+        for (int flags = 0; flags < 64; flags++) {
+            for (int contact = 0; contact < 4; contact++) {
+                World world;
+                world_init(&world);
+                world.location = character == 2 ? WORLD_NURSERY : WORLD_EXTERIOR;
+                world.maintenance_key = (flags & 1) != 0;
+                world.north_channel = (flags & 1) != 0;
+                world.south_channel = (flags & 2) != 0;
+                world.drain_open = (flags & 4) != 0;
+                world.water = (flags & 8) != 0;
+                world.light = (flags & 16) != 0;
+                world.alarm = (flags & 32) != 0;
+                world.guardian_defeated = (flags & 2) != 0;
+                world.canal_note = (flags & 4) != 0;
+                world.alarm_note = (flags & 8) != 0;
+                if (character == 2) world.npc_introduced[0] = (flags & 32) != 0;
+                world.npc_introduced[character] = (contact & 1) != 0;
+                world.npc_help_thanked[character] = (contact & 2) != 0;
+                Vector2 feet = positions[character];
+                world_interact(&world, &feet, "WWWWWWWWWWWW");
+                assert(world.dialogue_title);
+                for (int page = 0; page < WORLD_DIALOGUE_PAGE_COUNT && world.dialogue_pages[page]; page++) {
+                    int lines = ui_text_wrap_font(ui->dialogue_font, world.dialogue_pages[page],
+                                                  (Rectangle){0,0,858,1024}, 28, WHITE);
+                    if (lines > 3) {
+                        if (overflow < 12) fprintf(stderr, "%s: %d linhas: %s\n", world.dialogue_title, lines, world.dialogue_pages[page]);
+                        overflow++;
+                    }
+                }
+                if (character == 1 && world_bridge_open(&world)) {
+                    assert(world.npc_help_thanked[1]);
+                    if (!(contact & 2)) {
+                        int request_page = (contact & 1) ? 0 : 1;
+                        assert(strstr(world.dialogue_pages[request_page], "você conseguiu"));
+                        assert(strstr(world.dialogue_pages[request_page], "Obrigado"));
+                    }
+                }
+            }
+        }
+    }
+    EndDrawing();
+    assert(overflow == 0);
 }
 
 int main(void)
@@ -163,6 +215,26 @@ int main(void)
     assert(game.ui.regular.texture.id && game.ui.semibold.texture.id);
     assert(game.ui.regular.texture.id != GetFontDefault().texture.id);
     assert(game.ui.interaction_chevron.id);
+    assert(game.ui.interaction_frame.id && game.ui.interaction_frame_source.width > 0);
+    assert(game.ui.dialogue_frame.id && game.ui.gardener_portrait.id);
+    assert(game.ui.dialogue_skin.id);
+    Image skin = LoadImageFromTexture(game.ui.dialogue_skin);
+    assert(skin.data);
+    Rectangle skin_source = game.ui.dialogue_skin_source;
+    assert(skin_source.width > 0 && skin_source.height > 0);
+    /* Cantos recortados transparentes, sem apagar o papel no interior. */
+    for (int corner = 0; corner < 4; corner++) {
+        int x = (int)(skin_source.x + ((corner & 1) ? skin_source.width-1 : 0));
+        int y = (int)(skin_source.y + ((corner & 2) ? skin_source.height-1 : 0));
+        assert(GetImageColor(skin, x, y).a < 26);
+    }
+    assert(GetImageColor(skin, (int)(skin_source.x+skin_source.width*0.3f),
+                        (int)(skin_source.y+skin_source.height*0.5f)).a >= 250);
+    UnloadImage(skin);
+    assert(game.ui.technician_portrait.id && game.ui.researcher_portrait.id);
+    assert(game.ui.technician_portrait_source.width > 0 && game.ui.researcher_portrait_source.width > 0);
+    assert(game.ui.dialogue_font.texture.id && game.ui.dialogue_font.texture.id != GetFontDefault().texture.id);
+    check_character_copy(&game.ui);
     check_marker_filter(&game.ui);
     UiTheme animation = {0};
     ui_theme_update(&animation, 0.7f);
@@ -173,6 +245,7 @@ int main(void)
     assert(animation.marker_time == 0);
     const int glyphs[] = {'I', 'l', '1', 'O', '0', 0xe7, 0xe3, 0xf5, 0xe9, 0xc1};
     for (unsigned int i = 0; i < sizeof(glyphs)/sizeof(glyphs[0]); i++) {
+        assert(GetGlyphIndex(game.ui.dialogue_font, glyphs[i]) != GetGlyphIndex(game.ui.dialogue_font, '?'));
         assert(GetGlyphIndex(game.ui.regular, glyphs[i]) != GetGlyphIndex(game.ui.regular, '?'));
         assert(GetGlyphIndex(game.ui.semibold, glyphs[i]) != GetGlyphIndex(game.ui.semibold, '?'));
     }
@@ -199,6 +272,11 @@ int main(void)
     game.player.feet = (Vector2){1271, 401};
     world_snap_camera(&game.world, game.player.feet);
     capture(&game, &canvas, "exterior_1080p", 1920, 1080);
+    game.player.feet = (Vector2){600,507};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "interaction_lia_720p", 1280, 720);
+    capture(&game, &canvas, "interaction_lia_1080p", 1920, 1080);
+    capture(&game, &canvas, "interaction_lia_1440p", 2560, 1440);
     World saved_world = game.world;
     Vector2 saved_feet = game.player.feet;
     static const struct {
@@ -228,12 +306,142 @@ int main(void)
         assert(selected.state != HUD_INTERACTION_NONE);
         capture(&game, &canvas, marker_samples[i].name, 1280, 720);
     }
+    world_init(&game.world);
+    game.player.feet = (Vector2){868,578};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "botanical_bridge_closed_720p", 1280, 720);
+    capture(&game, &canvas, "botanical_bridge_closed_1080p", 1920, 1080);
+    capture(&game, &canvas, "botanical_bridge_closed_1440p", 2560, 1440);
+    game.world.north_channel = true;
+    game.world.drain_open = false;
+    capture(&game, &canvas, "botanical_bridge_open", 1280, 720);
+    game.player.feet = (Vector2){1271,401};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "botanical_nursery_closed", 1280, 720);
+    game.world.water = true;
+    game.world.light = true;
+    game.world.alarm = false;
+    capture(&game, &canvas, "botanical_nursery_open", 1280, 720);
     game.world = saved_world;
     game.player.feet = saved_feet;
     UiTheme saved = game.ui;
+    game.ui.interaction_frame = (Texture2D){0};
+    capture(&game, &canvas, "interaction_missing_frame", 1280, 720);
+    game.ui = saved;
+    game.ui.dialogue_font = (Font){0};
+    capture(&game, &canvas, "interaction_missing_font", 1280, 720);
+    game.ui = saved;
     game.ui = (UiTheme){0};
     capture(&game, &canvas, "font_fallback", 1280, 720);
     game.ui = saved;
+
+    game.screen = GAME_EXPLORATION;
+    game.world.location = WORLD_EXTERIOR;
+    game.player.feet = (Vector2){600, 507};
+    world_snap_camera(&game.world, game.player.feet);
+    World original_world = game.world;
+    Vector2 talk_feet = {600, 507};
+    world_init(&game.world);
+    const char *visitor = "ÁÉÍÓÚáéíóúÇç";
+    world_interact(&game.world, &talk_feet, visitor);
+    assert(game.world.dialogue_title && strcmp(game.world.dialogue_title, "Lia") == 0);
+    assert(strstr(game.world.dialogue_pages[0], visitor));
+    game.world.dialogue_visible_characters = INT_MAX;
+    capture(&game, &canvas, "dialogue_lia_introduction", 1280, 720);
+    game.world.dialogue_title = NULL;
+    talk_feet = (Vector2){868, 578};
+    world_interact(&game.world, &talk_feet, visitor);
+    assert(game.world.dialogue_title && strcmp(game.world.dialogue_title, "Bento") == 0);
+    assert(strstr(game.world.dialogue_pages[0], visitor));
+    game.world.dialogue_visible_characters = INT_MAX;
+    capture(&game, &canvas, "dialogue_bento_introduction", 1280, 720);
+    game.world.dialogue_title = NULL;
+    game.world.location = WORLD_NURSERY;
+    talk_feet = (Vector2){790, 485};
+    world_interact(&game.world, &talk_feet, visitor);
+    assert(game.world.dialogue_title && strcmp(game.world.dialogue_title, "Íris") == 0);
+    assert(strstr(game.world.dialogue_pages[0], "A Lia comentou"));
+    game.world.dialogue_visible_characters = INT_MAX;
+    capture(&game, &canvas, "dialogue_iris_introduction", 1280, 720);
+    game.world = original_world;
+    game.world.dialogue_title = NULL;
+    game.world.npc_introduced[0] = true;
+    game.world.maintenance_key = false;
+    game.world.gate_unlocked = false;
+    game.world.water = false;
+    game.world.light = false;
+    game.world.alarm = true;
+    talk_feet = (Vector2){600,507};
+    world_interact(&game.world, &talk_feet, "Álvaro");
+    game.world.dialogue_visible_characters = 0;
+    capture(&game, &canvas, "dialogue_typing_empty", 1280, 720);
+    game.world.dialogue_visible_characters = 7;
+    capture(&game, &canvas, "dialogue_typing_start", 1280, 720);
+    game.world.dialogue_visible_characters = 60;
+    capture(&game, &canvas, "dialogue_typing_accent", 1280, 720);
+    game.world.dialogue_visible_characters = INT_MAX;
+    capture(&game, &canvas, "dialogue_gardener_720p", 1280, 720);
+    capture(&game, &canvas, "dialogue_gardener_1080p", 1920, 1080);
+    capture(&game, &canvas, "dialogue_gardener_1440p", 2560, 1440);
+    game.world.dialogue_page = 1;
+    capture(&game, &canvas, "dialogue_last_page", 1280, 720);
+    game.world.dialogue_title = NULL;
+    game.world.npc_introduced[1] = true;
+    game.world.north_channel = false;
+    game.world.south_channel = false;
+    talk_feet = (Vector2){868,578};
+    world_interact(&game.world, &talk_feet, "Álvaro");
+    game.world.dialogue_visible_characters = INT_MAX;
+    capture(&game, &canvas, "dialogue_technician", 1280, 720);
+    game.world.dialogue_title = NULL;
+    game.world.north_channel = true;
+    game.world.drain_open = false;
+    game.world.npc_help_thanked[1] = false;
+    world_interact(&game.world, &talk_feet, "Álvaro");
+    assert(strstr(game.world.dialogue_pages[1], "válvula"));
+    game.world.dialogue_visible_characters = INT_MAX;
+    capture(&game, &canvas, "dialogue_bento_bridge_thanks", 1280, 720);
+    game.world.dialogue_title = NULL;
+    game.world.location = WORLD_NURSERY;
+    game.world.npc_introduced[2] = true;
+    game.world.guardian_defeated = false;
+    game.world.alarm_note = false;
+    game.world.canal_note = false;
+    talk_feet = (Vector2){790,485};
+    world_interact(&game.world, &talk_feet, "Álvaro");
+    game.world.dialogue_visible_characters = INT_MAX;
+    game.player.feet = (Vector2){760, 505};
+    world_snap_camera(&game.world, game.player.feet);
+    capture(&game, &canvas, "dialogue_researcher", 1280, 720);
+    UiTheme portraits = game.ui;
+    game.ui.researcher_portrait = (Texture2D){0};
+    capture(&game, &canvas, "dialogue_researcher_missing_portrait", 1280, 720);
+    game.ui = portraits;
+    game.world.location = WORLD_EXTERIOR;
+    game.player.feet = (Vector2){600, 507};
+    world_snap_camera(&game.world, game.player.feet);
+    game.world.dialogue_title = "Bento";
+    game.ui.technician_portrait = (Texture2D){0};
+    capture(&game, &canvas, "dialogue_technician_missing_portrait", 1280, 720);
+    game.ui = portraits;
+    game.world.dialogue_title = "Placa dos canais";
+    capture(&game, &canvas, "dialogue_sign", 1280, 720);
+    game.world.dialogue_title = "Lia";
+    game.world.dialogue_page = 0;
+    game.world.dialogue_pages[0] = "A ponte precisa de um único canal aberto e pressão correta. A água, a luz e o alarme têm estados próprios. Confira as pistas e os controles antes de abrir a central de relés e testar sua solução.";
+    capture(&game, &canvas, "dialogue_long_text", 1280, 720);
+    game.world.dialogue_pages[0] = game.world.dialogue_pages[1];
+    saved = game.ui;
+    game.ui.gardener_portrait = (Texture2D){0};
+    capture(&game, &canvas, "dialogue_missing_portrait", 1280, 720);
+    game.ui.dialogue_skin = (Texture2D){0};
+    capture(&game, &canvas, "dialogue_missing_skin", 1280, 720);
+    game.ui.dialogue_frame = (Texture2D){0};
+    capture(&game, &canvas, "dialogue_missing_assets", 1280, 720);
+    game.ui = (UiTheme){0};
+    capture(&game, &canvas, "dialogue_missing_font", 1280, 720);
+    game.ui = saved;
+    game.world.dialogue_title = NULL;
 
     game.screen = GAME_MENU;
     capture(&game, &canvas, "menu", 1280, 720);
@@ -252,7 +460,12 @@ int main(void)
     game_shutdown(&game);
     assert(!game.ui.regular.texture.id && !game.ui.semibold.texture.id);
     assert(!game.ui.interaction_chevron.id);
+    assert(!game.ui.interaction_frame.id);
+    assert(!game.ui.dialogue_frame.id && !game.ui.gardener_portrait.id);
+    assert(!game.ui.dialogue_skin.id);
+    assert(!game.ui.technician_portrait.id && !game.ui.researcher_portrait.id);
+    assert(!game.ui.dialogue_font.texture.id);
     CloseWindow();
-    puts("PASS: fontes, acentos, alvo compartilhado, bloqueio, estados, seta, resolucoes e desenho imutavel.");
+    puts("PASS: fontes, acentos, alvo compartilhado, bloqueio, estados, seta, resolucoes, dialogos, paginas, retratos/reserva e desenho imutavel.");
     return 0;
 }

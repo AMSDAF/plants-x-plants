@@ -15,10 +15,12 @@ static const int switch_keys[MAX_TEAM_SIZE] = {KEY_Q, KEY_W, KEY_E, KEY_R};
 static const char *const switch_labels[MAX_TEAM_SIZE] = {"Q", "W", "E", "R"};
 
 static const Rectangle return_button = {64, 565, 265, 54};
-static const Rectangle logic_button = {634, 567, 582, 48};
 static const Rectangle setup_left = {64, 225, 400, 58};
 static const Rectangle setup_operator = {480, 225, 200, 58};
 static const Rectangle setup_right = {696, 225, 520, 58};
+static const Rectangle setup_move_buttons[MAX_MOVES] = {
+    {64, 535, 556, 48}, {660, 535, 556, 48}
+};
 static const Rectangle setup_confirm = {64, 602, 370, 54};
 static const Rectangle remove_reserve = {453, 602, 430, 54};
 enum { ROSTER_COLUMNS = 4 };
@@ -150,8 +152,13 @@ static void update_setup(BattleScreen *screen)
         draft->right = next_condition(draft->right, draft->left);
     } else if (activate(setup_operator, KEY_E)) {
         draft->operator = (draft->operator + 1) % LOGIC_OPERATOR_COUNT;
+    } else if (activate(setup_move_buttons[0], KEY_ONE)) {
+        screen->draft_move_index = 0;
+    } else if (activate(setup_move_buttons[1], KEY_TWO)) {
+        screen->draft_move_index = 1;
     } else if (activate(setup_confirm, KEY_ENTER)) {
         screen->battle.formulas[screen->setup_side] = *draft;
+        screen->battle.boosted_move_indices[screen->setup_side] = screen->draft_move_index;
         screen->setup_side = -1;
     }
 }
@@ -185,10 +192,6 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     }
 
     if (battle->state == BATTLE_STATE_ONGOING) {
-        if (activate(logic_button, KEY_THREE)) {
-            Battle_ExecuteMove(battle, BATTLE_LOGIC_MOVE_INDEX);
-            return BATTLE_SCREEN_NONE;
-        }
         for (int i = 0; i < MAX_MOVES; i++) {
             if (activate(move_button(i), move_keys[i])) {
                 Battle_ExecuteMove(battle, i);
@@ -268,9 +271,16 @@ static void draw_setup(const UiTheme *ui, const BattleScreen *screen)
 {
     LogicFormula formula = screen->draft;
     LogicEvaluation value = Battle_EvaluateFormula(&screen->battle, screen->setup_side, formula);
-    const Move *move = Battle_LogicMove(formula.operator);
+    const Team *team = screen->setup_side == 0
+        ? &screen->battle.player_team : &screen->battle.enemy_team;
+    const Plant *active = &team->plants[team->active_index];
+    BattleState preview = screen->battle;
+    preview.formulas[screen->setup_side] = formula;
+    preview.boosted_move_indices[screen->setup_side] = screen->draft_move_index;
+    int move_index = screen->draft_move_index;
+    int boosted_power = Battle_GetMovePower(&preview, screen->setup_side, move_index);
 
-    ui_text(ui, "Monte seu próprio golpe", 64, 42, 40, ink);
+    ui_text(ui, "Escolha o golpe que receberá o bônus", 64, 42, 36, ink);
     ui_text(ui, "ESC · Estufa", 1060, 43, 20, ink);
     ui_text(ui, TextFormat("Montagem de %s", side_name(screen->setup_side)), 64, 110, 28, ink);
     ui_text(ui, "Escolha duas condições diferentes e combine com um operador.", 64, 158, 22, ink);
@@ -284,15 +294,20 @@ static void draw_setup(const UiTheme *ui, const BattleScreen *screen)
     DrawRectangle(64, 319, 1152, 197, paper);
     ui_text(ui, TextFormat("P %s Q", operators[formula.operator]), 86, 341, 33, ink);
     ui_text(ui, operator_rules[formula.operator], 86, 391, 24, ink);
-    ui_text(ui, TextFormat("Poder %d  ·  Precisão %d%%", move->power, move->accuracy), 86, 433, 22, ink);
+    ui_text(ui, TextFormat("Bônus do operador: +%d de poder quando a fórmula for verdadeira",
+                           Battle_GetFormulaPowerBonus(formula.operator)), 86, 433, 22, ink);
     ui_text(ui, TextFormat("Com as equipes no início: %s %s %s = %s",
                         truth(value.left), operators[formula.operator], truth(value.right),
                         truth(value.result)), 86, 471, 22, ink);
-    {
-        LogicFormula rival = screen->battle.formulas[1];
-        ui_text(ui, TextFormat("Golpe do guardião: %s %s %s", conditions[rival.left],
-                            operators[rival.operator], conditions[rival.right]), 64, 548, 18, ink);
+    for (int i = 0; i < MAX_MOVES; i++) {
+        const Move *candidate = &active->moves[i];
+        int candidate_power = i == move_index ? boosted_power : candidate->power;
+        draw_button(ui, setup_move_buttons[i],
+                    TextFormat("[%d]  %s  ·  Poder %d%s", i + 1, candidate->name,
+                               candidate_power, i == move_index ? "  (selecionado)" : ""), true);
     }
+    ui_text(ui, "Use 1/2 ou clique para escolher o golpe. Q/W alteram condições; E altera o operador.",
+            64, 583, 16, ink);
     draw_button(ui, setup_confirm, "ENTER  Confirmar fórmula", true);
 }
 
@@ -419,21 +434,28 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
     if (battle->state == BATTLE_STATE_REPLACEMENT) {
         ui_text(ui, TextFormat("%s precisa escolher uma reserva.", side), 64, 511, 26, ink);
     } else {
-        ui_text(ui, TextFormat("Turno de %s%s", side, cpu ? " · escolhendo..." : ""), 64, 511, 26, ink);
+        LogicFormula formula = battle->formulas[battle->current_turn];
+        LogicEvaluation value = Battle_EvaluateFormula(battle, battle->current_turn, formula);
+        int boosted_index = battle->boosted_move_indices[battle->current_turn];
+        const Move *boosted_move = &active->moves[boosted_index];
+        int boosted_power = Battle_GetMovePower(battle, battle->current_turn, boosted_index);
+        ui_text(ui, TextFormat("%s%s · %s %s %s = %s", side,
+                            cpu ? " escolhendo..." : "",
+                            conditions[formula.left], operators[formula.operator],
+                            conditions[formula.right], truth(value.result)), 64, 510, 17, ink);
+        if (value.result) {
+            ui_text(ui, TextFormat("Golpe %d fortalecido: %s · poder %d → %d",
+                                boosted_index + 1, boosted_move->name,
+                                boosted_move->power, boosted_power), 64, 533, 17, ink);
+        } else {
+            ui_text(ui, TextFormat("Golpe escolhido: %s · poder base %d (aguardando fórmula)",
+                                boosted_move->name, boosted_move->power), 64, 533, 17, ink);
+        }
         for (int i = 0; i < MAX_MOVES; i++) {
             const Move *move = &active->moves[i];
             draw_button(ui, move_button(i),
                         TextFormat("%d  %s  %d%%", i + 1, move->name, move->accuracy), !cpu);
         }
-        LogicFormula formula = battle->formulas[battle->current_turn];
-        LogicEvaluation value = Battle_EvaluateFormula(battle, battle->current_turn, formula);
-        const Move *move = Battle_LogicMove(formula.operator);
-        draw_button(ui, logic_button,
-                    TextFormat("3  %s  ·  Poder %d  ·  %s %s %s = %s", move->name, move->power,
-                               truth(value.left), operators[formula.operator], truth(value.right),
-                               truth(value.result)), !cpu && value.result);
-        ui_text(ui, TextFormat("P (%s): %s", truth(value.left), conditions[formula.left]), 634, 510, 18, ink);
-        ui_text(ui, TextFormat("Q (%s): %s", truth(value.right), conditions[formula.right]), 634, 534, 18, ink);
     }
 
     for (int i = 0; i < team->count; i++) {
