@@ -21,6 +21,7 @@ typedef struct {
     int roster_cursor;
     int team_slot;
     LogicFormula draft;
+    int draft_move_index;
 } BattleScreen;
 
 BattleScreenAction battle_screen_update(BattleScreen *screen, float dt);

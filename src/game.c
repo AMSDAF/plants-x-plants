@@ -62,10 +62,14 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
     };
     Battle_Init(&screen->battle, team, guardian_team(encounter, team.count));
-    if (configured) screen->battle.formulas[0] = game->campaign.formula;
+    if (configured) {
+        screen->battle.formulas[0] = game->campaign.formula;
+        screen->battle.boosted_move_indices[0] = game->campaign.boosted_move_index;
+    }
     LogicCondition condition = encounter == WORLD_ENCOUNTER_ALOE
         ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
     screen->battle.formulas[1] = (LogicFormula){condition, LOGIC_OWN_RESERVE, LOGIC_AND};
+    screen->battle.boosted_move_indices[1] = 0;
     game->encounter = encounter;
     change_screen(game, GAME_BATTLE);
 }
@@ -77,6 +81,7 @@ static void leave_encounter(Game *game)
         game->campaign.team = screen->battle.player_team;
         Team_Restore(&game->campaign.team);
         game->campaign.formula = screen->battle.formulas[0];
+        game->campaign.boosted_move_index = screen->battle.boosted_move_indices[0];
         game->campaign.has_team = true;
     }
     if (screen->battle.state == BATTLE_STATE_PLAYER_WIN) {

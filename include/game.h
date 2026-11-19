@@ -30,6 +30,7 @@ typedef struct {
     bool has_team;
     Team team;
     LogicFormula formula;
+    int boosted_move_index;
 } CampaignSession;
 
 /* Estado e recursos compartilhados entre as telas. */

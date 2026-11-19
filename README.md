@@ -283,11 +283,11 @@ cmake --build build --target selection_scene_check
 O alvo opcional usa eventos de entrada da raylib, testa navegação, transições, fallback e animação, e grava capturas OpenGL. Não substitui teste manual. Consulte [o relatório da seleção](docs/TRAINER_SELECTION.md).
 
 Na campanha, o primeiro encontro com um guardião abre a montagem da equipe e
-do **Golpe Lógico**. Escolha de duas a quatro plantas com **Q/W/E/R**, **setas**
+da fórmula de fortalecimento. Escolha de duas a quatro plantas com **Q/W/E/R**, **setas**
 e **Espaço**, ou clique nos cartões. **Backspace** remove uma reserva; **ENTER**
-confirma. Na fórmula, **Q/W** escolhem condições, **E** muda o operador e
-**ENTER** confirma. Durante a batalha, **1/2** usam os golpes da espécie,
-**3** usa o Golpe Lógico e **Q/W/E/R** trocam a planta ativa.
+confirma. Na fórmula, **Q/W** escolhem condições, **E** muda o operador,
+**1/2** escolhem qual golpe receberá o bônus, e **ENTER** confirma. Durante a
+batalha, **1/2** usam os golpes da espécie e **Q/W/E/R** trocam a planta ativa.
 **ENTER** no resultado ou **ESC** retorna à estufa. Consulte
 [o relatório do combate](docs/BATTLE_PROTOTYPE.md).
 

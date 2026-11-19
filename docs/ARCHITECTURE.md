@@ -113,11 +113,13 @@ Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a in
 Uma ação inválida não deve alterar a batalha nem consumir o turno.
 
 O jogador escolhe de duas a quatro das 12 espécies catalogadas em `plant_data.c`; os guardiões têm equipes predefinidas.
-O Golpe Lógico tem uma fórmula por equipe. `battle_screen.c` coleta as duas
-condições e o operador antes da partida e mostra os valores durante os turnos.
-`battle.c` interpreta a fórmula, resolve a disponibilidade e executa o golpe
-pela mesma função usada para os golpes das espécies. A CPU consulta essa
-disponibilidade antes de escolher uma ação. Os encontros seguintes preservam a fórmula do jogador.
+Cada equipe associa duas condições e um operador a um dos dois espaços de golpe.
+Quando a fórmula é verdadeira, o golpe daquele espaço recebe um bônus de poder;
+o efeito acompanha a equipe quando sua planta ativa muda. `battle_screen.c`
+coleta a fórmula e o espaço escolhido e mostra os valores durante os turnos.
+`battle.c` avalia a fórmula e aplica o bônus ao executar um golpe normal. A CPU
+considera o mesmo bônus ao escolher uma ação. Os encontros seguintes preservam
+a configuração do jogador.
 
 ### Adversário controlado pelo computador
 

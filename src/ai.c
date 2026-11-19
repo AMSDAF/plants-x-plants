@@ -21,12 +21,9 @@ int AI_PlayTurn(BattleState *battle)
     for (int i = 1; i < MAX_MOVES; i++) {
         const Move *candidate = &active->moves[i];
         const Move *best = &active->moves[best_move];
-        if (candidate->power * candidate->accuracy > best->power * best->accuracy)
-            best_move = i;
+        int candidate_score = Battle_GetMovePower(battle, 1, i) * candidate->accuracy;
+        int best_score = Battle_GetMovePower(battle, 1, best_move) * best->accuracy;
+        if (candidate_score > best_score) best_move = i;
     }
-    const Move *logic = Battle_GetAvailableLogicMove(battle);
-    const Move *best = &active->moves[best_move];
-    if (logic && logic->power * logic->accuracy > best->power * best->accuracy)
-        best_move = BATTLE_LOGIC_MOVE_INDEX;
     return Battle_ExecuteMove(battle, best_move);
 }

@@ -63,7 +63,7 @@ int main(void)
     Battle_Init(&battle, team, team);
     BattleState before = battle;
     assert(!Battle_ExecuteMove(&battle, -1));
-    assert(!Battle_ExecuteMove(&battle, BATTLE_LOGIC_MOVE_INDEX + 1));
+    assert(!Battle_ExecuteMove(&battle, MAX_MOVES));
     assert(!Battle_SwitchPlant(&battle, 0));
     assert(!Battle_SwitchPlant(&battle, MAX_TEAM_SIZE));
     assert(memcmp(&battle, &before, sizeof(battle)) == 0);
