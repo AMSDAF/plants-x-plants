@@ -46,12 +46,15 @@ receber o comando e aplica o bônus somente enquanto ela for verdadeira.
 
 ## Equipes e turnos
 
-O jogador escolhe de duas a quatro plantas entre Cacto,
-Girassol, Babosa, Rosa, Hera, Bambu, Samambaia, Lavanda, Orquídea, Lótus,
-Hortelã e Trevo. O guardião usa espécies predefinidas e monta um grupo do mesmo
-tamanho. Cada espécie usa diretamente os atributos base do catálogo e tem dois golpes próprios.
+O jogador escolhe três plantas no prólogo entre Trevo, Hera Venenosa, Pimenta,
+Cacto, Orquídea e Planta Carnívora. Babosa e Girassol são os bosses do depósito e
+do viveiro e não aparecem entre as opções iniciais. O catálogo contém somente
+essas oito espécies. As equipes dos guardiões mantêm o boss na posição inicial
+e reservas predefinidas do elenco atual, com o mesmo tamanho da equipe do jogador. Cada espécie usa diretamente os atributos base do catálogo e tem dois golpes próprios.
 
-Selecione uma vaga com **Q/W/E/R** ou clique nela. Depois selecione a espécie
+A montagem de reserva da interface de batalha continua disponível como alternativa
+interna de duas a quatro plantas, usando somente as seis iniciais. Na campanha,
+a equipe do prólogo é preservada. Nessa montagem, selecione uma vaga com **Q/W/E/R** ou clique nela. Depois selecione a espécie
 com **setas** e **Espaço** ou clique no cartão. A primeira posição começa
 ativa. Se escolher uma espécie já presente para uma vaga ocupada, as duas
 trocam de lugar. Para adicionar em uma vaga livre, escolha uma espécie que
@@ -112,7 +115,8 @@ cmake --build build --target plants_x_plants battle_check name_entry_check menu_
 .\build\menu_screen_check.exe
 ```
 
-`battle_check` verifica atributos das 12 espécies, tabelas-verdade, ações inválidas,
+`battle_check` verifica o elenco de oito espécies, a lista de seis iniciais sem bosses,
+os dois golpes de cada inicial e os atributos do catálogo, tabelas-verdade, ações inválidas,
 trocas, derrota, substituição pela IA, vitória e restauração. `name_entry_check`
 percorre a campanha com guardiões e progresso. `menu_screen_check` confere a
 entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerramento.

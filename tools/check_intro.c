@@ -78,6 +78,14 @@ int main(void)
     for (int i = 0; i < INTRO_STARTER_COUNT; i++) {
         game.intro.cursor = i;
         key(&game, KEY_SPACE); assert(game.intro.count == 1);
+        IntroScreen draft = game.intro;
+        draft.count = INTRO_TEAM_SIZE;
+        for (int slot = 0; slot < INTRO_TEAM_SIZE; slot++)
+            draft.selected[slot] = (i + slot) % INTRO_STARTER_COUNT;
+        Team selected = {0};
+        assert(intro_screen_team(&draft, &selected));
+        assert(selected.plants[0].id == (int)PlantData_GetStarter(i)->id);
+        assert(selected.plants[0].id != SPECIES_ALOE && selected.plants[0].id != SPECIES_SUNFLOWER);
         key(&game, KEY_SPACE); assert(game.intro.count == 0);
     }
     click(&game, 150, 210);
@@ -89,9 +97,15 @@ int main(void)
     assert(game.intro.count == INTRO_TEAM_SIZE);
     Team team = {0};
     assert(intro_screen_team(&game.intro, &team) && team.count == INTRO_TEAM_SIZE);
-    assert(team.plants[0].id == SPECIES_CACTUS && team.plants[2].id == SPECIES_ALOE);
+    assert(team.plants[0].id == SPECIES_CLOVER && team.plants[1].id == SPECIES_POISON_IVY &&
+           team.plants[2].id == SPECIES_PEPPER);
     IntroScreen invalid = game.intro;
     invalid.selected[1] = invalid.selected[0];
+    assert(!intro_screen_team(&invalid, &team));
+    invalid = game.intro;
+    invalid.selected[0] = -1;
+    assert(!intro_screen_team(&invalid, &team));
+    invalid.selected[0] = INTRO_STARTER_COUNT;
     assert(!intro_screen_team(&invalid, &team));
     capture(&game, "build/intro_preview/03_starters.png");
     key(&game, KEY_ENTER); assert(game.intro.stage == INTRO_TRAVEL);
@@ -111,12 +125,22 @@ int main(void)
     assert(game.screen == GAME_BATTLE && !game.battle_screen.choosing_team);
     assert(game.battle_screen.battle.player_team.count == INTRO_TEAM_SIZE);
     assert(game.battle_screen.battle.enemy_team.count == INTRO_TEAM_SIZE);
+    assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_ALOE);
     assert(game.battle_screen.setup_side == 0);
     key(&game, KEY_ENTER);
     assert(game.battle_screen.setup_side == -1);
+    capture(&game, "build/intro_preview/06_starter_battle.png");
     key(&game, KEY_ESCAPE);
     assert(game.screen == GAME_EXPLORATION && game.campaign.has_formula);
     assert(game.campaign.team.count == INTRO_TEAM_SIZE);
+    game.world.location = WORLD_NURSERY;
+    game.player.feet = (Vector2){640, 420};
+    key(&game, KEY_E);
+    assert(game.screen == GAME_BATTLE && game.battle_screen.setup_side == -1);
+    assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_SUNFLOWER);
+    for (int i = 0; i < INTRO_TEAM_SIZE; i++)
+        assert(game.battle_screen.battle.player_team.plants[i].id == team.plants[i].id);
+    key(&game, KEY_ESCAPE);
     key(&game, KEY_ESCAPE);
     key(&game, KEY_ENTER); key(&game, KEY_ENTER);
     for (int i = 0; i < 90; i++) tick(&game);

@@ -99,12 +99,24 @@ O movimento usa delta time limitado a 0,1 s por quadro. Teclas de eixos diferent
 |---|---|
 | `include/plant.h` | Definir as estruturas de plantas, golpes e equipes, além das operações sobre esses dados. |
 | `src/plant.c` | Implementar a criação e a manipulação de plantas e equipes. |
-| `include/plant_data.h` | Declarar o acesso ao catálogo de espécies, evoluções e golpes. |
-| `src/plant_data.c` | Armazenar nomes, atributos e golpes de cada espécie. |
+| `include/plant_data.h` | Declarar os IDs das oito espécies, o tamanho da lista inicial e o acesso aos dados e golpes. |
+| `src/plant_data.c` | Armazenar nomes, atributos e golpes provisórios de cada espécie e a lista explícita das seis iniciais. |
 
 O catálogo contém os dados usados para criar as plantas. A criação recebe somente o identificador da espécie e copia seus atributos base, sem progressão individual. Durante uma partida, cada planta possui seu próprio estado, como a vida atual.
 
 Por exemplo: dois cactos podem partir dos mesmos atributos do catálogo, mas perder vida de forma independente.
+
+`PlantData_GetStarter(index)` consulta a lista inicial sem depender da ordem dos
+IDs do catálogo e retorna `NULL` para índices inválidos. A introdução armazena
+índices dessa lista e os converte em IDs ao montar a equipe. A montagem de reserva
+na interface de combate consulta a mesma lista; o motor continua aceitando as
+oito espécies, pois também controla as equipes dos bosses.
+
+Para aprimorar o elenco, ajuste atributos e golpes em `plant_data.c`; o catálogo
+usa inicializadores por ID. Os desenhos provisórios ficam em `intro_screen.c`
+e `battle_screen.c`, sem mudar as regras do combate. Nesta etapa não há efeitos
+de veneno, queimadura ou captura, nem balanceamento final.
+
 
 ### Regras de combate
 
@@ -117,7 +129,7 @@ Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a in
 
 Uma ação inválida não deve alterar a batalha nem consumir o turno.
 
-A abertura oferece Cacto, Girassol, Babosa, Rosa, Hera e Bambu, com três escolhas distintas obrigatórias. O catálogo completo continua com 12 espécies. Os guardiões usam equipes predefinidas com o mesmo tamanho da equipe do jogador.
+A abertura oferece Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora, com três escolhas distintas obrigatórias. O catálogo definitivo contém oito espécies; Girassol e Babosa são os bosses e ficam fora da seleção inicial. Os guardiões usam equipes predefinidas com o mesmo tamanho da equipe do jogador.
 Cada equipe associa duas condições e um operador a um dos dois espaços de golpe.
 Quando a fórmula é verdadeira, o golpe daquele espaço recebe um bônus de poder;
 o efeito acompanha a equipe quando sua planta ativa muda. `battle_screen.c`

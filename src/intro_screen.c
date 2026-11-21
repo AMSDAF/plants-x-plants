@@ -57,9 +57,8 @@ bool intro_screen_team(const IntroScreen *screen, Team *team)
     if (screen->count != INTRO_TEAM_SIZE) return false;
     Team result = {0};
     for (int i = 0; i < screen->count; i++) {
-        int species = screen->selected[i];
-        if (species < 0 || species >= INTRO_STARTER_COUNT ||
-            !Team_SelectSpecies(&result, result.count, species)) return false;
+        const SpeciesData *species = PlantData_GetStarter(screen->selected[i]);
+        if (!species || !Team_SelectSpecies(&result, result.count, species->id)) return false;
     }
     *team = result;
     return true;
@@ -125,13 +124,29 @@ static void draw_plant(int species, int x, int y, float elapsed)
     DrawRectangle(x - 4 + sway, y - 47, 8, 48, (Color){71, 117, 57, 255});
     DrawRectangle(x - 28 + sway, y - 35, 25, 12, (Color){91, 146, 67, 255});
     DrawRectangle(x + sway, y - 49, 26, 13, (Color){91, 146, 67, 255});
-    if (species == SPECIES_SUNFLOWER || species == SPECIES_ROSE) {
-        Color petals = species == SPECIES_ROSE ? (Color){194, 76, 91, 255} : (Color){233, 179, 61, 255};
+    if (species == SPECIES_ORCHID) {
+        Color petals = {194, 80, 167, 255};
         DrawRectangle(x - 15 + sway, y - 70, 30, 28, petals);
         DrawRectangle(x - 6 + sway, y - 62, 12, 12, (Color){111, 77, 49, 255});
     }
-    if (species == SPECIES_CACTUS || species == SPECIES_ALOE)
+    if (species == SPECIES_CACTUS)
         DrawRectangle(x - 11 + sway, y - 67, 22, 49, (Color){79, 133, 78, 255});
+    if (species == SPECIES_CLOVER) {
+        for (int i = 0; i < 4; i++)
+            DrawRectangle(x - 18 + (i % 2) * 20 + sway, y - 73 + (i / 2) * 20,
+                          17, 17, (Color){70, 150, 61, 255});
+    } else if (species == SPECIES_PEPPER) {
+        DrawRectangle(x - 10 + sway, y - 64, 21, 27, (Color){205, 65, 45, 255});
+        DrawRectangle(x - 5 + sway, y - 37, 11, 10, (Color){205, 65, 45, 255});
+    } else if (species == SPECIES_VENUS_FLYTRAP) {
+        DrawRectangle(x - 21 + sway, y - 70, 42, 35, (Color){87, 143, 62, 255});
+        DrawRectangle(x - 15 + sway, y - 58, 30, 11, (Color){167, 62, 70, 255});
+        for (int i = 0; i < 4; i++)
+            DrawRectangle(x - 14 + i * 8 + sway, y - 60, 4, 6, cream);
+    } else if (species == SPECIES_POISON_IVY) {
+        DrawRectangle(x - 10 + sway, y - 76, 20, 25, (Color){89, 125, 51, 255});
+        DrawRectangle(x - 19 + sway, y - 69, 38, 11, (Color){89, 125, 51, 255});
+    }
     DrawRectangle(x - 23, y, 46, 12, (Color){174, 98, 58, 255});
     DrawRectangle(x - 18, y + 12, 36, 20, (Color){144, 78, 47, 255});
 }
@@ -151,12 +166,14 @@ void intro_screen_draw(const UiTheme *ui, const IntroScreen *screen,
         selection_ui_text(ui, TextFormat("Escolha 3 de 6 · %d/3 selecionadas", screen->count), 640, 141, 21, cream);
         for (int i = 0; i < INTRO_STARTER_COUNT; i++) {
             Rectangle card = starter_card(i);
-            const SpeciesData *plant = PlantData_GetSpecies((SpeciesId)i);
+            const SpeciesData *plant = PlantData_GetStarter(i);
             int slot = selected_slot(screen, i);
             selection_ui_panel(card, 8, slot >= 0 ? (Color){223, 235, 183, 255} : cream);
             if (screen->cursor == i) selection_ui_accents(card, 1);
-            draw_plant(i, (int)card.x + 58, (int)card.y + 108, screen->elapsed);
-            ui_text_bold(ui, plant->name_pt, (int)card.x + 108, (int)card.y + 22, 26, ink);
+            draw_plant(plant->id, (int)card.x + 58, (int)card.y + 108, screen->elapsed);
+            int name_size = 26;
+            while (name_size > 18 && ui_measure_bold(ui, plant->name_pt, name_size) > 216) name_size--;
+            ui_text_bold(ui, plant->name_pt, (int)card.x + 108, (int)card.y + 22, name_size, ink);
             ui_text(ui, TextFormat("Vida %d · ATQ %d", plant->base_hp, plant->base_attack), (int)card.x + 108, (int)card.y + 62, 19, ink);
             ui_text(ui, TextFormat("Defesa %d", plant->base_defense), (int)card.x + 108, (int)card.y + 89, 19, ink);
             ui_text(ui, slot >= 0 ? TextFormat("%d · Na equipe", slot + 1) : "Selecionar", (int)card.x + 108, (int)card.y + 128, 21, ink);

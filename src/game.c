@@ -32,10 +32,10 @@ static bool transition_input_down(void)
 static Team guardian_team(WorldEncounter encounter, int size)
 {
     static const SpeciesId aloe[MAX_TEAM_SIZE] = {
-        SPECIES_ALOE, SPECIES_IVY, SPECIES_BAMBOO, SPECIES_CLOVER
+        SPECIES_ALOE, SPECIES_POISON_IVY, SPECIES_VENUS_FLYTRAP, SPECIES_CLOVER
     };
     static const SpeciesId sunflower[MAX_TEAM_SIZE] = {
-        SPECIES_SUNFLOWER, SPECIES_ROSE, SPECIES_LOTUS, SPECIES_LAVENDER
+        SPECIES_SUNFLOWER, SPECIES_PEPPER, SPECIES_ORCHID, SPECIES_CACTUS
     };
     const SpeciesId *species = encounter == WORLD_ENCOUNTER_ALOE ? aloe : sunflower;
     Team team = {0};
@@ -51,8 +51,8 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         team = game->campaign.team;
         Team_Restore(&team);
     } else {
-        Team_SelectSpecies(&team, 0, SPECIES_CACTUS);
-        Team_SelectSpecies(&team, 1, SPECIES_SUNFLOWER);
+        for (int i = 0; i < MIN_TEAM_SIZE; i++)
+            Team_SelectSpecies(&team, i, PlantData_GetStarter(i)->id);
     }
 
     BattleScreen *screen = &game->battle_screen;

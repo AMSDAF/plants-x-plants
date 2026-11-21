@@ -3,9 +3,9 @@
 #define INTRO_SCREEN_H
 
 #include "trainer_select_screen.h"
-#include "plant.h"
+#include "plant_data.h"
 
-#define INTRO_STARTER_COUNT 6
+#define INTRO_STARTER_COUNT STARTER_SPECIES_COUNT
 #define INTRO_TEAM_SIZE 3
 
 typedef enum { INTRO_LETTER, INTRO_ACCEPT, INTRO_STARTERS, INTRO_TRAVEL } IntroStage;
@@ -14,7 +14,7 @@ typedef enum { INTRO_NONE, INTRO_BACK, INTRO_FINISH } IntroAction;
 typedef struct {
     IntroStage stage;
     int cursor;
-    int selected[INTRO_TEAM_SIZE];
+    int selected[INTRO_TEAM_SIZE]; /* Índices na lista de iniciais, não IDs de espécie. */
     int count;
     float elapsed;
     float reveal;

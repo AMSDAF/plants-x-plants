@@ -29,14 +29,10 @@ static const Color species_colors[SPECIES_COUNT] = {
     [SPECIES_CACTUS] = {56, 123, 78, 255},
     [SPECIES_SUNFLOWER] = {225, 154, 39, 255},
     [SPECIES_ALOE] = {65, 162, 132, 255},
-    [SPECIES_ROSE] = {208, 61, 83, 255},
-    [SPECIES_IVY] = {89, 125, 51, 255},
-    [SPECIES_BAMBOO] = {144, 170, 53, 255},
-    [SPECIES_FERN] = {45, 142, 84, 255},
-    [SPECIES_LAVENDER] = {146, 109, 184, 255},
+    [SPECIES_POISON_IVY] = {89, 125, 51, 255},
+    [SPECIES_PEPPER] = {208, 61, 43, 255},
+    [SPECIES_VENUS_FLYTRAP] = {101, 152, 56, 255},
     [SPECIES_ORCHID] = {194, 80, 167, 255},
-    [SPECIES_LOTUS] = {231, 133, 157, 255},
-    [SPECIES_MINT] = {72, 177, 118, 255},
     [SPECIES_CLOVER] = {70, 150, 61, 255}
 };
 
@@ -121,17 +117,17 @@ static bool update_team_selection(BattleScreen *screen)
     else if (IsKeyPressed(KEY_RIGHT)) cursor++;
     else if (IsKeyPressed(KEY_UP)) cursor -= ROSTER_COLUMNS;
     else if (IsKeyPressed(KEY_DOWN)) cursor += ROSTER_COLUMNS;
-    screen->roster_cursor = (cursor + SPECIES_COUNT) % SPECIES_COUNT;
+    screen->roster_cursor = (cursor + STARTER_SPECIES_COUNT) % STARTER_SPECIES_COUNT;
 
     int selected = IsKeyPressed(KEY_SPACE) ? screen->roster_cursor : -1;
-    for (int i = 0; i < SPECIES_COUNT; i++) {
+    for (int i = 0; i < STARTER_SPECIES_COUNT; i++) {
         if (activate(species_card(i), KEY_NULL)) {
             screen->roster_cursor = i;
             selected = i;
             break;
         }
     }
-    if (selected >= 0 && Team_SelectSpecies(team, screen->team_slot, selected))
+    if (selected >= 0 && Team_SelectSpecies(team, screen->team_slot, PlantData_GetStarter(selected)->id))
         screen->team_slot = (screen->team_slot + 1) % team->count;
     return false;
 }
@@ -229,20 +225,20 @@ static void draw_team_selection(const UiTheme *ui, const BattleScreen *screen)
     ui_text(ui, "Escolha uma vaga abaixo, depois clique numa planta ou use as setas e Espaço.",
              64, 149, 20, ink);
 
-    for (int i = 0; i < SPECIES_COUNT; i++) {
-        const SpeciesData *species = PlantData_GetSpecies((SpeciesId)i);
+    for (int i = 0; i < STARTER_SPECIES_COUNT; i++) {
+        const SpeciesData *species = PlantData_GetStarter(i);
         Rectangle card = species_card(i);
         int x = (int)card.x;
         int y = (int)card.y;
         bool focused = i == screen->roster_cursor || CheckCollisionPointRec(GetMousePosition(), card);
         DrawRectangleRec(card, focused ? GOLD : paper);
         DrawRectangleLinesEx(card, focused ? 3 : 2, ink);
-        DrawCircle(x + 22, y + 25, 9, species_colors[i]);
+        DrawCircle(x + 22, y + 25, 9, species_colors[species->id]);
         ui_text(ui, species->name_pt, x + 39, y + 14, 22, ink);
         ui_text(ui, TextFormat("HP %d  ATQ %d  DEF %d", species->base_hp, species->base_attack,
                             species->base_defense), x + 14, y + 48, 17, ink);
         for (int slot = 0; slot < team->count; slot++) {
-            if (team->plants[slot].id != i) continue;
+            if (team->plants[slot].id != (int)species->id) continue;
             const char *role = slot == 0 ? "ATIVA" : TextFormat("RESERVA %d", slot);
             ui_text(ui, role, x + 14, y + 72, 15, ink);
         }
@@ -353,20 +349,29 @@ static void draw_plant(const UiTheme *ui, const Plant *plant, int x, int y,
         DrawRectangle(x - 5, y - 20, 10, 75, DARKGREEN);
         DrawEllipse(x - 17, y + 31, 23, 11, DARKGREEN);
         DrawEllipse(x + 19, y + 19, 23, 10, GREEN);
-        if (plant->id == SPECIES_ROSE || plant->id == SPECIES_ORCHID ||
-            plant->id == SPECIES_LAVENDER || plant->id == SPECIES_LOTUS) {
+        if (plant->id == SPECIES_ORCHID) {
             DrawEllipse(x - 23, y - 23, 22, 20, color);
             DrawEllipse(x + 23, y - 23, 22, 20, color);
             DrawEllipse(x, y - 39, 27, 25, color);
             DrawCircle(x, y - 20, 18, paper);
+        } else if (plant->id == SPECIES_PEPPER) {
+            DrawEllipse(x, y - 31, 25, 36, color);
+            DrawTriangle((Vector2){x - 19, y - 12}, (Vector2){x, y + 34},
+                         (Vector2){x + 19, y - 12}, color);
+        } else if (plant->id == SPECIES_VENUS_FLYTRAP) {
+            DrawEllipse(x, y - 30, 42, 28, color);
+            DrawEllipse(x, y - 27, 32, 12, MAROON);
+            for (int i = 0; i < 5; i++) {
+                DrawRectangle(x - 27 + i * 12, y - 39, 6, 10, paper);
+                DrawRectangle(x - 27 + i * 12, y - 21, 6, 8, paper);
+            }
+        } else if (plant->id == SPECIES_CLOVER) {
+            for (int i = 0; i < 4; i++)
+                DrawEllipse(x - 18 + (i % 2) * 36, y - 54 + (i / 2) * 32, 22, 21, color);
         } else {
             DrawEllipse(x - 23, y - 18, 28, 17, color);
             DrawEllipse(x + 23, y - 26, 27, 18, color);
             DrawEllipse(x, y - 37, 15, 30, color);
-        }
-        if (plant->id == SPECIES_FERN) {
-            /* Raiz visível até a sombra para assentar a samambaia no chão. */
-            DrawEllipse(x, y + 52, 15, 5, DARKGREEN);
         }
     }
 }
@@ -389,10 +394,10 @@ static void draw_team(const UiTheme *ui, const Team *team, const char *name, int
     for (int i = 0; i < team->count; i++) {
         const Plant *plant = &team->plants[i];
         int slot_x = x + 20 + i * 126;
-        ui_text(ui, plant->name_pt, slot_x, 375, 18, ink);
+        ui_text_wrap(ui, plant->name_pt, (Rectangle){slot_x, 371, 118, 42}, 16, ink, false);
         ui_text(ui, TextFormat("%d/%d%s", plant->current_hp, plant->max_hp,
                             i == team->active_index ? " · ativa" : ""),
-                 slot_x, 399, 16, ink);
+                 slot_x, 414, 16, ink);
     }
 }
 

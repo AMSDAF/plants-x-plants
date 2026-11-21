@@ -12,7 +12,17 @@ A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pres
 
 ### Campanha
 
-O jogador começa escolhendo três companheiras entre Cacto, Girassol, Babosa, Rosa, Hera e Bambu. A evolução e o recrutamento durante a jornada permanecem planejados.
+O jogador começa escolhendo três companheiras entre Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora. A evolução e o recrutamento durante a jornada permanecem planejados.
+
+O elenco definitivo tem oito espécies: as seis iniciais acima e os bosses
+**Babosa**, no depósito, e **Girassol**, no viveiro. Os bosses não aparecem na
+seleção inicial. As espécies antigas fora desse elenco foram retiradas do catálogo.
+
+Atributos e dois golpes de dano por espécie continuam provisórios, centralizados
+em `src/plant_data.c`. Pimenta e Planta Carnívora reaproveitam valores da base;
+Hera Venenosa mantém os atributos e golpes da antiga Hera. Os nomes não aplicam
+veneno, queimadura ou captura. As iniciais usam desenhos provisórios em código,
+prontos para substituição por sprites; as artes dos bosses são preservadas.
 
 A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativas.
 
