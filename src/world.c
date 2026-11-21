@@ -11,7 +11,10 @@
 static void open_dialogue(World *world, const char *title, const char *first, const char *second);
 
 /* Coordenadas do exterior medidas na imagem de referência. */
-enum { MAP_WIDTH = 1672, MAP_HEIGHT = 941 };
+enum { MAP_WIDTH = 1672, MAP_HEIGHT = 941,
+       TREE_CANOPY_X = 580, TREE_CANOPY_Y = 205,
+       TREE_CANOPY_WIDTH = 279, TREE_CANOPY_HEIGHT = 207,
+       TREE_CANOPY_WORLD_WIDTH = 155, TREE_CANOPY_WORLD_HEIGHT = 115 };
 
 typedef enum {
     VALVE,
@@ -146,6 +149,23 @@ static const Vector2 irrigation_path[] = {
     {1198, 682}, {1215, 714}, {1348, 714}, {1357, 686}, {1414, 686},
     {1425, 710}, {1568, 708}, {1568, 742}, {1090, 742}, {1070, 723}
 };
+/* Área da copa da árvore central liberada dentro do círculo marcado. */
+static const Vector2 tree_courtyard_path[] = {
+    {585, 216}, {602, 208}, {718, 208}, {733, 218}, {739, 232},
+    {739, 278}, {734, 294}, {730, 300}, {724, 305}, {721, 311}, {720, 316},
+    {710, 310}, {590, 310}, {584, 316}, {578, 312}, {574, 306}, {578, 303}, {569, 292},
+    {563, 274}, {562, 239}, {568, 220}
+};
+/* Pequenas extensões laterais da copa, dentro das duas novas marcações. */
+static const Vector2 tree_left_side_path[] = {
+    {569, 291}, {590, 291}, {590, 314}, {569, 314}
+};
+static const Vector2 tree_right_side_path[] = {
+    {716, 291}, {735, 291}, {735, 314}, {716, 314}
+};
+static const Vector2 left_bed_path[] = {
+    {454, 458}, {502, 455}, {508, 463}, {510, 499}, {454, 506}, {452, 484}
+};
 
 #define WALK_AREA(points) {points, sizeof(points) / sizeof(points[0])}
 static const struct {
@@ -154,7 +174,8 @@ static const struct {
 } walk_areas[] = {
     WALK_AREA(entry_path), WALK_AREA(courtyard_path), WALK_AREA(depot_path),
     WALK_AREA(maintenance_path), WALK_AREA(pergola_path), WALK_AREA(garden_loop_path), WALK_AREA(east_path),
-    WALK_AREA(irrigation_path)
+    WALK_AREA(irrigation_path), WALK_AREA(tree_courtyard_path), WALK_AREA(tree_left_side_path),
+    WALK_AREA(tree_right_side_path), WALK_AREA(left_bed_path)
 };
 #undef WALK_AREA
 
@@ -268,6 +289,8 @@ void world_assets_load(WorldAssets *assets)
             "assets/maps/maintenance_house_interior.png", 1672, 941),
         .courtyard_detail = load_map_texture("assets/maps/courtyard_detail/courtyard_complete.png",
                                             COURTYARD_DETAIL_WIDTH, COURTYARD_DETAIL_HEIGHT),
+        .tree_canopy_foreground = load_map_texture(
+            "assets/maps/tree_canopy_foreground.png", TREE_CANOPY_WIDTH, TREE_CANOPY_HEIGHT),
         .depot_interior = load_map_texture("assets/maps/depot_interior.png", 1672, 941),
         .basement_interior = load_map_texture("assets/maps/basement_interior.png", 1672, 941),
         .bridge_control_interior = load_map_texture(
@@ -276,6 +299,10 @@ void world_assets_load(WorldAssets *assets)
         .aloe_guard = load_sprite_texture("assets/sprites/aloe_guard.png"),
         .sunflower_guard = load_sprite_texture("assets/sprites/sunflower_guard.png")
     };
+    if (assets->tree_canopy_foreground.id) {
+        SetTextureFilter(assets->tree_canopy_foreground, TEXTURE_FILTER_BILINEAR);
+        SetTextureWrap(assets->tree_canopy_foreground, TEXTURE_WRAP_CLAMP);
+    }
     if (assets->courtyard_detail.id) {
         SetTextureFilter(assets->courtyard_detail, TEXTURE_FILTER_BILINEAR);
         /* Impede o filtro de buscar pixels da borda oposta nas margens transparentes. */
@@ -290,6 +317,7 @@ void world_assets_unload(WorldAssets *assets)
     if (assets->tiles.id) UnloadTexture(assets->tiles);
     if (assets->maintenance_interior.id) UnloadTexture(assets->maintenance_interior);
     if (assets->courtyard_detail.id) UnloadTexture(assets->courtyard_detail);
+    if (assets->tree_canopy_foreground.id) UnloadTexture(assets->tree_canopy_foreground);
     if (assets->depot_interior.id) UnloadTexture(assets->depot_interior);
     if (assets->basement_interior.id) UnloadTexture(assets->basement_interior);
     if (assets->bridge_control_interior.id) UnloadTexture(assets->bridge_control_interior);
@@ -1244,6 +1272,20 @@ void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet
         if (objects[npc].location == world->location && in_front == foreground)
             draw_npc(assets->tiles, npc - GARDENER, base, camera);
     }
+}
+
+void world_draw_tree_canopy(const World *world, const WorldAssets *assets, Vector2 feet)
+{
+    if (world->location != WORLD_EXTERIOR || !world->detail_enabled ||
+        !assets->courtyard_detail.id || !assets->tree_canopy_foreground.id ||
+        feet.x < 550 || feet.x > 755 || feet.y > 350) return;
+
+    /* Reutiliza as folhas originais com transparência ao redor da silhueta. */
+    DrawTexturePro(assets->tree_canopy_foreground,
+                   (Rectangle){0, 0, TREE_CANOPY_WIDTH, TREE_CANOPY_HEIGHT},
+                   (Rectangle){TREE_CANOPY_X, TREE_CANOPY_Y,
+                               TREE_CANOPY_WORLD_WIDTH, TREE_CANOPY_WORLD_HEIGHT},
+                   (Vector2){0}, 0, WHITE);
 }
 
 static void draw_sign(Texture2D atlas, Object object)
