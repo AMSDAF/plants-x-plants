@@ -31,6 +31,7 @@ set(BATTLE_SOURCES
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/battle_screen_assets.c
 )
 
 add_executable(plants_x_plants
@@ -170,6 +171,14 @@ list(REMOVE_ITEM INTRO_CHECK_SOURCES src/main.c)
 add_executable(intro_check EXCLUDE_FROM_ALL tools/check_intro.c ${INTRO_CHECK_SOURCES})
 target_include_directories(intro_check PRIVATE include)
 target_link_libraries(intro_check PRIVATE raylib)
+
+# Arena real: menus, ações, recursos e capturas em resolução física.
+add_executable(battle_screen_check EXCLUDE_FROM_ALL tools/check_battle_screen.c ${INTRO_CHECK_SOURCES})
+target_include_directories(battle_screen_check PRIVATE include)
+target_link_libraries(battle_screen_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(battle_screen_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(intro_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()

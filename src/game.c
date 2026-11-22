@@ -58,6 +58,7 @@ static void start_encounter(Game *game, WorldEncounter encounter)
 
     BattleScreen *screen = &game->battle_screen;
     *screen = (BattleScreen){
+        .scene = encounter == WORLD_ENCOUNTER_ALOE ? BATTLE_SCENE_DEPOT : BATTLE_SCENE_NURSERY,
         .setup_side = game->campaign.has_formula ? -1 : 0,
         .choosing_team = !configured,
         .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
@@ -105,6 +106,7 @@ void game_init(Game *game)
     player_assets_load(&game->player_assets);
     trainer_select_assets_load(&game->trainer_select_assets);
     intro_assets_load(&game->intro_assets);
+    battle_screen_assets_load(&game->battle_assets);
     world_init(&game->world);
     world_assets_load(&game->world_assets);
     trainer_select_screen_init(&game->trainer_select);
@@ -114,7 +116,8 @@ void game_init(Game *game)
 
 void game_update(Game *game)
 {
-    if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT || game->screen == GAME_NAME_ENTRY) {
+    if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT ||
+        game->screen == GAME_NAME_ENTRY || game->screen == GAME_BATTLE) {
         float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
         selection_ui_update_fonts(&game->trainer_select_assets.ui, scale);
     }
@@ -219,8 +222,8 @@ void game_draw(const Game *game)
     switch (game->screen) {
         case GAME_MENU: menu_screen_draw(ui, &game->menu, &game->trainer_select_assets.ui); break;
         case GAME_BATTLE:
-            battle_screen_draw(ui, &game->battle_screen, game->world_assets.aloe_guard,
-                               game->world_assets.sunflower_guard);
+            battle_screen_draw(ui, &game->battle_screen, &game->battle_assets, &game->trainer_select_assets.ui,
+                                game->intro_assets.plants, game->intro_assets.sources);
             break;
         case GAME_TRAINER_SELECT:
             trainer_select_screen_draw(ui, &game->trainer_select, &game->trainer_select_assets);
@@ -257,5 +260,6 @@ void game_shutdown(Game *game)
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);
     intro_assets_unload(&game->intro_assets);
+    battle_screen_assets_unload(&game->battle_assets);
     menu_screen_shutdown(&game->menu);
 }

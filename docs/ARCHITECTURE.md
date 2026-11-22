@@ -160,8 +160,10 @@ A IA escolhe uma ação, mas não aplica dano nem altera equipes diretamente. Su
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `include/battle_screen.h` | Declarar as funções de entrada e desenho da tela de batalha. |
-| `src/battle_screen.c` | Capturar comandos e desenhar plantas, vida, golpes, turnos e mensagens usando raylib. |
+| `include/battle_screen.h` | Declarar os menus, o local do encontro e os recursos próprios da arena, além da entrada e desenho. |
+| `src/battle_screen.c` | Arena botânica, menu Atacar/Trocar, submenus de golpes/reservas, placeholders bloqueados, fórmula e resultado. Encaminha ações ao motor; desenho somente de leitura. Reutiliza as seis sprites iniciais e os atlas Pixelify já pertencentes a `Game`. |
+| `src/battle_screen_assets.c` | Carregar e liberar `Game.battle_assets`: dois cenários, terra, três molduras e dois bosses definitivos. Confere dimensões, calcula limites de alfa uma vez e desenha molduras em nove partes com filtro pontual. Não altera o mundo nem recursos emprestados. |
+| `tools/check_battle_screen.c` | Entradas raylib e capturas OpenGL dos dois locais, oito espécies, submenus, ações bloqueadas, quatro posições, substituição, CPU, resultado, resoluções e fallback; confere desenho imutável e liberação. |
 
 A interface apresenta o estado da batalha e encaminha as escolhas do jogador ao módulo de combate.
 

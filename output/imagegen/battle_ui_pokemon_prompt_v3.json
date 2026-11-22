@@ -1,0 +1,6 @@
+{
+  "tool": "image_gen (integrado)",
+  "status": "referencia_visual_sem_integracao",
+  "image": "battle_ui_pokemon_v3.png",
+  "prompt": "Use case: precise-object-edit. Edit the supplied approved pixel art battle UI mockup with ONLY TWO small top-of-screen changes. 1. Completely remove the text 'ESC · Estufa' from the upper-right wooden beam, restoring the matching blank wood pixels naturally. 2. Add ONE compact horizontally centered location name plaque at the very top center, reading exactly 'Depósito', in crisp dark forest-green pixel letters on cream parchment with a slim warm amber wood border and small restrained green leaf accents, matching this game's botanical UI. Plaque about 20 percent of image width and 6 percent of image height, neatly fitting on the upper horizontal beam without obscuring hanging lanterns or any health box. Keep EVERY other part of the image unchanged: exact 16:9 canvas and framing, depot scenery, Pimenta and Babosa sprites, their sizes and positions, soil platforms, cream health boxes and HP values, all bottom dialogue and four-button menu, selected Atacar, enabled Trocar, disabled Mochila/Fugir, 'Em breve' badges, 'Vamos implementar em breve' text. No extra edits, no other new elements, no new text, no restyling, no blur. The result is the same approved screen with no ESC label and a location plaque at top center."
+}

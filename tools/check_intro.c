@@ -229,6 +229,7 @@ int main(void)
     assert(game.battle_screen.battle.player_team.count == INTRO_TEAM_SIZE);
     assert(game.battle_screen.battle.enemy_team.count == INTRO_TEAM_SIZE);
     assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_ALOE);
+    assert(game.battle_screen.scene == BATTLE_SCENE_DEPOT);
     assert(game.battle_screen.setup_side == 0);
     key(&game, KEY_ENTER);
     assert(game.battle_screen.setup_side == -1);
@@ -241,6 +242,7 @@ int main(void)
     key(&game, KEY_E);
     assert(game.screen == GAME_BATTLE && game.battle_screen.setup_side == -1);
     assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_SUNFLOWER);
+    assert(game.battle_screen.scene == BATTLE_SCENE_NURSERY);
     for (int i = 0; i < INTRO_TEAM_SIZE; i++)
         assert(game.battle_screen.battle.player_team.plants[i].id == team.plants[i].id);
     key(&game, KEY_ESCAPE);

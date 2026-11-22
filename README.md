@@ -30,8 +30,10 @@ numerada, foco dourado com seta e fonte Pixelify Sans. Os botões de rodapé
 preservam cantos e folhas. A confirmação só é habilitada com três plantas. As quatro etapas do prólogo
 compartilham título pixelado, progresso, subtítulo, instruções e botões de
 madeira; o rótulo superior da marca foi removido.
-Consulte [o desenho da seleção](docs/PLANT_SELECTION_DESIGN.md). No combate, as iniciais ainda usam desenhos
-provisórios em código; as artes dos bosses são preservadas.
+Consulte [o desenho da seleção](docs/PLANT_SELECTION_DESIGN.md). O combate usa
+as oito sprites definitivas, cenários próprios do depósito/viveiro e o menu
+Atacar/Trocar, com Mochila e Fugir bloqueados. As artes antigas dos bosses são
+preservadas na exploração. Consulte [a interface de combate](docs/BATTLE_UI_PREPARATION.md).
 
 A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativas.
 

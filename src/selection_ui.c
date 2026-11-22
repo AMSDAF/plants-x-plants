@@ -69,7 +69,7 @@ void selection_ui_assets_unload(SelectionUiAssets *assets)
     *assets = (SelectionUiAssets){0};
 }
 
-static Font pixel_font(const UiTheme *ui, const SelectionUiAssets *assets, int size, float *draw_size)
+Font selection_ui_font(const UiTheme *ui, const SelectionUiAssets *assets, int size, float *draw_size)
 {
     for (int i = 0; i < SELECTION_FONT_COUNT; i++) {
         if (font_sizes[i] == size && assets->fonts[i].texture.id) {
@@ -84,7 +84,7 @@ static Font pixel_font(const UiTheme *ui, const SelectionUiAssets *assets, int s
 float selection_ui_measure(const UiTheme *ui, const SelectionUiAssets *assets, const char *text, int size)
 {
     float draw_size;
-    Font font = pixel_font(ui, assets, size, &draw_size);
+    Font font = selection_ui_font(ui, assets, size, &draw_size);
     return MeasureTextEx(font, text, draw_size, 0).x;
 }
 
@@ -92,7 +92,7 @@ void selection_ui_pixel_text(const UiTheme *ui, const SelectionUiAssets *assets,
                              float x, float y, int size, Color color)
 {
     float draw_size;
-    Font font = pixel_font(ui, assets, size, &draw_size);
+    Font font = selection_ui_font(ui, assets, size, &draw_size);
     float scale = assets->font_scale > 0 ? assets->font_scale : 1;
     DrawTextEx(font, text, (Vector2){roundf(x * scale) / scale, roundf(y * scale) / scale}, draw_size, 0, color);
 }
@@ -102,7 +102,7 @@ void selection_ui_pixel_box(const UiTheme *ui, const SelectionUiAssets *assets, 
                             Rectangle box, int size, Color color)
 {
     float draw_size;
-    Font font = pixel_font(ui, assets, size, &draw_size);
+    Font font = selection_ui_font(ui, assets, size, &draw_size);
     float width = MeasureTextEx(font, text, draw_size, 0).x;
     float top = (float)font.baseSize, bottom = 0;
     for (const char *cursor = text; *cursor;) {

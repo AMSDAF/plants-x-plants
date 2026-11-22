@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "status": "integrado_e_validado_opengl",
+  "validator": "tools/validate_battle_ui_assets.py",
+  "command": "python tools/validate_battle_ui_assets.py",
+  "executed_with_existing_tools_environment": true,
+  "result": "PASS",
+  "referenced_images": 18,
+  "plant_species": 8,
+  "backgrounds": 2,
+  "new_generated_skins": 3,
+  "checks": {
+    "files_exist": true,
+    "sha256_matches": true,
+    "dimensions_and_modes_match": true,
+    "transparent_assets_have_alpha": true,
+    "skin_centers_opaque": true,
+    "sources_inside_canvas": true,
+    "sources_cover_visible_art_alpha_128": true,
+    "nine_slice_insets_fit": true,
+    "eight_species_available": true,
+    "two_location_backgrounds_available": true,
+    "font_and_license_present": true,
+    "babosa_runtime_mirror_recorded": true,
+    "attack_and_switch_enabled_in_spec": true,
+    "bag_and_flee_disabled_in_spec": true,
+    "no_output_directory_dependency_in_manifest": true
+  },
+  "visual_review_pt": "Molduras novas inspecionadas: status simples, painel inferior vazio com divisor e plaquinha vazia; folhas e cantos completos. Texto, HP, células de menu e estados serão desenhados dinamicamente.",
+  "command_panel_divider_source_columns_px": [
+    910,
+    914
+  ],
+  "limitations_pt": [
+    "Animações de ataque e sprites de costas não estão incluídos.",
+    "Mochila e Fugir são placeholders desabilitados.",
+    "A fonte real é Pixelify Sans; a imagem de referência contém letras sintetizadas."
+  ],
+  "runtime_checks": {
+    "build": "plants_x_plants, battle_screen_check, battle_check, intro_check, name_entry_check: passou",
+    "battle_check": "PASS: catálogo e regras compartilhadas, ações inválidas, derrota, trocas, IA e vitória.",
+    "battle_screen_check": "PASS: dois locais, oito espécies, menus, placeholders, quatro posições, CPU, substituição, resultado, resoluções, fallback e desenho imutável.",
+    "intro_check": "PASS: escolhas, equipe preservada, cenários associados aos encontros, dois bosses e retorno.",
+    "name_entry_check": "PASS: nome, transições e campanha completa, com diálogos, escotilha, ponte, guardiões e saída."
+  }
+}

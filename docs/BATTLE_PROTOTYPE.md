@@ -1,9 +1,12 @@
 # Relatório do protótipo de combate
 
 Na campanha, interaja com um guardião para iniciar um encontro.
-No primeiro encontro, monte a equipe e escolha um golpe para fortalecer antes de lutar.
+No primeiro encontro, a equipe do prólogo é preservada e você escolhe um golpe para fortalecer antes de lutar.
 A arena mostra a planta ativa, o HP das duas equipes, de quem é o turno e o
-resultado da última ação. As plantas são desenhadas com formas da raylib.
+resultado da última ação. A interface usa os cenários próprios do depósito e
+viveiro, oito sprites definitivas, Pixelify Sans e o menu Atacar/Trocar. Mochila
+e Fugir aparecem bloqueados com aviso de implementação futura.
+Detalhes e capturas em [BATTLE_UI_PREPARATION.md](BATTLE_UI_PREPARATION.md).
 
 | Comando | Ação |
 | --- | --- |
@@ -13,6 +16,9 @@ resultado da última ação. As plantas são desenhadas com formas da raylib.
 | **ESC** | Retornar à estufa, inclusive durante a montagem ou a batalha. |
 
 Os golpes, as trocas e os botões do resultado também aceitam cliques.
+Use setas e ENTER/Espaço nos menus. ESC, Backspace ou Voltar fecham os submenus
+voluntários; ESC na raiz mantém o retorno à estufa. A troca obrigatória abre
+automaticamente as reservas. Os atalhos diretos 1/2 e Q/W/E/R foram preservados.
 
 ## Fortaleça um golpe da equipe
 

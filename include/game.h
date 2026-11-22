@@ -51,6 +51,7 @@ typedef struct {
     CampaignSession campaign;
     WorldEncounter encounter;
     BattleScreen battle_screen;
+    BattleScreenAssets battle_assets;
     Player player;
     World world;
     WorldAssets world_assets;
