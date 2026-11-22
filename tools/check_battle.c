@@ -33,7 +33,7 @@ int main(void)
 {
     static const SpeciesId starters[STARTER_SPECIES_COUNT] = {
         SPECIES_CLOVER, SPECIES_POISON_IVY, SPECIES_PEPPER,
-        SPECIES_CACTUS, SPECIES_ORCHID, SPECIES_VENUS_FLYTRAP
+        SPECIES_CACTUS, SPECIES_ORCHID, SPECIES_CARNIVOROUS_PLANT
     };
     static const char *const names[STARTER_SPECIES_COUNT] = {
         "Trevo", "Hera Venenosa", "Pimenta", "Cacto", "Orquídea", "Planta Carnívora"
@@ -50,12 +50,14 @@ int main(void)
             assert(starter->id != PlantData_GetStarter(previous)->id);
         /* Cada inicial pode entrar na equipe e usar os dois golpes contra um boss. */
         for (int move = 0; move < MAX_MOVES; move++) {
+            if (starter->moves[move].effect != MOVE_EFFECT_DAMAGE) continue;
             Team player = {0}, enemy = {0};
             assert(Team_SelectSpecies(&player, 0, starter->id));
             assert(Team_SelectSpecies(&enemy, 0, SPECIES_ALOE));
             player.plants[0].moves[move].accuracy = 100;
             BattleState encounter;
             Battle_Init(&encounter, player, enemy);
+            encounter.boosted_move_indices[0][0] = 2;
             assert(Battle_ExecuteMove(&encounter, move));
             assert(encounter.enemy_team.plants[0].current_hp < enemy.plants[0].current_hp);
         }
@@ -67,12 +69,15 @@ int main(void)
         assert(plant.max_hp == data->base_hp && plant.current_hp == data->base_hp);
         assert(plant.attack == data->base_attack && plant.defense == data->base_defense);
         assert(plant.max_hp > 0 && plant.attack > 0 && plant.defense > 0);
+        assert(plant.speed == data->base_speed);
         for (int i = 0; i < MAX_MOVES; i++) {
             assert(strcmp(plant.moves[i].name, data->moves[i].name) == 0);
             assert(plant.moves[i].power == data->moves[i].power);
             assert(plant.moves[i].accuracy == data->moves[i].accuracy);
             assert(plant.moves[i].name[0] && plant.moves[i].power > 0);
             assert(plant.moves[i].accuracy > 0 && plant.moves[i].accuracy <= 100);
+            assert(plant.moves[i].critical_chance == data->moves[i].critical_chance);
+            assert(plant.moves[i].priority == data->moves[i].priority);
         }
     }
     Plant empty = {0}, invalid = Plant_CreateFromSpecies(-1);

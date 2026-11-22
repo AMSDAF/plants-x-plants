@@ -110,7 +110,7 @@ void intro_assets_load(IntroAssets *assets)
         [SPECIES_PEPPER] = "assets/sprites/plants/pepper_v2.png",
         [SPECIES_CACTUS] = "assets/sprites/plants/cactus_v2.png",
         [SPECIES_ORCHID] = "assets/sprites/plants/orchid_v2.png",
-        [SPECIES_VENUS_FLYTRAP] = "assets/sprites/plants/venus_flytrap_v2.png"
+        [SPECIES_CARNIVOROUS_PLANT] = "assets/sprites/plants/venus_flytrap_v2.png"
     };
     *assets = (IntroAssets){0};
     for (int i = 0; i < INTRO_STARTER_COUNT; i++) {
@@ -245,7 +245,7 @@ static void draw_plant(int species, int x, int y, float elapsed)
     } else if (species == SPECIES_PEPPER) {
         DrawRectangle(x - 10 + sway, y - 64, 21, 27, (Color){205, 65, 45, 255});
         DrawRectangle(x - 5 + sway, y - 37, 11, 10, (Color){205, 65, 45, 255});
-    } else if (species == SPECIES_VENUS_FLYTRAP) {
+    } else if (species == SPECIES_CARNIVOROUS_PLANT) {
         DrawRectangle(x - 21 + sway, y - 70, 42, 35, (Color){87, 143, 62, 255});
         DrawRectangle(x - 15 + sway, y - 58, 30, 11, (Color){167, 62, 70, 255});
         for (int i = 0; i < 4; i++)

@@ -31,8 +31,8 @@ typedef struct {
     bool has_team;
     bool has_formula;
     Team team;
-    LogicFormula formula;
-    int boosted_move_index;
+    LogicFormula formulas[MAX_TEAM_SIZE];
+    int boosted_move_indices[MAX_TEAM_SIZE];
 } CampaignSession;
 
 /* Estado e recursos compartilhados entre as telas. */

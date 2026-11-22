@@ -70,6 +70,8 @@ e o título de reserva. O prólogo usa seus atlas próprios também nos textos
 narrativos; `ui_text_wrap_reveal_pixels` conserva a quebra e a revelação,
 alinhando cada linha à resolução física, sem alterar a fonte dos NPCs.
 O primeiro guardião preserva a equipe e abre somente a montagem da fórmula.
+Na seleção inicial, Girassol e Babosa ficam fora da lista por serem guardiões.
+As seis plantas jogáveis usam silhuetas provisórias quando não há sprite próprio.
 `CampaignSession.has_team` indica a equipe inicial pronta; `has_formula` indica
 a configuração de combate concluída. Os encontros seguintes reutilizam a
 equipe restaurada e a fórmula. `NameEntryScreen` preserva o rascunho ao voltar,
