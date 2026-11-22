@@ -141,11 +141,6 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
     return MENU_ACTION_NONE;
 }
 
-static void centered_text(const UiTheme *ui, const char *text, int center, int y, int size, Color color)
-{
-    ui_text(ui, text, center - ui_measure(ui, text, size) / 2, y, size, color);
-}
-
 static void draw_background(const MenuScreen *screen)
 {
     Texture2D original = screen->background;
@@ -208,13 +203,13 @@ static void draw_mascot(const MenuScreen *screen)
     DrawTexturePro(screen->mascot_idle, source, dest, (Vector2){0}, 0, WHITE);
 }
 
-void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen)
+void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen, const SelectionUiAssets *fonts)
 {
     ClearBackground((Color){118, 143, 67, 255});
     draw_background(screen);
     int logo_offset = (int)roundf(4.0f * sinf(2.0f * PI * screen->ui_time / 3.0f));
     if (screen->logo.id) draw_art(screen->logo, screen->logo_source, 640, 28 + logo_offset, 324);
-    else centered_text(ui, "Plants x Plants", 640, 90 + logo_offset, 50, INK);
+    else selection_ui_pixel_box(ui, fonts, "Plants x Plants", (Rectangle){200,90+logo_offset,880,80}, 72, INK);
     if (screen->mascot.id || screen->mascot_idle.id) {
         /* Sombra pequena em degraus, sem elipse suavizada nem halo. */
         DrawRectangle(583, 607, 114, 6, (Color){124, 110, 53, 255});
@@ -222,8 +217,9 @@ void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen)
         draw_mascot(screen);
     }
     if (fmodf(screen->ui_time, 1.2f) < 0.8f) {
-        centered_text(ui, "Pressione ENTER", 642, 652, 30, (Color){242, 232, 188, 255});
-        centered_text(ui, "Pressione ENTER", 640, 650, 30, INK);
+        selection_ui_pixel_box(ui, fonts, "Pressione ENTER", (Rectangle){402,646,480,40},
+                               30, (Color){242,232,188,255});
+        selection_ui_pixel_box(ui, fonts, "Pressione ENTER", (Rectangle){400,644,480,40}, 30, INK);
     }
 }
 

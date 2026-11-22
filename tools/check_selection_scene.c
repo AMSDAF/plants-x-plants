@@ -204,14 +204,14 @@ int main(void)
     assert(game.screen == GAME_TRAINER_SELECT);
     key(&game, KEY_F7);
     assert(!game.trainer_select.background_preview && game.trainer_select.selected == TRAINER_FEMALE);
-    input(7, 780, 670);
+    input(7, 980, 660);
     input(6, 0, 0);
     tick(&game);
     input(7, 100, 100);
     input(5, 0, 0);
     tick(&game);
     assert(game.screen == GAME_TRAINER_SELECT);
-    click(&game, 780, 670);
+    click(&game, 980, 660);
     confirm_campaign_name(&game);
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_FEMALE);
     check_botanical_walk(&game);
@@ -235,7 +235,7 @@ int main(void)
     confirm_campaign_name(&game);
     key(&game, KEY_ESCAPE);
     campaign(&game);
-    click(&game, 490, 670);
+    click(&game, 180, 660);
     assert(game.screen == GAME_MENU);
     campaign(&game);
     key(&game, KEY_ESCAPE);

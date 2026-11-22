@@ -1,0 +1,56 @@
+{
+  "status": "pass",
+  "scope_pt": "Validação de arte e especificação; sem implementação ou teste de execução novo.",
+  "assets": [
+    {
+      "file": "card_normal_v1.png",
+      "rgba": true,
+      "has_transparency": true,
+      "source_within_canvas": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "card_selected_v1.png",
+      "rgba": true,
+      "has_transparency": true,
+      "source_within_canvas": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "focus_outline_v1.png",
+      "rgba": true,
+      "has_transparency": true,
+      "source_within_canvas": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "footer_button_v1.png",
+      "rgba": true,
+      "has_transparency": true,
+      "source_within_canvas": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "leaf_badge_v1.png",
+      "rgba": true,
+      "has_transparency": true,
+      "source_within_canvas": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "cursor_v1.png",
+      "rgba": true,
+      "has_transparency": true,
+      "source_within_canvas": true,
+      "sha256_matches": true
+    }
+  ],
+  "same_card_canvas_and_registration": true,
+  "six_existing_sprites_present": true,
+  "existing_font_and_background_present": true,
+  "layout_card_boxes_within_viewport": true,
+  "notes_pt": [
+    "Recursos inspecionados visualmente; rasterização final com a fonte real depende da futura montagem.",
+    "Os recursos mantêm os PNGs originais, incluindo margens de alfa; usar os recortes do manifesto."
+  ]
+}

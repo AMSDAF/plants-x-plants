@@ -3,6 +3,7 @@
 #include "ui_theme.h"
 #include "plant_data.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -103,6 +104,7 @@ void game_init(Game *game)
     menu_screen_init(&game->menu);
     player_assets_load(&game->player_assets);
     trainer_select_assets_load(&game->trainer_select_assets);
+    intro_assets_load(&game->intro_assets);
     world_init(&game->world);
     world_assets_load(&game->world_assets);
     trainer_select_screen_init(&game->trainer_select);
@@ -112,6 +114,10 @@ void game_init(Game *game)
 
 void game_update(Game *game)
 {
+    if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT || game->screen == GAME_NAME_ENTRY) {
+        float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
+        selection_ui_update_fonts(&game->trainer_select_assets.ui, scale);
+    }
     if (game->screen == GAME_EXPLORATION) ui_theme_update(&game->ui, GetFrameTime());
     if (game->screen == GAME_NAME_ENTRY) {
         trainer_select_screen_update(&game->trainer_select, false, GetFrameTime());
@@ -133,6 +139,8 @@ void game_update(Game *game)
         return;
     }
     if (game->screen == GAME_INTRO) {
+        float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
+        intro_assets_update_fonts(&game->intro_assets, scale);
         IntroAction action = intro_screen_update(&game->intro, !game->input_blocked, GetFrameTime());
         if (action == INTRO_BACK) {
             name_entry_begin(&game->name_entry, true);
@@ -209,7 +217,7 @@ void game_draw(const Game *game)
 {
     const UiTheme *ui = &game->ui;
     switch (game->screen) {
-        case GAME_MENU: menu_screen_draw(ui, &game->menu); break;
+        case GAME_MENU: menu_screen_draw(ui, &game->menu, &game->trainer_select_assets.ui); break;
         case GAME_BATTLE:
             battle_screen_draw(ui, &game->battle_screen, game->world_assets.aloe_guard,
                                game->world_assets.sunflower_guard);
@@ -221,7 +229,8 @@ void game_draw(const Game *game)
             name_entry_draw(ui, &game->name_entry,&game->trainer_select,&game->trainer_select_assets);
             break;
         case GAME_INTRO:
-            intro_screen_draw(ui, &game->intro, &game->trainer_select_assets, game->campaign.player_name);
+            intro_screen_draw(ui, &game->intro, &game->trainer_select_assets,
+                              &game->intro_assets, game->campaign.player_name);
             break;
         case GAME_EXPLORATION: {
             ClearBackground(BLACK);
@@ -244,5 +253,6 @@ void game_shutdown(Game *game)
     world_assets_unload(&game->world_assets);
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);
+    intro_assets_unload(&game->intro_assets);
     menu_screen_shutdown(&game->menu);
 }

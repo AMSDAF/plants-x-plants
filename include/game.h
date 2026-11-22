@@ -47,6 +47,7 @@ typedef struct {
     TrainerSelectScreen trainer_select;
     NameEntryScreen name_entry;
     IntroScreen intro;
+    IntroAssets intro_assets;
     CampaignSession campaign;
     WorldEncounter encounter;
     BattleScreen battle_screen;

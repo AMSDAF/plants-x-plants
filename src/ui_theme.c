@@ -217,7 +217,8 @@ void ui_panel(Rectangle bounds)
 }
 
 /* Revela codepoints inteiros depois de calcular a quebra com a fala completa. */
-static void draw_revealed_line(Font font, char *line, Vector2 position, int size, Color color, int *visible)
+static void draw_revealed_line(Font font, char *line, Vector2 position, float size, Color color,
+                               int *visible, float pixel_scale)
 {
     int count = GetCodepointCount(line);
     int shown = *visible < count ? *visible : count;
@@ -229,12 +230,17 @@ static void draw_revealed_line(Font font, char *line, Vector2 position, int size
     }
     char saved = line[offset];
     line[offset] = 0;
+    if (pixel_scale > 0) {
+        position.x = roundf(position.x * pixel_scale) / pixel_scale;
+        position.y = roundf(position.y * pixel_scale) / pixel_scale;
+    }
     if (shown) DrawTextEx(font, line, position, size, 0, color);
     line[offset] = saved;
     *visible -= shown;
 }
 
-int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size, Color color, int visible_characters)
+int ui_text_wrap_reveal_pixels(Font font, const char *text, Rectangle bounds, float size,
+                               Color color, int visible_characters, float pixel_scale)
 {
     int visible = visible_characters > 0 ? visible_characters : 0;
     char line[512] = {0};
@@ -243,7 +249,7 @@ int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size,
     const char *cursor = text;
     while (*cursor && y + size <= bounds.y + bounds.height) {
         if (*cursor == '\n') {
-            draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible);
+            draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible, pixel_scale);
             y += size * 1.3f;
             lines++;
             length = 0;
@@ -266,7 +272,7 @@ int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size,
             while (split > 0 && line[split] != ' ') split--;
             if (split == 0) split = length;
             line[split] = 0;
-            draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible);
+            draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible, pixel_scale);
             y += size * 1.3f;
             lines++;
             if (split < length && visible > 0) visible--;
@@ -280,10 +286,15 @@ int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size,
         cursor += bytes;
     }
     if (length && y + size <= bounds.y + bounds.height) {
-        draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible);
+        draw_revealed_line(font, line, (Vector2){bounds.x, y}, size, color, &visible, pixel_scale);
         lines++;
     }
     return lines;
+}
+
+int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size, Color color, int visible_characters)
+{
+    return ui_text_wrap_reveal_pixels(font, text, bounds, (float)size, color, visible_characters, 0);
 }
 
 int ui_text_wrap_font(Font font, const char *text, Rectangle bounds, int size, Color color)

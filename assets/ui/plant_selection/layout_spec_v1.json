@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "status": "implementado_na_selecao",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "aspect_ratio": "16:9",
+    "reference_image": "assets/ui/plant_selection/approved_reference_v1.png",
+    "reference_size_px": [
+      1672,
+      941
+    ]
+  },
+  "coordinates": "Retângulos [x,y,largura,altura] no canvas lógico; áreas internas relativas ao cartão.",
+  "font": {
+    "file": "assets/fonts/pixelify_sans_regular.ttf",
+    "existing_accessor": "IntroAssets.fonts; ui_pixel_font como reserva",
+    "fallback": "ui_font(ui, false): Atkinson ou fonte padrão da raylib",
+    "no_baked_text": true,
+    "roles": {
+      "eyebrow": 22,
+      "title": 72,
+      "subtitle": 28,
+      "plant_name": 30,
+      "stats": 28,
+      "status": 26,
+      "buttons": 28,
+      "hints": 20,
+      "badge_number": 26
+    },
+    "weight_note_pt": "Sem reforço artificial. Seis atlas Pixelify rasterizados no tamanho físico do viewport e posições alinhadas a pixels físicos; recriados somente ao mudar o tamanho necessário."
+  },
+  "palette": {
+    "text": "#1C3A2E",
+    "cream_text": "#FFF5D8",
+    "normal_parchment_sample": "#FCEACD",
+    "selected_parchment_sample": "#EAECC3",
+    "button_parchment_sample": "#FCE5C0",
+    "leaf_sample": "#4B6802",
+    "cursor_sample": "#FC5B00",
+    "backdrop_overlay": {
+      "rgb": [
+        15,
+        35,
+        18
+      ],
+      "alpha": 0.72
+    }
+  },
+  "header": {
+    "title": {
+      "text": "Quem vai com você?",
+      "center_x": 640,
+      "y": 29
+    },
+    "steps": {
+      "count": 6,
+      "bounds": [
+        502,
+        103,
+        276,
+        7
+      ],
+      "segment_width": 36,
+      "gap": 12,
+      "order_pt": [
+        "personagem",
+        "nome",
+        "carta",
+        "aceite",
+        "equipe",
+        "viagem"
+      ],
+      "filled_pt": "Índice da etapa atual + 1; acompanha retorno entre telas."
+    },
+    "subtitle": {
+      "text": "Escolha 3 de 6 plantas   |   {count}/3 selecionadas",
+      "center_x": 640,
+      "y": 116
+    },
+    "scope_pt": "Mesmo título, progresso, subtítulo e rodapé nas quatro etapas do prólogo, sem rótulo superior da marca."
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 2,
+    "card_size": [
+      350,
+      208
+    ],
+    "column_x": [
+      98,
+      465,
+      832
+    ],
+    "row_y": [
+      162,
+      388
+    ],
+    "draw": "Enquadrar uniformemente o recorte comum de 1378 × 814 dentro do retângulo; não distorcer a arte.",
+    "hit_area": "Usar o retângulo completo do cartão."
+  },
+  "card_content": {
+    "nameplate": [
+      35,
+      22,
+      282,
+      32
+    ],
+    "name_unselected_center_x": 176,
+    "name_selected_center_x": 202,
+    "name_y": 23,
+    "badge": [
+      59,
+      27,
+      34,
+      25
+    ],
+    "sprite_area": [
+      35,
+      66,
+      107,
+      113
+    ],
+    "sprite_fit": "contain, alfa >= 0.1, proporção preservada, raízes alinhadas à base, filtro pontual",
+    "stats": {
+      "x": 187,
+      "first_y": 61,
+      "line_spacing": 28,
+      "labels": [
+        "Vida  {hp}",
+        "ATQ  {attack}",
+        "DEF  {defense}"
+      ]
+    },
+    "status_plate": [
+      157,
+      154,
+      153,
+      28
+    ],
+    "status_text_center": [
+      234,
+      154
+    ],
+    "status_unselected": "Selecionar",
+    "status_selected": "{slot} · Na equipe",
+    "badge_number_alignment": "Centro vertical pelos limites visíveis dos glifos, sem a margem de ascensão da fonte."
+  },
+  "states": {
+    "normal": {
+      "base": "card_normal"
+    },
+    "selected": {
+      "base": "card_selected",
+      "badge": "leaf_badge",
+      "number": "índice da seleção + 1"
+    },
+    "focused": {
+      "overlay": "focus_outline",
+      "cursor": "cursor",
+      "independent_of_selected": true
+    },
+    "selected_and_focused": {
+      "layers": [
+        "card_selected",
+        "sprite/textos/emblema",
+        "focus_outline",
+        "cursor"
+      ]
+    },
+    "full_team": {
+      "selection_limit": 3,
+      "can_remove_selected": true,
+      "can_add_unselected": false,
+      "unselected_text": "Selecionar",
+      "note": "Manter as regras atuais; não inventar raridade, tipos ou atributos extras."
+    }
+  },
+  "footer": {
+    "back": {
+      "bounds": [
+        98,
+        628,
+        240,
+        64
+      ],
+      "label": "Voltar · ESC",
+      "asset": "footer_button"
+    },
+    "confirm": {
+      "bounds": [
+        832,
+        628,
+        350,
+        64
+      ],
+      "label": "Confirmar equipe · ENTER",
+      "enabled_when": "count == 3",
+      "asset": "footer_button",
+      "disabled_style": "mesma moldura; reduzir saturação/contraste e bloquear ativação na lógica futura"
+    },
+    "hint": {
+      "bounds": [
+        334,
+        643,
+        492,
+        40
+      ],
+      "text": "Setas / WASD: navegar · Espaço ou clique: selecionar",
+      "wrap_if_needed": true
+    },
+    "alignment_note_pt": "Mesma altura e y; na seleção, bordas externas alinhadas aos cartões; nas etapas de texto, ao quadro. Instrução centralizada no espaço entre os botões.",
+    "narrative_bounds": {
+      "panel": [
+        120,
+        172,
+        1040,
+        402
+      ],
+      "back": [
+        120,
+        628,
+        240,
+        64
+      ],
+      "next": [
+        810,
+        628,
+        350,
+        64
+      ]
+    },
+    "narrative_hint": "ENTER ou clique: completar o texto / avançar",
+    "revealing_label": "Completar texto · ENTER"
+  },
+  "layer_order": [
+    "fundo existente com animação",
+    "escurecimento",
+    "cabeçalho e progresso",
+    "moldura normal/selecionada",
+    "sprites sem alteração de desenho",
+    "nome, atributos e status",
+    "emblema e número",
+    "contorno de foco",
+    "cursor",
+    "rodapé"
+  ],
+  "reuse": {
+    "background": "assets/sprites/trainer_selection_background.png",
+    "background_renderer": "trainer_background_draw_dimmed",
+    "font": "assets/fonts/pixelify_sans_regular.ttf",
+    "species_source": "PlantData_GetStarter",
+    "stats_source": "plant_data.c; valores abaixo apenas registram o estado da referência",
+    "plants": [
+      {
+        "species": "SPECIES_CLOVER",
+        "name_pt": "Trevo",
+        "sprite": "assets/sprites/plants/clover_v2.png",
+        "hp": 94,
+        "attack": 47,
+        "defense": 46
+      },
+      {
+        "species": "SPECIES_POISON_IVY",
+        "name_pt": "Hera Venenosa",
+        "sprite": "assets/sprites/plants/poison_ivy_v2.png",
+        "hp": 97,
+        "attack": 47,
+        "defense": 45
+      },
+      {
+        "species": "SPECIES_PEPPER",
+        "name_pt": "Pimenta",
+        "sprite": "assets/sprites/plants/pepper_v2.png",
+        "hp": 89,
+        "attack": 54,
+        "defense": 38
+      },
+      {
+        "species": "SPECIES_CACTUS",
+        "name_pt": "Cacto",
+        "sprite": "assets/sprites/plants/cactus_v2.png",
+        "hp": 100,
+        "attack": 55,
+        "defense": 40
+      },
+      {
+        "species": "SPECIES_ORCHID",
+        "name_pt": "Orquídea",
+        "sprite": "assets/sprites/plants/orchid_v2.png",
+        "hp": 86,
+        "attack": 53,
+        "defense": 40
+      },
+      {
+        "species": "SPECIES_VENUS_FLYTRAP",
+        "name_pt": "Planta Carnívora",
+        "sprite": "assets/sprites/plants/venus_flytrap_v2.png",
+        "hp": 106,
+        "attack": 48,
+        "defense": 49
+      }
+    ]
+  },
+  "scope_exclusions": [
+    "Sem novas regras de combate",
+    "Sem alteração de atributos",
+    "Sem animação nova das plantas",
+    "Sem inclusão de bosses na seleção"
+  ],
+  "prologue_stages": [
+    {
+      "stage": "INTRO_LETTER",
+      "title": "Uma carta para você",
+      "subtitle": "Um pedido de ajuda chegou até você.",
+      "next_label": "Continuar · ENTER"
+    },
+    {
+      "stage": "INTRO_ACCEPT",
+      "title": "Um novo começo",
+      "subtitle": "Sua jornada começa com uma decisão.",
+      "next_label": "Preparar equipe · ENTER"
+    },
+    {
+      "stage": "INTRO_STARTERS",
+      "title": "Quem vai com você?",
+      "subtitle": "Escolha 3 de 6 plantas | {count}/3 selecionadas",
+      "next_label": "Confirmar equipe · ENTER"
+    },
+    {
+      "stage": "INTRO_TRAVEL",
+      "title": "A caminho da vila",
+      "subtitle": "Próximo destino: a estufa da vila.",
+      "next_label": "Chegar à vila · ENTER"
+    }
+  ]
+}

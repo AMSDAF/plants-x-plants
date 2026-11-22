@@ -14,6 +14,12 @@ O logo flutua ±4 pixels em três segundos; o aviso aparece durante 0,8 s e
 some durante 0,4 s. O mascote usa oito quadros a 6 FPS, com pés e sombra fixos.
 Os relógios continuam durante bloqueios de entrada.
 
+O aviso “Pressione ENTER” e o título de reserva usam Pixelify Sans, a mesma fonte
+das seleções. A home reutiliza os atlas de `SelectionUiAssets`: `game_update`
+rasteriza no tamanho físico do viewport e conserva o atlas enquanto esse tamanho
+não muda. O desenho alinha as letras aos pixels físicos; logo e animações
+mantêm a composição existente.
+
 O carregador prefere `menu_background_v2.png`, quando disponível, e aceita
 `menu_backround_v2.png`, a grafia da fonte fornecida. Logo, mascote estático,
 atlas de repouso e atlas de vegetação são preservados. Não há fonte de arte

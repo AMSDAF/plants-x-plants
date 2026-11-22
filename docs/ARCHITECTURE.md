@@ -36,10 +36,10 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | Arquivos | Responsabilidade |
 |---|---|
 | `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial em pixel art e relógios contínuos de grama e mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. ENTER abre a seleção de personagem; ESC solicita encerramento. O coordenador protege as transições até soltar entradas. |
-| `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões e controles geométricos em pixel art sobre `TrainerBackgroundAssets`, retratos de repouso com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa metadados dos atlas de repouso para igualar altura e pés. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
-| `include/intro_screen.h`, `src/intro_screen.c` | Pedido de Lia, aceite, seleção de três entre seis plantas, viagem e montagem validada da equipe inicial. Reutiliza os recursos do fundo e a interface, sem carregar recursos próprios ou resolver combate. |
+| `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões botânicos de madeira e controles Pixelify sobre `TrainerBackgroundAssets`, retratos de repouso com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa metadados dos atlas de repouso para igualar altura e pés. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
+| `include/intro_screen.h`, `src/intro_screen.c` | Pedido de Lia, aceite, seleção de três entre seis plantas, viagem e montagem validada da equipe inicial. Reutiliza o fundo e a interface; `IntroAssets`, pertencente a `Game`, carrega as seis sprites `*_v2.png`, calcula os limites de alfa e usa filtro pontual. Também carrega as seis artes de `assets/ui/plant_selection/`, com recortes fixos, foco independente da seleção e botões em nove partes. A seleção mantém seis atlas Pixelify nos tamanhos físicos do viewport, atualizados fora do desenho quando a resolução muda. O desenho preserva a proporção, alinha as raízes e oferece reserva se faltar uma textura. A entrada usa as mesmas áreas dos novos cartões e botões. Não resolve combate. |
 | `include/name_entry_screen.h`, `src/name_entry_screen.c` | Rascunho UTF-8 de até 12 codepoints, foco, edição e transição reversível de 0,6 s; reutiliza o cartão/retrato e os relógios da seleção. |
-| `include/selection_ui.h`, `src/selection_ui.c` | Paleta, geometria em degraus, cantos laranja e cursor pulsante compartilhados entre seleção e nome, centralização de texto e descarte de entrada. |
+| `include/selection_ui.h`, `src/selection_ui.c` | Interface compartilhada de personagem e nome: `SelectionUiAssets`, pertencente a `TrainerSelectAssets`, possui três molduras novas, botão/seta reutilizados e sete atlas Pixelify rasterizados na resolução física, atualizados por `game_update`. Desenha cabeçalho, textos, molduras com recorte comum e botões em nove partes, com reserva geométrica. Também preserva paleta, formas e descarte de entrada das transições. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
 | `include/world.h`, `src/world.c` | Estado da estufa, interações por proximidade, relógio e entrada dos diálogos, avaliação das fórmulas, colisão da caixa dos pés (16 × 8 pixels) e das portas interiores, câmera de tela inteira, HUD contextual e profundidade do aviso da ponte. |
@@ -51,7 +51,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `tools/prepare_menu_trees.py`, `include/menu_tree_data.h` | Extração de quatro copas grandes e oito distantes; poses com ligações fixas, reaproveitamento da curva da grama e reconstrução somente dos contornos expostos. Diagnósticos em `build/menu_tree_preview/`. |
 | `tools/prepare_menu_grass.py`, `include/menu_grass_data.h` | Extração de 17 touceiras, reconstrução localizada do fundo e atlas de vento. Máscaras, relatório, contatos e GIFs ficam em `build/menu_grass_preview/`. |
 | `tools/prepare_menu_mascot.py`, `include/menu_mascot_data.h` | Extrai partes e gera oito quadros do mascote na resolução original, sem criar cores; metadados compartilhados com a execução. Máscaras e GIFs ficam em `build/menu_mascot_preview/`. |
-| `include/trainer_background.h`, `src/trainer_background.c` | Composição do fundo da seleção normal e da prévia F7: atlas de vento ancorado, nuvens com wrap e fallback estático completo. Usa o relógio da seleção, sem modificar estado durante o desenho. |
+| `include/trainer_background.h`, `src/trainer_background.c` | Composição do fundo animado: atlas de vento ancorado, nuvens com wrap e fallback estático completo. Centraliza o mesmo escurecimento para seleção de personagem, nome e prólogo; a prévia F7 preserva o cenário original. Recebe o relógio da tela, sem modificar estado durante o desenho. |
 | `tools/prepare_trainer_selection_background.py`, `include/trainer_background_data.h` | Extração e reconstrução local da nova fonte; poses e fases próprias, sem alterar recursos do menu aprovado. |
 | `tools/check_trainer_background.c`, `tools/preview_trainer_selection_background.py` | Capturas OpenGL do ciclo completo, verificação da prévia e montagem de GIF/contatos em `build/trainer_selection_preview/`. Consulte [os detalhes do fundo](TRAINER_SELECTION_BACKGROUND.md). |
 
@@ -61,6 +61,14 @@ memória. ENTER na tela inicial abre diretamente a seleção. A confirmação do
 personagem abre o nome; um nome válido inicia o prólogo. A abertura apresenta
 o pedido de Lia, o aceite, a escolha de três entre seis espécies e a viagem.
 A chegada abre o mapa existente da estufa como primeiro destino na vila.
+`OpeningStep` e `selection_ui_progress` unificam o indicador em seis passos:
+personagem, nome, carta, aceite, equipe e viagem. O desenho deriva da tela/etapa
+atual, sem armazenar outro contador; retornar acompanha automaticamente o fluxo.
+
+A home reutiliza os atlas Pixelify de `SelectionUiAssets` para o aviso inicial
+e o título de reserva. O prólogo usa seus atlas próprios também nos textos
+narrativos; `ui_text_wrap_reveal_pixels` conserva a quebra e a revelação,
+alinhando cada linha à resolução física, sem alterar a fonte dos NPCs.
 O primeiro guardião preserva a equipe e abre somente a montagem da fórmula.
 `CampaignSession.has_team` indica a equipe inicial pronta; `has_formula` indica
 a configuração de combate concluída. Os encontros seguintes reutilizam a
@@ -85,11 +93,12 @@ Um atlas ausente ou inválido gera aviso no cartão, sem impedir a navegação.
 
 `MenuScreen` mantém fundo, logo, mascote estático, atlas opcional, recortes e estado de entrada. As fontes são inspecionadas pelo alfa durante a inicialização, sem modificar arquivos. O fundo cobre 1280 × 720 mantendo proporção; logo e mascote usam escala uniforme e filtro pontual. A composição é fixa, sem renderização global em baixa resolução. O atlas do mascote tem 4096 × 2048, oito células de 1024 × 1024 e reprodução a 6 FPS. Seu relógio usa delta time limitado a 0,1 s e avança antes da entrada, inclusive durante bloqueios; abrir/fechar o menu não reinicia a fase. Margens transparentes são compensadas no destino para preservar escala, sombra e pés. Atlas ausente/inválido usa o mascote estático; cada textura é carregada uma vez e liberada no encerramento. Não há painel de opções. ENTER abre a seleção de personagem e ESC solicita encerramento; `game.c` coordena as transições e o bloqueio até soltar entradas. O vento do menu usa 17 touceiras e 12 copas extraídas do fundo, em 32 fases a 8 FPS, com uma transformação e um relógio comuns. O par adicional de copas só é ativado com a grama válida; sua falha mantém árvores estáticas e grama animada. A restauração das copas parte do fundo preparado para a grama e protege suas áreas. O par só é ativado após validar ambas as texturas; qualquer falha preserva o fundo original completo. O relógio da grama também usa delta time e continua na tela inicial. A geração offline e seus limites estão em [MENU_GRASS_WIND.md](MENU_GRASS_WIND.md).
 
-A seleção desenha cartões e controles em código sobre `TrainerBackgroundAssets`.
+A seleção compõe molduras botânicas e textos dinâmicos sobre `TrainerBackgroundAssets`.
 Os limites corporais dos atlas determinam escala e pés; os repousos usam atlas
-próprios, durações explícitas e filtro pontual. Não carrega nem atualiza a antiga
-floresta em camadas, moldura ou botões de madeira. A auditoria está em
-[SELECTION_CLEANUP.md](SELECTION_CLEANUP.md).
+próprios, durações explícitas e filtro pontual. A antiga floresta em camadas
+permanece removida; as novas molduras de personagem e nome são descritas em
+[TRAINER_SETUP_DESIGN.md](TRAINER_SETUP_DESIGN.md). A auditoria histórica está
+em [SELECTION_CLEANUP.md](SELECTION_CLEANUP.md).
 
 O movimento usa delta time limitado a 0,1 s por quadro. Teclas de eixos diferentes permitem andar na diagonal à mesma velocidade. Passos curtos e colisões por eixo permitem deslizar junto às bordas. A animação avança apenas após deslocamento efetivo. Parado, o treinador volta à pose neutra da direção mantida. Limitações dos ciclos e parâmetros de preparação estão em [TRAINER_TEST.md](TRAINER_TEST.md).
 

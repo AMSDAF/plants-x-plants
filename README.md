@@ -21,8 +21,17 @@ seleção inicial. As espécies antigas fora desse elenco foram retiradas do cat
 Atributos e dois golpes de dano por espécie continuam provisórios, centralizados
 em `src/plant_data.c`. Pimenta e Planta Carnívora reaproveitam valores da base;
 Hera Venenosa mantém os atributos e golpes da antiga Hera. Os nomes não aplicam
-veneno, queimadura ou captura. As iniciais usam desenhos provisórios em código,
-prontos para substituição por sprites; as artes dos bosses são preservadas.
+veneno, queimadura ou captura. Na seleção inicial, os cartões usam as novas sprites
+`*_v2.png` de `assets/sprites/plants/`, com transparência, proporção preservada e
+filtro pontual. O enquadramento considera o alfa da imagem; se ela faltar, o cartão
+usa o desenho geométrico de reserva. Os cartões seguem a referência aprovada: molduras
+de madeira com folhas, fundo creme ou verde-claro para as escolhidas, folha
+numerada, foco dourado com seta e fonte Pixelify Sans. Os botões de rodapé
+preservam cantos e folhas. A confirmação só é habilitada com três plantas. As quatro etapas do prólogo
+compartilham título pixelado, progresso, subtítulo, instruções e botões de
+madeira; o rótulo superior da marca foi removido.
+Consulte [o desenho da seleção](docs/PLANT_SELECTION_DESIGN.md). No combate, as iniciais ainda usam desenhos
+provisórios em código; as artes dos bosses são preservadas.
 
 A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativas.
 
@@ -169,6 +178,10 @@ A versão atual abre uma tela inicial em pixel art, com logo flutuando suavement
 
 O menu usa `assets/sprites/logo_v2.png`, `menu_mascot.png` e `menu_background_v2.png`. A fonte atualmente fornecida tem a grafia `menu_backround_v2.png`, aceita como alternativa sem renomear o original. Logo e mascote são enquadrados pelos limites visíveis do alfa durante a carga; todas as texturas do menu usam filtro pontual. `menu_mascot_idle.png` já acompanha o projeto, com oito quadros a 6 FPS e fallback para a fonte estática. Dezessete touceiras e doze copas extraídas do fundo recebem vento localizado; troncos, raízes e pedras permanecem fixos. Sem o par válido de fundo reconstruído e atlas de grama, o jogo usa o fundo original completo. A seleção mantém fundo e retratos próprios; seus cartões e controles são desenhados em código. Consulte [MENU_V2.md](docs/MENU_V2.md) para composição e validação.
 
+O aviso “Pressione ENTER” da home usa Pixelify Sans, como as seleções. A fonte é
+rasterizada na resolução física da tela. Carta, aceite e viagem também usam
+atlas próprios nos textos para preservar a nitidez ao ampliar a janela.
+
 Para refazer apenas a animação do mascote, usando o ambiente de preparação descrito abaixo:
 
 ```powershell
@@ -193,7 +206,7 @@ cmake --build build --target menu_screen_check
 
 As máscaras, o GIF de cena completa e os contatos ficam em `build/menu_grass_preview/` e `build/menu_tree_preview/`. Somente o fundo reconstruído, o atlas e os metadados são recursos de execução. Consulte [MENU_GRASS_WIND.md](docs/MENU_GRASS_WIND.md) para regiões, reconstrução, parâmetros e limites.
 
-Na tela **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. Os cartões creme, bordas verdes em degraus, cantos laranja e cursor pulsante são desenhados em código sobre o fundo animado. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para abrir o prólogo antes da Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna à tela inicial. Os retratos animados de repouso preservam a proporção e o alinhamento dos pés.
+Na tela **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no cartão de **Homem** ou **Mulher**. As duas telas usam molduras botânicas de madeira, pergaminho creme, títulos Pixelify e os mesmos botões do prólogo sobre o fundo animado escurecido. A escolha recebe fundo verde-claro, contorno dourado e seta laranja. O clique apenas seleciona: pressione **ENTER** ou clique em **Confirmar** para abrir **Como você se chama?**. Digite até 12 caracteres, incluindo acentos portugueses; **TAB/SHIFT+TAB** alterna entre campo e botões. Confirme um nome válido para abrir o prólogo antes da Estufa Lógica. **Voltar/ESC** nessa etapa retorna à seleção, preservando o rascunho. Na seleção, **Voltar/ESC** retorna à tela inicial. Os retratos animados de repouso preservam a proporção e o alinhamento dos pés. Consulte [a interface de personagem e nome](docs/TRAINER_SETUP_DESIGN.md).
 
 - **WASD ou setas:** mover em quatro direções, sem diagonais. Com várias teclas mantidas, a prioridade é norte, sul, oeste e leste.
 - **Shift na estufa:** correr enquanto se move.
@@ -359,4 +372,4 @@ cmake --build build --target intro_check battle_check
 O primeiro alvo verifica o fluxo do nome à chegada, as seis candidatas, a seleção
 de três, o retorno entre etapas, o reinício da sessão e a equipe na primeira batalha.
 As capturas ficam em `build/intro_preview/`. O prólogo reutiliza o fundo e as
-fontes existentes, com silhuetas provisórias das plantas desenhadas em código.
+fontes existentes, com as novas sprites das seis iniciais nos cartões.

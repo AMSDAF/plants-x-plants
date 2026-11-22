@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "raylib.h"
 #include "ui_theme.h"
+#include "selection_ui.h"
 
 typedef struct {
     Texture2D background;
@@ -28,7 +29,7 @@ typedef enum { MENU_ACTION_NONE, MENU_ACTION_CAMPAIGN, MENU_ACTION_EXIT } MenuAc
 void menu_screen_init(MenuScreen *screen);
 MenuAction menu_screen_update(MenuScreen *screen, bool accept_input);
 void menu_screen_reset_input(MenuScreen *screen);
-void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen);
+void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen, const SelectionUiAssets *fonts);
 void menu_screen_shutdown(MenuScreen *screen);
 
 #endif

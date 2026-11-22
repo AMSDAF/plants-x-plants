@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "status": "integrado_personagem_e_nome",
+  "alpha_threshold_for_measurement": 128,
+  "assets": {
+    "portrait_normal": {
+      "file": "assets/ui/trainer_setup/portrait_normal_v1.png",
+      "size_px": [
+        1049,
+        1499
+      ],
+      "source_xywh_px": [
+        64,
+        44,
+        920,
+        1390
+      ],
+      "visible_alpha128_xywh_px": [
+        78,
+        57,
+        894,
+        1367
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 254,
+      "sha256": "c584a35b013cd530ece5a1f7b7d45a60b95476478c78b35b2c37de6419ade1c7"
+    },
+    "portrait_selected": {
+      "file": "assets/ui/trainer_setup/portrait_selected_v1.png",
+      "size_px": [
+        1049,
+        1500
+      ],
+      "source_xywh_px": [
+        64,
+        44,
+        920,
+        1390
+      ],
+      "visible_alpha128_xywh_px": [
+        68,
+        48,
+        912,
+        1382
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 251,
+      "sha256": "f5e50ad3710b77b5711c5ae4cb3475d2b2b98bec5232560643c6773a97a80a54"
+    },
+    "name_panel": {
+      "file": "assets/ui/trainer_setup/name_panel_v1.png",
+      "size_px": [
+        1606,
+        979
+      ],
+      "source_xywh_px": [
+        60,
+        41,
+        1486,
+        888
+      ],
+      "visible_alpha128_xywh_px": [
+        60,
+        41,
+        1486,
+        888
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 254,
+      "sha256": "d237f93ee1ca5ab2abe67a90096df4d2494bc4cca0901e3fe008e8a2a22c6a0c",
+      "nine_slice_insets_px": {
+        "left": 230,
+        "top": 160,
+        "right": 230,
+        "bottom": 160
+      }
+    }
+  },
+  "notes_pt": [
+    "Originais preservados sem edição.",
+    "Recorte comum nos dois estados do retrato; canvas com um pixel de diferença na altura.",
+    "Enquadrar com proporção preservada e filtro pontual; conferir registro no render futuro."
+  ],
+  "approved_reference": {
+    "file": "assets/ui/trainer_setup/approved_reference_v1.png",
+    "size_px": [
+      1182,
+      1330
+    ],
+    "sha256": "c887a12b28617007fd637c58bbe45d965eb59668d5a072ad9d44f36ac7ac0b54"
+  }
+}

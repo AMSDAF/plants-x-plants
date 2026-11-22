@@ -1,0 +1,189 @@
+{
+  "note_pt": "PNG RGBA originais. Limites visíveis medidos com alfa >= 128; sem recorte ou edição dos arquivos gerados.",
+  "assets": [
+    {
+      "file": "clover_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        229,
+        123,
+        970,
+        1143
+      ]
+    },
+    {
+      "file": "poison_ivy_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        232,
+        92,
+        1028,
+        1169
+      ]
+    },
+    {
+      "file": "pepper_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        287,
+        84,
+        948,
+        1150
+      ]
+    },
+    {
+      "file": "cactus_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        127,
+        170,
+        1126,
+        1125
+      ]
+    },
+    {
+      "file": "orchid_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        235,
+        106,
+        1004,
+        1168
+      ]
+    },
+    {
+      "file": "venus_flytrap_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        224,
+        119,
+        954,
+        1166
+      ]
+    },
+    {
+      "file": "aloe_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        40,
+        98,
+        1212,
+        1194
+      ]
+    },
+    {
+      "file": "sunflower_v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "visible_bounds_alpha_128": [
+        186,
+        44,
+        1061,
+        1216
+      ]
+    }
+  ]
+}

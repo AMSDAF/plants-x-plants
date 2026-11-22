@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "status": "integrado_e_verificado_opengl",
+  "checks": [
+    {
+      "file": "portrait_normal_v1.png",
+      "rgba": true,
+      "transparent_exterior": true,
+      "opaque_center": true,
+      "source_contains_visible_art": true
+    },
+    {
+      "file": "portrait_selected_v1.png",
+      "rgba": true,
+      "transparent_exterior": true,
+      "opaque_center": true,
+      "source_contains_visible_art": true
+    },
+    {
+      "file": "name_panel_v1.png",
+      "rgba": true,
+      "transparent_exterior": true,
+      "opaque_center": true,
+      "source_contains_visible_art": true
+    }
+  ],
+  "shared_portrait_source": true,
+  "reused_resources_exist": [
+    "assets/ui/plant_selection/footer_button_v1.png",
+    "assets/ui/plant_selection/cursor_v1.png",
+    "assets/fonts/pixelify_sans_regular.ttf",
+    "assets/sprites/trainers/male_portrait_idle.png",
+    "assets/sprites/trainers/female_portrait_idle.png"
+  ],
+  "visual_review_pt": "Artes e capturas reais em 720p/1080p conferidas: cartões, seleção dourada, pés alinhados, campo do nome, acentos e rodapé legíveis. Rótulo do nome afastado da folha.",
+  "runtime_checks": [
+    "cmake --build build --target plants_x_plants intro_check selection_scene_check name_entry_check: passou",
+    "intro_check: passou; prólogo, equipe, dois bosses, fallback, fontes, desenho imutável e liberação",
+    "name_entry_check --setup-only: passou; UTF-8, limite, edição, TAB, cliques e transições reversíveis",
+    "selection_scene_check: passou; teclado/mouse, reentrada, F7, animações e fallback"
+  ],
+  "limitations_pt": [
+    "Registro dos estados usa recorte comum; a geração não garante pixels idênticos.",
+    "Textos da imagem de conceito são sintetizados; a interface usa a fonte real Pixelify Sans."
+  ]
+}

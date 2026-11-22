@@ -133,6 +133,8 @@ static void check_names(void)
 
 static void capture_native(Game *game, const char *path)
 {
+    float previous_scale = game->trainer_select_assets.ui.font_scale;
+    selection_ui_update_fonts(&game->trainer_select_assets.ui, 1.5f);
     Game before = *game;
     GameCanvas canvas = {0};
     assert(game_canvas_resize(&canvas, 1920, 1080, 1920, 1080));
@@ -147,6 +149,7 @@ static void capture_native(Game *game, const char *path)
     assert(ExportImage(image, path));
     UnloadImage(image);
     game_canvas_unload(&canvas);
+    selection_ui_update_fonts(&game->trainer_select_assets.ui, previous_scale);
 }
 
 static void walk_axis(Game *game, bool horizontal, float target)
@@ -623,8 +626,9 @@ static void check_greenhouse(Game *game)
     puts("PASS: diálogos, placas, prédios, guardiões, chave, subsolo, ponte, pistas e saída.");
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    bool setup_only = argc > 1 && strcmp(argv[1], "--setup-only") == 0;
     assert(DirectoryExists("build/name_entry_preview") || MakeDirectory("build/name_entry_preview")==0);
     SetConfigFlags(FLAG_WINDOW_HIDDEN);
     SetTraceLogLevel(LOG_WARNING);
@@ -656,7 +660,7 @@ int main(void)
         input(2,KEY_LEFT_SHIFT,0); key(&game,KEY_TAB); input(1,KEY_LEFT_SHIFT,0); tick(&game);
         assert(game.name_entry.focus==0);
         capture_native(&game, TextFormat("build/name_entry_preview/name_1080p_%d.png", gender));
-        click(&game,950,570); /* Confirmar por mouse transfere nome e personagem. */
+        click(&game,950,660); /* Confirmar por mouse transfere nome e personagem. */
         check_complete_intro(&game, key);
         assert(game.screen==GAME_EXPLORATION);
         assert(game.campaign.trainer==(Trainer)gender && game.player.trainer==(Trainer)gender);
@@ -683,13 +687,13 @@ int main(void)
     input(1,KEY_BACKSPACE,0); tick(&game);
     assert(game.name_entry.count==0 && game.name_entry.draft[0]==0);
     text(&game,"João");
-    click(&game,680,570); settle(&game);
+    click(&game,180,660); settle(&game);
     assert(game.screen==GAME_TRAINER_SELECT && strcmp(game.name_entry.draft,"João")==0);
     key(&game,KEY_ENTER); settle(&game);
     assert(strcmp(game.name_entry.draft,"João")==0 && game.name_entry.focus==0);
     key(&game,KEY_TAB); key(&game,KEY_TAB); assert(game.name_entry.focus==2);
     key(&game,KEY_ENTER); check_complete_intro(&game, key); assert(game.screen==GAME_EXPLORATION);
-    check_greenhouse(&game);
+    if (!setup_only) check_greenhouse(&game);
     /* Botão Voltar focado por teclado e soltura de mouse mantido na entrada. */
     game.screen=GAME_TRAINER_SELECT; game.input_blocked=false;
     name_entry_init(&game.name_entry);
@@ -716,7 +720,7 @@ int main(void)
         name_entry_begin(&game.name_entry,true);
         for (int i=0;i<=12;i++) {
             Rectangle card=name_entry_transition_bounds(&game.name_entry,(Trainer)gender);
-            assert(card.x>=172 && card.width>=308 && card.width<=336);
+            assert(card.x>=160 && card.width>=300 && card.width<=320);
             capture(&game,target,TextFormat("build/name_entry_preview/forward_%d_%02d.ppm",gender,i));
             if (i<12) {
                 trainer_select_screen_update(&game.trainer_select,false,.05f);

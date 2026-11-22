@@ -11,8 +11,8 @@ static float clamp01(float value) { return fminf(1,fmaxf(0,value)); }
 
 static Rectangle control_bounds(int focus)
 {
-    if (focus==0) return (Rectangle){592,292,476,72};
-    return (Rectangle){focus==1 ? 568 : 844,548,240,52};
+    if (focus==0) return (Rectangle){548,280,524,80};
+    return selection_ui_footer_bounds(focus == 2);
 }
 
 static bool letter_or_digit(int codepoint)
@@ -158,7 +158,7 @@ NameEntryAction name_entry_update(NameEntryScreen *screen, bool accept_input, fl
     return NAME_ENTRY_NONE;
 }
 
-Rectangle name_entry_portrait_bounds(void) { return (Rectangle){172,140,308,440}; }
+Rectangle name_entry_portrait_bounds(void) { return (Rectangle){160,160,300,420}; }
 
 Rectangle name_entry_transition_bounds(const NameEntryScreen *screen, Trainer trainer)
 {
@@ -169,58 +169,55 @@ Rectangle name_entry_transition_bounds(const NameEntryScreen *screen, Trainer tr
                        roundf(from.width+(to.width-from.width)*t),roundf(from.height+(to.height-from.height)*t)};
 }
 
-static void draw_name_ui(const UiTheme *ui, const NameEntryScreen *screen)
+static void draw_name_ui(const UiTheme *ui, const NameEntryScreen *screen, const SelectionUiAssets *assets)
 {
     float alpha=clamp01((screen->progress-.5f)/.5f);
     if (alpha<=0) return;
-    int rise=(int)roundf(12*(1-alpha));
-    Color ink=Fade(SELECTION_INK,alpha), cream=Fade(SELECTION_CREAM,alpha);
+    Color ink=Fade(SELECTION_INK,alpha);
     Color orange=Fade(SELECTION_ORANGE,alpha);
-    selection_ui_panel((Rectangle){260,28+rise,760,64},4,ink);
-    selection_ui_panel((Rectangle){264,32+rise,752,56},4,cream);
-    selection_ui_text(ui, "Como você se chama?",640,40+rise,40,ink);
-    selection_ui_panel((Rectangle){556,190+rise,548,314},8,ink);
-    selection_ui_panel((Rectangle){564,198+rise,532,298},8,cream);
-    ui_text(ui, "Seu nome",592,232+rise,30,ink);
+    selection_ui_header(ui, assets, "Como você se chama?", "Escolha o nome da sua aventura.",
+                         OPENING_NAME, alpha);
+    selection_ui_skin(assets, SELECTION_NAME_PANEL, (Rectangle){500,175,620,380}, alpha);
+    selection_ui_pixel_text(ui, assets, "Seu nome",548,246,30,ink);
     Rectangle field=control_bounds(0);
-    field.y+=rise;
     selection_ui_panel(field,4,screen->focus==0 ? orange : ink);
     selection_ui_panel((Rectangle){field.x+4,field.y+4,field.width-8,field.height-8},4,
                        Fade((Color){255,249,222,255},alpha));
     game_canvas_begin_scissor((Rectangle){field.x+12, field.y+8, field.width-24, field.height-16});
-    ui_text(ui, screen->draft,(int)field.x+16,(int)field.y+20,30,ink);
+    float text_width = selection_ui_measure(ui, assets, screen->draft, 36);
+    float text_x = field.x + 16 - fmaxf(0, text_width - field.width + 40);
+    selection_ui_pixel_text(ui, assets, screen->draft,text_x,field.y+20,36,ink);
     if (screen->focus==0 && screen->caret_time<.5f) {
-        int x=(int)fminf(field.x+field.width-20,field.x+18+ui_measure(ui, screen->draft,30));
-        DrawRectangle(x,(int)field.y+18,3,34,ink);
+        int x=(int)roundf(text_x+text_width+3);
+        DrawRectangle(x,(int)field.y+18,2,40,ink);
     }
     EndScissorMode();
     const char *counter=TextFormat("%d/12",screen->count);
-    ui_text(ui, counter,1068-ui_measure(ui, counter,20),380+rise,20,ink);
-    ui_text(ui, "Esse será o seu nome na aventura.",592,420+rise,20,ink);
-    if (screen->error) ui_text(ui, "Digite um nome para continuar.",592,458+rise,20,orange);
+    selection_ui_pixel_text(ui, assets, counter,1072-selection_ui_measure(ui,assets,counter,22),378,22,ink);
+    selection_ui_pixel_text(ui, assets, "Esse será o seu nome na aventura.",548,440,24,ink);
+    if (screen->error) selection_ui_pixel_text(ui, assets, "Digite um nome para continuar.",548,488,22,orange);
     for (int i=1;i<3;i++) {
         Rectangle bounds=control_bounds(i);
-        bounds.y+=rise;
-        selection_ui_panel(bounds,4,screen->focus==i ? orange : ink);
-        selection_ui_panel((Rectangle){bounds.x+4,bounds.y+4,bounds.width-8,bounds.height-8},4,cream);
-        selection_ui_text(ui, i==1 ? "Voltar" : "Confirmar",(int)(bounds.x+bounds.width/2),(int)bounds.y+12,30,ink);
+        bool hovered = CheckCollisionPointRec(GetMousePosition(), bounds);
+        selection_ui_button(ui, assets, bounds, i==1 ? "Voltar · ESC" : "Confirmar · ENTER",
+                            screen->focus==i || hovered, hovered && screen->pressed==i, alpha);
     }
-    selection_ui_panel((Rectangle){208,688+rise,864,28},4,ink);
-    selection_ui_text(ui, "Digite seu nome | ENTER: confirmar | ESC: voltar",640,692+rise,20,cream);
+    selection_ui_pixel_box(ui, assets, "Digite seu nome para continuar",
+                           (Rectangle){350,643,470,28},20,Fade((Color){253,245,216,255},alpha));
 }
 
 void name_entry_draw(const UiTheme *ui, const NameEntryScreen *screen, const TrainerSelectScreen *selection,
                      const TrainerSelectAssets *assets)
 {
-    trainer_background_draw(&assets->background,selection->background_time);
+    trainer_background_draw_dimmed(&assets->background,selection->background_time);
     float old=1-clamp01(screen->progress/.25f);
     if (old>0) {
-        trainer_select_draw_chrome(ui, selection,old);
+        trainer_select_draw_chrome(ui, selection,assets,old);
         Trainer other=selection->selected==TRAINER_MALE ? TRAINER_FEMALE : TRAINER_MALE;
         trainer_select_draw_card(ui, selection,assets,other,trainer_select_card_bounds(other),old,false,1);
     }
-    draw_name_ui(ui, screen);
+    draw_name_ui(ui, screen, &assets->ui);
     /* O cartão atravessa o painel pela frente; retrato e halo nunca são encobertos. */
     trainer_select_draw_card(ui, selection,assets,selection->selected,
-                             name_entry_transition_bounds(screen,selection->selected),1,true,old);
+                             name_entry_transition_bounds(screen,selection->selected),1,old>0,old);
 }

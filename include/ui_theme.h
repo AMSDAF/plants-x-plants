@@ -35,6 +35,8 @@ void ui_text_bold(const UiTheme *ui, const char *text, int x, int y, int size, C
 int ui_measure_bold(const UiTheme *ui, const char *text, int size);
 void ui_panel(Rectangle bounds);
 int ui_text_wrap_reveal(Font font, const char *text, Rectangle bounds, int size, Color color, int visible_characters);
+int ui_text_wrap_reveal_pixels(Font font, const char *text, Rectangle bounds, float size,
+                               Color color, int visible_characters, float pixel_scale);
 int ui_text_wrap_font(Font font, const char *text, Rectangle bounds, int size, Color color);
 int ui_text_wrap(const UiTheme *ui, const char *text, Rectangle bounds, int size, Color color, bool bold);
 

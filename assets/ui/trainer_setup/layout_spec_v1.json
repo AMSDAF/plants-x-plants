@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "status": "integrado_personagem_e_nome",
+  "viewport": [
+    1280,
+    720
+  ],
+  "reference": "assets/ui/trainer_setup/approved_reference_v1.png",
+  "coordinates_pt": "Retângulos [x,y,largura,altura] no canvas lógico; conteúdo dos cartões relativo à caixa. Enquadramento conferido em 720p e 1080p.",
+  "shared": {
+    "background_renderer": "trainer_background_draw_dimmed",
+    "overlay_rgb": [
+      15,
+      35,
+      18
+    ],
+    "overlay_alpha": 0.72,
+    "font": "assets/fonts/pixelify_sans_regular.ttf",
+    "font_roles": {
+      "title": 72,
+      "subtitle": 28,
+      "nameplate": 30,
+      "label": 30,
+      "input": 36,
+      "helper": 24,
+      "counter": 22,
+      "buttons": 28,
+      "hints": 20
+    },
+    "font_note_pt": "Rasterizar atlas no tamanho físico do viewport, sem reforço horizontal; posição em pixels físicos, filtro pontual.",
+    "title_center_x": 640,
+    "title_box": [
+      80,
+      24,
+      1120,
+      68
+    ],
+    "subtitle_y": 116,
+    "progress": {
+      "decision_pt": "Progresso único da escolha do personagem até a viagem, sem reiniciar na carta.",
+      "bounds": [
+        502,
+        103,
+        276,
+        7
+      ],
+      "count": 6,
+      "segment_width": 36,
+      "gap": 12,
+      "order_pt": [
+        "personagem",
+        "nome",
+        "carta",
+        "aceite",
+        "equipe",
+        "viagem"
+      ],
+      "filled_pt": "Índice da etapa atual + 1; acompanha retorno entre telas."
+    },
+    "footer": {
+      "back": [
+        98,
+        628,
+        240,
+        64
+      ],
+      "confirm": [
+        832,
+        628,
+        350,
+        64
+      ],
+      "back_label": "Voltar · ESC",
+      "confirm_label": "Confirmar · ENTER"
+    },
+    "reuse": {
+      "footer": "assets/ui/plant_selection/footer_button_v1.png",
+      "cursor": "assets/ui/plant_selection/cursor_v1.png",
+      "portraits": [
+        "assets/sprites/trainers/male_portrait_idle.png",
+        "assets/sprites/trainers/female_portrait_idle.png"
+      ]
+    }
+  },
+  "character_selection": {
+    "title": "Escolha seu personagem",
+    "subtitle": "Quem vai começar esta jornada?",
+    "cards": [
+      [
+        300,
+        145,
+        320,
+        456
+      ],
+      [
+        660,
+        145,
+        320,
+        456
+      ]
+    ],
+    "portrait_area_relative": [
+      55,
+      42,
+      210,
+      323
+    ],
+    "portrait_fit_pt": "Preservar proporção e animação, alinhar pés em y=365 relativo ao cartão, usar os atlas reais sem redesenhar os personagens.",
+    "nameplate_relative": [
+      60,
+      378,
+      200,
+      42
+    ],
+    "nameplate_style_pt": "Creme com contorno marrom fino em degraus desenhado pela interface; texto dinâmico centrado.",
+    "labels": [
+      "Homem",
+      "Mulher"
+    ],
+    "cursor_relative": [
+      -22,
+      210,
+      18,
+      26
+    ],
+    "hint": "Setas / A-D: escolher",
+    "hint_center": [
+      585,
+      643
+    ],
+    "selected_state_pt": "Usar portrait_selected; contorno dourado já incluso. A seta indica a seleção. Não sobrepor o foco horizontal da seleção de plantas.",
+    "input_pt": "Clique no cartão apenas seleciona; ENTER ou Confirmar avança. Preservar bloqueio até soltar entradas e ESC/Voltar."
+  },
+  "name_entry": {
+    "title": "Como você se chama?",
+    "subtitle": "Escolha o nome da sua aventura.",
+    "portrait_card": [
+      160,
+      160,
+      300,
+      420
+    ],
+    "portrait_area_relative": [
+      50,
+      40,
+      200,
+      330
+    ],
+    "portrait_skin": "portrait_normal",
+    "form_panel": [
+      500,
+      175,
+      620,
+      380
+    ],
+    "label": {
+      "text": "Seu nome",
+      "position": [
+        548,
+        246
+      ]
+    },
+    "input_bounds": [
+      548,
+      280,
+      524,
+      80
+    ],
+    "input_style_pt": "Campo creme #FFF5D8, contorno marrom em degraus e realce laranja de foco. Desenhar campo e cursor por código; não precisam de PNG.",
+    "counter_anchor": [
+      1072,
+      378
+    ],
+    "counter_format": "{count}/12",
+    "helper": {
+      "text": "Esse será o seu nome na aventura.",
+      "position": [
+        548,
+        440
+      ]
+    },
+    "hint": "Digite seu nome para continuar",
+    "behavior_pt": "Preservar edição UTF-8, limite de 12 codepoints, TAB/SHIFT+TAB, feedback de nome inválido e transição reversível atual de 0,6 s. Rascunho e personagem permanecem somente na sessão."
+  },
+  "rendering_pt": [
+    "Recortar fontes conforme manifesto e enquadrar sem deformar os cantos.",
+    "Normal e selecionado usam recorte idêntico e origem de registro; não reenquadrar pelo alfa individual.",
+    "As imagens da geração não são atlas exatos de pixels do jogo: o JSON fixa o recorte comum; conferir o encaixe no render real.",
+    "Não gravar nomes, rótulos ou conteúdo do campo nas texturas.",
+    "Reaproveitar botões em nove partes conforme manifesto da seleção de plantas.",
+    "Manter os relógios, fallback, desenho somente de leitura e prévia F7 existentes."
+  ],
+  "scope_exclusions": [
+    "Sem novas dependências ou alteração das regras do jogo.",
+    "Sem nova fonte, cenário, personagens ou lógica de jogo.",
+    "Sem alteração da seleção de plantas.",
+    "Sem mudança no fluxo da campanha."
+  ]
+}

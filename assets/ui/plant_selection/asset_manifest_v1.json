@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "status": "integrado_na_selecao",
+  "alpha_threshold_for_measurement": 128,
+  "notes_pt": [
+    "Arquivos originais do ImageGen preservados, sem redimensionamento ou edição.",
+    "Usar os recortes explícitos abaixo; ignoram margens transparentes e ruído de alfa quase invisível.",
+    "Normal e selecionado compartilham o mesmo recorte para evitar deslocamento ao alternar estado.",
+    "O foco é uma camada separada e combina com ambos os estados."
+  ],
+  "assets": {
+    "card_normal": {
+      "file": "assets/ui/plant_selection/card_normal_v1.png",
+      "size_px": [
+        1613,
+        975
+      ],
+      "source_xywh_px": [
+        118,
+        81,
+        1378,
+        814
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 254,
+      "sha256": "4734cb500c0a8fe36469e6ea60ccdd83bc35497e398dd738d0d89611c373acd1"
+    },
+    "card_selected": {
+      "file": "assets/ui/plant_selection/card_selected_v1.png",
+      "size_px": [
+        1613,
+        975
+      ],
+      "source_xywh_px": [
+        118,
+        81,
+        1378,
+        814
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 253,
+      "sha256": "9f71bc9b8610fa61ab36ef6739f0bbe7d0900ad7909caea3d268992887bef8ba"
+    },
+    "focus_outline": {
+      "file": "assets/ui/plant_selection/focus_outline_v1.png",
+      "size_px": [
+        1613,
+        975
+      ],
+      "source_xywh_px": [
+        115,
+        78,
+        1382,
+        816
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 0,
+      "sha256": "bc0221346f196d6621d387c9a614223223dacab57beae4f0939fac0428545a1e"
+    },
+    "footer_button": {
+      "file": "assets/ui/plant_selection/footer_button_v1.png",
+      "size_px": [
+        2172,
+        724
+      ],
+      "source_xywh_px": [
+        152,
+        158,
+        1868,
+        387
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 254,
+      "sha256": "b92deb756b78e2d1801e71ba9e31a7ebe5068f2d2c18a1cd1e31e3d6b7ed056f",
+      "nine_slice_insets_px": {
+        "left": 260,
+        "top": 88,
+        "right": 260,
+        "bottom": 88
+      }
+    },
+    "leaf_badge": {
+      "file": "assets/ui/plant_selection/leaf_badge_v1.png",
+      "size_px": [
+        1448,
+        1086
+      ],
+      "source_xywh_px": [
+        376,
+        293,
+        696,
+        491
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 254,
+      "sha256": "5cf4e354ca8c370df44dcdfb1c9eb48c8695f749213beb53a49ef794f20b8f3f"
+    },
+    "cursor": {
+      "file": "assets/ui/plant_selection/cursor_v1.png",
+      "size_px": [
+        1112,
+        1415
+      ],
+      "source_xywh_px": [
+        410,
+        552,
+        293,
+        401
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "center_alpha": 253,
+      "sha256": "7866a0d93a7bdc3e869d639b717d32f5466312e5be0bfd24c82cfdb39188f343"
+    }
+  },
+  "approved_reference": {
+    "file": "assets/ui/plant_selection/approved_reference_v1.png",
+    "size_px": [
+      1672,
+      941
+    ]
+  }
+}

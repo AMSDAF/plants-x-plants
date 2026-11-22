@@ -66,3 +66,10 @@ void trainer_background_draw(const TrainerBackgroundAssets *assets, float elapse
         DrawTexturePro(assets->atlas, source, dest, (Vector2){0}, 0, WHITE);
     }
 }
+
+void trainer_background_draw_dimmed(const TrainerBackgroundAssets *assets, float elapsed)
+{
+    trainer_background_draw(assets, elapsed);
+    DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT,
+                  Fade((Color){15, 35, 18, 255}, 0.72f));
+}

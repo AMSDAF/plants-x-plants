@@ -5,6 +5,7 @@
 
 #include "player.h"
 #include "trainer_background.h"
+#include "selection_ui.h"
 
 typedef enum {
     TRAINER_SELECT_NONE,
@@ -16,6 +17,7 @@ typedef struct {
     Texture2D male_idle;
     Texture2D female_idle;
     TrainerBackgroundAssets background;
+    SelectionUiAssets ui;
 } TrainerSelectAssets;
 
 typedef struct {
@@ -38,6 +40,7 @@ void trainer_select_screen_draw(const UiTheme *ui, const TrainerSelectScreen *sc
 Rectangle trainer_select_card_bounds(Trainer trainer);
 void trainer_select_draw_card(const UiTheme *ui, const TrainerSelectScreen *screen, const TrainerSelectAssets *assets,
                               Trainer trainer, Rectangle bounds, float alpha, bool selected, float label_alpha);
-void trainer_select_draw_chrome(const UiTheme *ui, const TrainerSelectScreen *screen, float alpha);
+void trainer_select_draw_chrome(const UiTheme *ui, const TrainerSelectScreen *screen,
+                                const TrainerSelectAssets *assets, float alpha);
 
 #endif
