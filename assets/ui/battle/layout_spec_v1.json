@@ -224,32 +224,39 @@
     "button_shape_pt": "Desenhar creme com contorno verde em degraus; usar verde-claro na escolha, cinza em indisponível. Não reutilizar os botões de madeira grossa da proposta rejeitada. Os quatro botões não estão gravados no painel.",
     "last_message_bounds": [
       72,
-      622,
+      612,
       445,
-      78
-    ]
+      74
+    ],
+    "effects_hint": {
+      "text": "TAB · efeitos",
+      "position": [
+        76,
+        525
+      ]
+    }
   },
   "submenus": {
     "moves": {
       "items": 3,
-      "content_pt": "Três golpes, dano/atributo, poder, precisão, crítico e prioridade; disponibilidade pelo motor, fórmula individual no rodapé.",
+      "content_pt": "Três golpes, dano/atributo, poder, precisão, crítico e prioridade; a avaliação da fórmula e bônus/bloqueio ficam na linha do ataque lógico.",
       "back_pt": "Retornar ao menu sem consumir turno.",
       "bounds": [
         [
           568,
-          500,
+          522,
           647,
           50
         ],
         [
           568,
-          554,
+          576,
           647,
           50
         ],
         [
           568,
-          608,
+          630,
           647,
           50
         ]
@@ -288,8 +295,8 @@
     },
     "pending_pt": "Submenus conferidos em capturas OpenGL, incluindo quatro posições e substituição obrigatória.",
     "back_bounds": [
-      1095,
-      664,
+      390,
+      520,
       120,
       28
     ]

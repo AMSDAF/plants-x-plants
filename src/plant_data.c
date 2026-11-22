@@ -34,8 +34,8 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
     {
         SPECIES_SUNFLOWER,
         "Girassol",
-        90,
-        45,
+        225,
+        50,
         45,
         38,
         {
@@ -45,7 +45,7 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
                            1.0f, 3.0f, MOVE_STAT_CHANGE_ADD_TO_CAP)
         }
     },
-    {SPECIES_ALOE, "Babosa", 110, 42, 53, 30,
+    {SPECIES_ALOE, "Babosa", 275, 46, 53, 30,
         {DAMAGE_MOVE("Espinho Curto", MOVE_CATEGORY_RANGED, 39, 100, 8, 0),
          DAMAGE_MOVE("Corte de Aloe", MOVE_CATEGORY_PHYSICAL, 51, 85, 16, 0),
          ATTRIBUTE_MOVE("Casca Grossa", MOVE_TARGET_SELF, MOVE_STAT_DEFENSE,

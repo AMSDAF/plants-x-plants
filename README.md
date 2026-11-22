@@ -16,7 +16,8 @@ O jogador começa escolhendo três companheiras entre Trevo, Hera Venenosa, Pime
 
 O elenco definitivo tem oito espécies: as seis iniciais acima e os bosses
 **Babosa**, no depósito, e **Girassol**, no viveiro. Os bosses não aparecem na
-seleção inicial. As espécies antigas fora desse elenco foram retiradas do catálogo.
+seleção inicial. Cada boss luta sozinho contra a equipe: Babosa tem 275 HP/46 ATQ e
+Girassol 225 HP/50 ATQ, com defesa e velocidade preservadas. As espécies antigas fora desse elenco foram retiradas do catálogo.
 
 Atributos e três golpes por espécie ficam centralizados em `src/plant_data.c`.
 O combate inclui golpes de dano e de atributo, fórmulas individuais, habilidades
@@ -315,13 +316,20 @@ para selecionar ou remover plantas; **ENTER** confirma somente com três escolhi
 **Voltar/ESC** retorna à etapa anterior. A primeira planta escolhida começa ativa.
 A chegada abre o mapa existente da estufa; não há um mapa adicional de vila.
 
-Na campanha, o primeiro encontro com um guardião preserva a equipe inicial e
-abre a configuração individual do buff, sem remontar a equipe. Selecione a planta
-com **←/→** ou pelos cartões; **Q/W** escolhem condições, **E** muda o operador,
-e **1/2/3** escolhem qual golpe recebe o bônus. **ENTER** confirma a fórmula de cada
-planta. Durante a batalha, **1/2/3** usam golpes: o escolhido para o buff fica
-bloqueado enquanto a fórmula for falsa, e os outros seguem disponíveis com poder
-normal. **Q/W/E/R** trocam a planta ativa.
+A placa perto do depósito abre o modal de golpes lógicos. As abas mostram as
+três plantas e podem ser escolhidas em qualquer ordem. Cada planta responde
+sua própria pergunta (OU, E ou NÃO); erros permitem tentar novamente.
+Acertar libera o editor daquela planta, sem aplicar um golpe automaticamente.
+Escolha um ataque de dano, duas condições diferentes e o operador **E, OU ou XOR**.
+**Confirmar configuração** salva apenas a planta selecionada; é possível editar
+depois. Perguntas resolvidas e rascunhos são preservados ao alternar abas ou
+fechar com **Voltar/ESC**, durante a sessão atual.
+Use clique, **TAB/setas** e **ENTER/Espaço**. Nas listas, **ESC** fecha somente a
+lista; fora delas, fecha o modal. Golpes de atributo e condições repetidas ficam
+indisponíveis. A fórmula verdadeira concede o bônus do operador; falsa bloqueia
+somente o golpe lógico confirmado. Sem confirmação, todos os ataques continuam
+normais. O encontro abre direto, sem configuração obrigatória.
+Durante a batalha, **1/2/3** usam golpes e **Q/W/E/R** trocam a planta ativa.
 **ENTER** no resultado ou **ESC** retorna à estufa. Consulte
 [o relatório do combate](docs/BATTLE_PROTOTYPE.md).
 

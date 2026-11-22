@@ -39,7 +39,7 @@ typedef struct {
     int current_turn; /* 0 para o primeiro lado, 1 para o segundo. */
     BattleStateEnum state;
     LogicFormula formulas[2][MAX_TEAM_SIZE];
-    int boosted_move_indices[2][MAX_TEAM_SIZE];
+    int boosted_move_indices[2][MAX_TEAM_SIZE]; /* -1 mantém todos os golpes normais. */
     char last_message[128];
 } BattleState;
 

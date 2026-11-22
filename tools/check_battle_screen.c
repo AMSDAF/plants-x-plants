@@ -43,9 +43,11 @@ static void reset(Game *game)
     game->screen = GAME_BATTLE;
     game->battle_screen = (BattleScreen){.setup_side=-1};
     Battle_Init(&game->battle_screen.battle,player,enemy);
-    for (int side = 0; side < 2; side++) for (int i = 0; i < MAX_TEAM_SIZE; i++)
+    for (int side = 0; side < 2; side++) for (int i = 0; i < MAX_TEAM_SIZE; i++) {
+        game->battle_screen.battle.boosted_move_indices[side][i] = 0;
         game->battle_screen.battle.formulas[side][i] =
             (LogicFormula){LOGIC_OWN_RESERVE,LOGIC_ENEMY_RESERVE,LOGIC_OR};
+    }
     game->battle_screen.battle.player_team.plants[0].moves[0].accuracy = 100;
 }
 
@@ -91,6 +93,9 @@ int main(void)
     capture(&game,1280,720,"depot_720p");
     capture(&game,1920,1080,"depot_1080p");
     capture(&game,1024,768,"depot_letterbox");
+    snprintf(game.battle_screen.battle.last_message,sizeof(game.battle_screen.battle.last_message),
+        "Hera Venenosa usou Cipó Ágil fortalecido: 94 de dano. Hera Venenosa não envenenou o atacante desta vez.");
+    capture(&game,1920,1080,"long_message_1080p");
     BattleState before = game.battle_screen.battle;
     click(&game,700,615); click(&game,1050,615);
     assert(game.battle_screen.menu == BATTLE_MENU_ROOT);
@@ -101,6 +106,14 @@ int main(void)
     key(&game,KEY_UP); key(&game,KEY_ENTER);
     assert(game.battle_screen.menu == BATTLE_MENU_MOVES);
     capture(&game,1920,1080,"moves_1080p");
+    LogicFormula saved_formula = game.battle_screen.battle.formulas[0][0];
+    game.battle_screen.battle.formulas[0][0] = (LogicFormula){LOGIC_OWN_LOW_HP,LOGIC_ENEMY_LOW_HP,LOGIC_AND};
+    capture(&game,1280,720,"logical_move_blocked");
+    game.battle_screen.battle.formulas[0][0] = saved_formula;
+    click(&game,450,534);
+    assert(game.battle_screen.menu == BATTLE_MENU_ROOT);
+    click(&game,650,545);
+    assert(game.battle_screen.menu == BATTLE_MENU_MOVES);
     assert(key(&game,KEY_ESCAPE) == BATTLE_SCREEN_NONE && game.battle_screen.menu == BATTLE_MENU_ROOT);
     assert(memcmp(&before,&game.battle_screen.battle,sizeof(before)) == 0);
     click(&game,1050,545);
@@ -131,7 +144,7 @@ int main(void)
     assert(game.battle_screen.pending_move_index == 0);
     assert(memcmp(&before,&game.battle_screen.battle,sizeof(before)) == 0);
     resolve_action(&game);
-    assert(game.battle_screen.battle.enemy_team.plants[0].current_hp < 110);
+    assert(game.battle_screen.battle.enemy_team.plants[0].current_hp < game.battle_screen.battle.enemy_team.plants[0].max_hp);
     assert(game.battle_screen.menu == BATTLE_MENU_ROOT && game.battle_screen.battle.current_turn == 1);
 
     reset(&game);

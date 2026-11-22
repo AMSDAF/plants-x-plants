@@ -17,7 +17,7 @@ static const int switch_keys[MAX_TEAM_SIZE] = {KEY_Q, KEY_W, KEY_E, KEY_R};
 static const char *const switch_labels[MAX_TEAM_SIZE] = {"Q", "W", "E", "R"};
 
 static const Rectangle return_button = {568, 518, 647, 60};
-static const Rectangle back_button = {1095, 664, 120, 28};
+static const Rectangle back_button = {390, 520, 120, 28};
 static const Rectangle setup_left = {64, 242, 400, 58};
 static const Rectangle setup_operator = {480, 242, 200, 58};
 static const Rectangle setup_right = {696, 242, 520, 58};
@@ -73,7 +73,7 @@ static bool cpu_turn(const BattleScreen *screen)
 
 static Rectangle move_button(int index)
 {
-    return (Rectangle){568, 500 + index*54, 647, 50};
+    return (Rectangle){568, 522 + index*54, 647, 50};
 }
 
 static Rectangle switch_button(int index)
@@ -514,6 +514,12 @@ static void menu_root(const BattleView *view, const BattleScreen *screen, bool e
     text_box(view,"Vamos implementar em breve",(Rectangle){600,652,600,24},20,(Color){124,127,112,255});
 }
 
+static void back_control(const BattleView *view)
+{
+    cell(back_button,true,CheckCollisionPointRec(GetMousePosition(),back_button));
+    text_box(view,"Voltar",back_button,22,ink);
+}
+
 static void menu_moves(const BattleView *view, const BattleScreen *screen)
 {
     const BattleState *battle = &screen->battle;
@@ -527,7 +533,21 @@ static void menu_moves(const BattleView *view, const BattleScreen *screen)
         Color color = enabled ? ink : (Color){112,114,99,255};
         cell(box,enabled,focus);
         if (focus) pointer(view,box);
-        text(view,TextFormat("%d · %s%s",i+1,move->name,enabled ? "" : " · indisponível"),box.x+48,box.y+2,24,color);
+        bool logical = battle->boosted_move_indices[0][index] == i;
+        if (logical) {
+            LogicFormula formula = battle->formulas[0][index];
+            LogicEvaluation value = Battle_EvaluatePlantFormula(battle,0,index,formula);
+            const char *evaluation = TextFormat("%s %s %s = %s · %s",value.left ? "V" : "F",
+                operators[formula.operator],value.right ? "V" : "F",value.result ? "V" : "F",
+                value.result ? TextFormat("+%d",Battle_GetFormulaPowerBonus(formula.operator)) : "bloqueado");
+            float width = selection_ui_measure(view->ui,view->fonts,evaluation,20)+12;
+            text(view,TextFormat("%d · %s · lógico",i+1,move->name),box.x+48,box.y+2,24,color);
+            text(view,evaluation,box.x+box.width-width,box.y+6,20,
+                value.result ? ink : (Color){143,66,42,255});
+        } else {
+            text(view,TextFormat("%d · %s%s",i+1,move->name,
+                enabled ? "" : " · indisponível"),box.x+48,box.y+2,24,color);
+        }
         if (move->effect == MOVE_EFFECT_ATTRIBUTE) {
             const char *stat = move->stat == MOVE_STAT_ATTACK ? "ATQ" : move->stat == MOVE_STAT_DEFENSE ? "DEF" : "VEL";
             text(view,TextFormat("%s %s · passo %.1fx · limite %.1fx",move->target == MOVE_TARGET_SELF ? "Próprio" : "Rival",
@@ -538,7 +558,7 @@ static void menu_moves(const BattleView *view, const BattleScreen *screen)
                 Battle_GetCriticalChance(plant,move),move->priority),box.x+48,box.y+28,20,color);
         }
     }
-    text_box(view,"Voltar",back_button,22,ink);
+    back_control(view);
 }
 
 static void menu_team(const BattleView *view, const BattleScreen *screen, bool forced)
@@ -560,7 +580,7 @@ static void menu_team(const BattleView *view, const BattleScreen *screen, bool f
         text(view,TextFormat("%d/%d HP%s",plant->current_hp,plant->max_hp,state),box.x+56,box.y+34,20,color);
         if (focus) DrawRectangleLinesEx((Rectangle){box.x+3,box.y+3,box.width-6,box.height-6},2,ORANGE);
     }
-    if (!forced) text_box(view,"Voltar",back_button,22,ink);
+    if (!forced) back_control(view);
     text(view,forced ? "Escolha uma planta viva." : "Q/W/E/R · escolher reserva",575,654,20,ink);
 }
 
@@ -712,9 +732,9 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
         : screen->menu == BATTLE_MENU_TEAM ? "Qual planta vai entrar em campo?"
         : screen->menu == BATTLE_MENU_MOVES ? "Escolha seu golpe."
         : TextFormat("O que %s\nvai fazer?",active->name_pt);
-    text_wrap(&view,question,(Rectangle){72,526,445,92},36,ink);
-    text(&view,"TAB · efeitos",76,461,20,paper);
-    text_wrap(&view,battle->last_message,(Rectangle){72,622,445,78},20,ink);
+    text_wrap(&view,question,(Rectangle){72,544,445,72},28,ink);
+    text(&view,"TAB · efeitos",76,525,20,ink);
+    text_wrap(&view,battle->last_message,(Rectangle){72,612,445,74},20,ink);
     if (ended) {
         cell(return_button,true,true);
         text_box(&view,"ENTER · Voltar à estufa",return_button,30,ink);
@@ -725,16 +745,10 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
     } else if (screen->menu == BATTLE_MENU_MOVES) {
         menu_moves(&view,screen);
     } else menu_root(&view,screen,true);
-    if (!ended && !cpu && !pending && screen->menu == BATTLE_MENU_MOVES) {
-        LogicFormula formula = battle->formulas[0][battle->player_team.active_index];
-        LogicEvaluation value = Battle_EvaluatePlantFormula(battle,0,battle->player_team.active_index,formula);
-        text(&view,TextFormat("%s %s %s = %s · bônus %s",value.left ? "V" : "F",operators[formula.operator],
-             value.right ? "V" : "F",value.result ? "V" : "F",value.result ? "ativo" : "golpe bloqueado"),575,666,20,ink);
-    }
     if (pending) {
         float elapsed = fminf(1,fmaxf(0,1-screen->action_timer/pending_action_seconds));
-        DrawRectangle(76,605,430,4,(Color){191,181,133,255});
-        DrawRectangle(76,605,(int)(430*elapsed),4,ORANGE);
+        DrawRectangle(76,606,430,4,(Color){191,181,133,255});
+        DrawRectangle(76,606,(int)(430*elapsed),4,ORANGE);
     }
     if (screen->show_statuses) status_overlay(&view,battle);
 }

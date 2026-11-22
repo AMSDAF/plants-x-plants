@@ -41,6 +41,13 @@ static void check_refreshed_rules(void)
     Battle_Init(&battle,player,enemy);
     assert(battle.current_turn == 0);
     assert(Plant_HasStatus(&battle.player_team.plants[1],PLANT_STATUS_LUCK));
+    assert(battle.boosted_move_indices[0][0] == -1);
+    assert(Battle_CanUseMove(&battle,0,0,0));
+    assert(Battle_GetMovePower(&battle,0,0) == player.plants[0].moves[0].power);
+    battle.player_team.plants[0].current_hp = player.plants[0].max_hp / 2;
+    assert(Battle_GetMovePower(&battle,0,0) == player.plants[0].moves[0].power);
+    battle.player_team.plants[0].current_hp = player.plants[0].max_hp;
+    battle.boosted_move_indices[0][0] = 0;
     assert(!Battle_CanUseMove(&battle,0,0,0));
     BattleState before = battle;
     assert(!Battle_ExecuteMove(&battle,0));
@@ -74,6 +81,24 @@ static void check_refreshed_rules(void)
 int main(void)
 {
     check_refreshed_rules();
+    /* Um guardião sozinho encerra a luta ao cair, sem pedir reserva. */
+    for (int id = SPECIES_SUNFLOWER; id <= SPECIES_ALOE; id++) {
+        Team players = {0}, boss = {0};
+        Team_SelectSpecies(&players,0,SPECIES_CACTUS);
+        Team_SelectSpecies(&players,1,SPECIES_CLOVER);
+        Team_SelectSpecies(&players,2,SPECIES_PEPPER);
+        Team_SelectSpecies(&boss,0,id);
+        BattleState solo;
+        Battle_Init(&solo,players,boss);
+        assert(solo.enemy_team.count == 1 && solo.player_team.count == 3);
+        solo.player_team.plants[0].moves[0].power = 10000;
+        solo.player_team.plants[0].moves[0].accuracy = 100;
+        assert(Battle_ExecuteMove(&solo,0));
+        assert(solo.state == BATTLE_STATE_PLAYER_WIN);
+        BattleState ended = solo;
+        assert(!Battle_ExecuteMove(&solo,0) && !Battle_SwitchPlant(&solo,0));
+        assert(memcmp(&ended,&solo,sizeof(solo)) == 0);
+    }
     static const SpeciesId starters[STARTER_SPECIES_COUNT] = {
         SPECIES_CLOVER, SPECIES_POISON_IVY, SPECIES_PEPPER,
         SPECIES_CACTUS, SPECIES_ORCHID, SPECIES_CARNIVOROUS_PLANT

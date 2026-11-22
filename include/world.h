@@ -68,6 +68,8 @@ typedef struct {
     int dialogue_page;
     int dialogue_visible_characters;
     float dialogue_character_timer;
+    bool logic_quiz_open;
+    unsigned int logic_move_mask;
     bool relay_panel_open;
     unsigned int relay_mask;
     unsigned int relay_attempts;

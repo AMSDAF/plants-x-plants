@@ -37,6 +37,7 @@ set(BATTLE_SOURCES
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/logic_setup_screen.c
     src/battle_screen_assets.c
 )
 

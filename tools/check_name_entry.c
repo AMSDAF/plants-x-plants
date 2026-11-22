@@ -468,8 +468,6 @@ static void check_greenhouse(Game *game)
     enter_depot(game);
     interact_at(game, 640, 420);
     assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_ALOE);
-    key(game, KEY_ENTER);
-    key(game, KEY_ENTER);
     assert(game->battle_screen.setup_side < 0);
     lose_guardian(game);
     assert(world->location == WORLD_EXTERIOR && game->player.feet.x == world_spawn().x);

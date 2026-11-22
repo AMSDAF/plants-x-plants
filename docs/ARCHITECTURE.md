@@ -39,6 +39,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões botânicos de madeira e controles Pixelify sobre `TrainerBackgroundAssets`, retratos de repouso com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa metadados dos atlas de repouso para igualar altura e pés. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
 | `include/intro_screen.h`, `src/intro_screen.c` | Pedido de Lia, aceite, seleção de três entre seis plantas, viagem e montagem validada da equipe inicial. Reutiliza o fundo e a interface; `IntroAssets`, pertencente a `Game`, carrega as seis sprites `*_v2.png`, calcula os limites de alfa e usa filtro pontual. Também carrega as seis artes de `assets/ui/plant_selection/`, com recortes fixos, foco independente da seleção e botões em nove partes. A seleção mantém seis atlas Pixelify nos tamanhos físicos do viewport, atualizados fora do desenho quando a resolução muda. O desenho preserva a proporção, alinha as raízes e oferece reserva se faltar uma textura. A entrada usa as mesmas áreas dos novos cartões e botões. Não resolve combate. |
 | `include/name_entry_screen.h`, `src/name_entry_screen.c` | Rascunho UTF-8 de até 12 codepoints, foco, edição e transição reversível de 0,6 s; reutiliza o cartão/retrato e os relógios da seleção. |
+| `include/logic_setup_screen.h`, `src/logic_setup_screen.c` | Modal da placa: abas por planta, perguntas, editor de ataque/fórmula, listas e confirmação individual. Recebe equipe e recursos emprestados; preserva rascunhos e não calcula dano. `world` mantém a interação e os acertos; `game` coordena abertura e configurações confirmadas. |
 | `include/selection_ui.h`, `src/selection_ui.c` | Interface compartilhada de personagem e nome: `SelectionUiAssets`, pertencente a `TrainerSelectAssets`, possui três molduras novas, botão/seta reutilizados e sete atlas Pixelify rasterizados na resolução física, atualizados por `game_update`. Desenha cabeçalho, textos, molduras com recorte comum e botões em nove partes, com reserva geométrica. Também preserva paleta, formas e descarte de entrada das transições. |
 | `tools/check_name_entry.c`, `tools/check_name_entry_input.c`, `tools/preview_name_entry.py` | Eventos nativos, verificações de UTF-8/foco/sessão e capturas OpenGL da entrada de nome e seus extremos. |
 | `include/player.h`, `src/player.c` | Estado do treinador, direção, posição dos pés, movimento cardinal, relógio de caminhada, recursos dos dois atlas e desenho somente de leitura. |
@@ -69,11 +70,17 @@ A home reutiliza os atlas Pixelify de `SelectionUiAssets` para o aviso inicial
 e o título de reserva. O prólogo usa seus atlas próprios também nos textos
 narrativos; `ui_text_wrap_reveal_pixels` conserva a quebra e a revelação,
 alinhando cada linha à resolução física, sem alterar a fonte dos NPCs.
-O primeiro guardião preserva a equipe e abre somente a montagem da fórmula.
+Os guardiões preservam a equipe e abrem diretamente a batalha. A placa próxima
+ao depósito controla três desafios opcionais, um por planta. `World.logic_move_mask`
+registra as perguntas resolvidas por posição na equipe. `LogicSetupScreen`
+pertence a `Game` e mantém abas livres, foco, lista aberta e rascunhos individuais.
+Somente a confirmação copia fórmula e ataque para `CampaignSession`; resolver
+a pergunta apenas libera o editor. `boosted_move_indices = -1`
+mantém golpes normais, sem bônus nem bloqueio por fórmula.
 Na seleção inicial, Girassol e Babosa ficam fora da lista por serem guardiões.
 As seis plantas jogáveis usam silhuetas provisórias quando não há sprite próprio.
 `CampaignSession.has_team` indica a equipe inicial pronta; `has_formula` indica
-a configuração de combate concluída. Os encontros seguintes reutilizam a
+a existência de pelo menos um golpe lógico confirmado. Os encontros seguintes reutilizam a
 equipe restaurada e a fórmula. `NameEntryScreen` preserva o rascunho ao voltar,
 enquanto os relógios da seleção continuam. `game.c` aguarda a soltura das teclas
 e do mouse após transições, sem bloquear a janela. ESC na seleção ou exploração
@@ -140,14 +147,12 @@ Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a in
 
 Uma ação inválida não deve alterar a batalha nem consumir o turno.
 
-A abertura oferece Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora, com três escolhas distintas obrigatórias. O catálogo definitivo contém oito espécies; Girassol e Babosa são os bosses e ficam fora da seleção inicial. Os guardiões usam equipes predefinidas com o mesmo tamanho da equipe do jogador.
-Cada equipe associa duas condições e um operador a um dos dois espaços de golpe.
-Quando a fórmula é verdadeira, o golpe daquele espaço recebe um bônus de poder;
-o efeito acompanha a equipe quando sua planta ativa muda. `battle_screen.c`
-coleta a fórmula e o espaço escolhido e mostra os valores durante os turnos.
-`battle.c` avalia a fórmula e aplica o bônus ao executar um golpe normal. A CPU
-considera o mesmo bônus ao escolher uma ação. Os encontros seguintes preservam
-a configuração do jogador.
+A abertura oferece Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora, com três escolhas distintas obrigatórias. O catálogo definitivo contém oito espécies; Girassol e Babosa são os bosses e ficam fora da seleção inicial. Cada guardião luta sozinho; sua resistência é definida nos atributos de Babosa e Girassol em `plant_data.c`.
+Cada planta pode associar duas condições e um operador a um golpe de dano.
+Sem aquisição, o índice é -1. `battle.c` avalia a fórmula e valida bônus e
+bloqueio apenas quando há um golpe lógico selecionado. `game.c` aplica as
+recompensas opcionais da exploração e preserva a configuração entre encontros.
+A CPU utiliza a mesma API de validação e dano.
 
 ### Adversário controlado pelo computador
 

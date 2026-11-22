@@ -104,12 +104,21 @@ não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
   podem entrar. Ações humanas, da CPU e paralisia usam a espera não bloqueante de dois segundos.
 - No resultado, ENTER ou o botão retorna à estufa. Ações de combate ficam bloqueadas.
 
-Fórmula e montagem interna de equipe usam fonte Pixelify, painel botânico e o
+Na campanha, a placa perto do depósito abre o novo modal de abas por planta.
+A pergunta resolvida libera a edição; ataque, condições e operador são escolhidos
+pelo jogador e só entram em combate após a confirmação daquela planta.
+As plantas sem configuração confirmada mantêm os golpes normais.
+Consulte [o modal de golpes lógicos](LOGIC_SETUP_UI.md).
+
+Como ferramenta interna, fórmula e montagem de equipe usam fonte Pixelify, painel botânico e o
 cenário do encontro escurecido. Na fórmula, setas esquerda/direita ou os cartões
 alternam a planta; cada uma preserva sua fórmula e seu golpe de dano escolhido.
 Golpes de atributo não recebem bônus de poder. Uma fórmula falsa bloqueia o
 golpe escolhido; limites de atributo e frutos também são validados pelo motor.
-O menu indica indisponibilidade sem enfileirar ações inválidas.
+O menu indica indisponibilidade sem enfileirar ações inválidas. A avaliação V/F e
+o bônus ou bloqueio aparecem no próprio ataque lógico, sem ocupar o rodapé.
+O atalho TAB fica dentro do painel à esquerda; a mensagem da última ação tem
+espaço para três linhas acima da moldura inferior.
 **TAB** alterna a consulta de HP, atributos, frutos e status das duas equipes.
 Durante uma ação pendente, o painel mostra a ação e o progresso da espera,
 impedindo nova entrada de combate até sua resolução.
@@ -145,3 +154,6 @@ montagem interna, resultado e ausência de imagens. Incluem 720p, 1080p e viewpo
 1024 × 576 em janela 4:3. Os testes verificam também bloqueio dos placeholders,
 trocas inválidas, fórmula por planta, terceiro golpe com e sem fruto, bloqueio lógico,
 paralisia, consulta de status, fila sem ação duplicada, desenho imutável e liberação dos recursos.
+
+Os três ataques ocupam y=522–680, dentro da área creme do painel. O botão Voltar
+fica no alto da coluna esquerda, em `(390,520,120,28)`, junto ao atalho de efeitos.

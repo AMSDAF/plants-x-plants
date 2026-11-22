@@ -1,7 +1,7 @@
 # Relatório do protótipo de combate
 
 Na campanha, interaja com um guardião para iniciar um encontro.
-No primeiro encontro, a equipe do prólogo é preservada e você escolhe um golpe para fortalecer antes de lutar.
+A equipe do prólogo é preservada e a batalha começa diretamente. Golpes lógicos são recompensas opcionais da placa perto do depósito.
 A arena mostra a planta ativa, o HP das duas equipes, de quem é o turno e o
 resultado da última ação. A interface usa os cenários próprios do depósito e
 viveiro, oito sprites definitivas, Pixelify Sans e o menu Atacar/Trocar. Mochila
@@ -19,15 +19,30 @@ Detalhes e capturas em [BATTLE_UI_PREPARATION.md](BATTLE_UI_PREPARATION.md).
 Os golpes, as trocas e os botões do resultado também aceitam cliques.
 Use setas e ENTER/Espaço nos menus. ESC, Backspace ou Voltar fecham os submenus
 voluntários; ESC na raiz mantém o retorno à estufa. A troca obrigatória abre
-automaticamente as reservas. Os atalhos diretos 1/2 e Q/W/E/R foram preservados.
+automaticamente as reservas. Os atalhos diretos 1/2/3 e Q/W/E/R foram preservados.
 
-## Fortaleça um golpe da equipe
+## Adquira um golpe lógico por planta
 
-Antes da luta, configure cada planta da equipe separadamente. Selecione-a com
-**←/→** ou pelo cartão; use **Q/W** para mudar suas condições, **E** para mudar
-o operador e **1/2/3** para escolher qual golpe recebe o bônus. Os controles
-também aceitam cliques. A configuração completa de cada planta é preservada nos
-encontros seguintes e a acompanha quando ela entra em campo.
+Interaja com a placa ao lado do depósito com **E**. O modal tem abas livres com
+os nomes da equipe, sem uma sequência obrigatória. Cada integrante responde uma
+pergunta própria (OU, E ou NÃO); a equipe inicial precisa de três acertos para
+liberar os três editores. Erros permitem nova tentativa.
+
+Depois do acerto, a própria aba mostra a escolha do golpe de dano, de duas
+condições distintas e do operador E, OU ou XOR. **Confirmar configuração** salva
+somente essa planta. A pergunta resolvida não aplica bônus nem bloqueio por si
+só. Plantas sem configuração confirmada continuam com ataques normais.
+
+O título e o rodapé permanecem fixos. Cada planta preserva seu rascunho ao trocar
+de aba ou reabrir a placa, e configurações confirmadas podem ser editadas. ESC
+fecha primeiro uma lista aberta; fora da lista, fecha o modal. Clique ou use
+TAB/cima/baixo para navegar, esquerda/direita nas abas e operadores, e
+ENTER/Espaço para selecionar. Os atalhos 1/2 respondem às perguntas.
+Golpes de atributo e condições repetidas aparecem indisponíveis nas listas.
+
+Acertos, rascunhos e confirmações duram a sessão atual e são zerados ao iniciar
+outra campanha; não há salvamento em disco. O editor interno da batalha continua
+somente como ferramenta de desenvolvimento. O motor oferece as regras abaixo.
 
 As condições disponíveis são ter uma reserva viva, o rival ter uma reserva
 viva, a planta que recebe o buff estar viva com até metade do HP e a planta
@@ -61,8 +76,10 @@ que deixou de ser verdadeira bloqueia apenas o golpe escolhido para o buff.
 O jogador escolhe três plantas no prólogo entre Trevo, Hera Venenosa, Pimenta,
 Cacto, Orquídea e Planta Carnívora. Babosa e Girassol são os bosses do depósito e
 do viveiro e não aparecem entre as opções iniciais. O catálogo contém somente
-essas oito espécies. As equipes dos guardiões mantêm o boss na posição inicial
-e reservas predefinidas do elenco atual, com o mesmo tamanho da equipe do jogador. Cada espécie usa diretamente os atributos base do catálogo e tem dois golpes próprios.
+essas oito espécies. Os guardiões lutam sozinhos, sem reservas, contra as três plantas do jogador.
+Babosa tem 275 HP e 46 ATQ; Girassol tem 225 HP e 50 ATQ. Defesa, velocidade,
+golpes e habilidades foram preservados. A fórmula do guardião consulta as reservas
+do jogador, pois o próprio boss não tem equipe de apoio. Cada espécie usa diretamente os atributos base do catálogo.
 Cada espécie tem três golpes, incluindo buffs/debuffs de atributo quando disponíveis.
 
 A montagem de reserva da interface de batalha continua disponível como alternativa
