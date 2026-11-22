@@ -14,7 +14,11 @@ static void open_dialogue(World *world, const char *title, const char *first, co
 enum { MAP_WIDTH = 1672, MAP_HEIGHT = 941,
        TREE_CANOPY_X = 580, TREE_CANOPY_Y = 205,
        TREE_CANOPY_WIDTH = 279, TREE_CANOPY_HEIGHT = 207,
-       TREE_CANOPY_WORLD_WIDTH = 155, TREE_CANOPY_WORLD_HEIGHT = 115 };
+       TREE_CANOPY_WORLD_WIDTH = 155, TREE_CANOPY_WORLD_HEIGHT = 115,
+       INTERIOR_CROP_X = 84, INTERIOR_CROP_Y = 13,
+       INTERIOR_CROP_WIDTH = 1504, INTERIOR_CROP_HEIGHT = 907,
+       PORTAL_CROP_X = 636, PORTAL_CROP_Y = 690,
+       PORTAL_CROP_WIDTH = 400, PORTAL_CROP_HEIGHT = 230 };
 
 typedef enum {
     VALVE,
@@ -183,6 +187,8 @@ static const Rectangle crossing = {899, 525, 160, 38};
 static const float passage_top = 525;
 static const float passage_bottom = 563;
 static const float interaction_radius = 55;
+static const Rectangle maintenance_hatch_bounds = {792, 372, 111, 90};
+static const float hatch_interaction_margin = 36;
 
 static const Color ink = {24, 49, 43, 255};
 static const Color frame = {39, 74, 60, 255};
@@ -229,7 +235,6 @@ static const Rectangle maintenance_furniture[] = {
     {380, 455, 48, 48},  /* Banco, com a base alinhada aos pés. */
     {305, 493, 62, 63},  /* Caixote de madeira inferior esquerdo. */
     {360, 508, 75, 50},  /* Baú verde inferior. */
-    {792, 372, 111, 90}, /* Escotilha metálica no piso. */
     {917, 423, 58, 132}  /* Estante lateral. */
 };
 
@@ -258,6 +263,7 @@ static const Rectangle interior_south_walls[] = {
     {300, 555, 290, 24}, {690, 555, 290, 24}
 };
 static const Rectangle interior_exit_door = {590, 555, 100, 24};
+static const Rectangle interior_portal_depth = {540, 510, 200, 90};
 
 static Texture2D load_map_texture(const char *path, int width, int height)
 {
@@ -296,6 +302,20 @@ void world_assets_load(WorldAssets *assets)
         .bridge_control_interior = load_map_texture(
             "assets/maps/bridge_control_interior.png", 1672, 941),
         .nursery_interior = load_map_texture("assets/maps/nursery_interior.png", 1672, 941),
+        .interior_portal_foreground = {
+            [WORLD_MAINTENANCE] = load_map_texture(
+                "assets/maps/interior_foregrounds/maintenance_house_portal.png",
+                PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT),
+            [WORLD_DEPOT] = load_map_texture(
+                "assets/maps/interior_foregrounds/depot_portal.png",
+                PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT),
+            [WORLD_NURSERY] = load_map_texture(
+                "assets/maps/interior_foregrounds/nursery_portal.png",
+                PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT),
+            [WORLD_BRIDGE_CONTROL] = load_map_texture(
+                "assets/maps/interior_foregrounds/bridge_control_portal.png",
+                PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT)
+        },
         .aloe_guard = load_sprite_texture("assets/sprites/aloe_guard.png"),
         .sunflower_guard = load_sprite_texture("assets/sprites/sunflower_guard.png")
     };
@@ -307,6 +327,10 @@ void world_assets_load(WorldAssets *assets)
         SetTextureFilter(assets->courtyard_detail, TEXTURE_FILTER_BILINEAR);
         /* Impede o filtro de buscar pixels da borda oposta nas margens transparentes. */
         SetTextureWrap(assets->courtyard_detail, TEXTURE_WRAP_CLAMP);
+    }
+    for (int i = WORLD_MAINTENANCE; i < WORLD_LOCATION_COUNT; i++) {
+        if (assets->interior_portal_foreground[i].id)
+            SetTextureWrap(assets->interior_portal_foreground[i], TEXTURE_WRAP_CLAMP);
     }
 }
 
@@ -322,6 +346,10 @@ void world_assets_unload(WorldAssets *assets)
     if (assets->basement_interior.id) UnloadTexture(assets->basement_interior);
     if (assets->bridge_control_interior.id) UnloadTexture(assets->bridge_control_interior);
     if (assets->nursery_interior.id) UnloadTexture(assets->nursery_interior);
+    for (int i = WORLD_MAINTENANCE; i < WORLD_LOCATION_COUNT; i++) {
+        if (assets->interior_portal_foreground[i].id)
+            UnloadTexture(assets->interior_portal_foreground[i]);
+    }
     if (assets->aloe_guard.id) UnloadTexture(assets->aloe_guard);
     if (assets->sunflower_guard.id) UnloadTexture(assets->sunflower_guard);
     *assets = (WorldAssets){0};
@@ -547,8 +575,20 @@ static Object nearby_object(const World *world, Vector2 feet)
                           world->location == WORLD_BRIDGE_CONTROL);
         if (objects[i].location != world->location && !exit_door) continue;
         if ((i == ALOE && world->maintenance_key) || (i == SUNFLOWER && world->guardian_defeated)) continue;
-        float dx = objects[i].position.x - feet.x;
-        float dy = objects[i].position.y - feet.y;
+        float dx;
+        float dy;
+        if (i == LOCKED_HATCH && world->location == WORLD_MAINTENANCE) {
+            float closest_x = fminf(fmaxf(feet.x, maintenance_hatch_bounds.x),
+                                    maintenance_hatch_bounds.x + maintenance_hatch_bounds.width);
+            float closest_y = fminf(fmaxf(feet.y, maintenance_hatch_bounds.y),
+                                    maintenance_hatch_bounds.y + maintenance_hatch_bounds.height);
+            dx = feet.x - closest_x;
+            dy = feet.y - closest_y;
+            if (dx * dx + dy * dy > hatch_interaction_margin * hatch_interaction_margin) continue;
+        } else {
+            dx = objects[i].position.x - feet.x;
+            dy = objects[i].position.y - feet.y;
+        }
         float distance = dx * dx + dy * dy;
         if (distance <= best_distance) {
             nearest = i;
@@ -1148,7 +1188,9 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
         (world->location == WORLD_NURSERY && assets->nursery_interior.id)) {
         /* Recorta a margem preta da referência e enquadra a sala no mapa. */
         DrawTexturePro(interior,
-                       (Rectangle){84, 13, 1504, 907}, b, (Vector2){0}, 0, WHITE);
+                       (Rectangle){INTERIOR_CROP_X, INTERIOR_CROP_Y,
+                                   INTERIOR_CROP_WIDTH, INTERIOR_CROP_HEIGHT},
+                       b, (Vector2){0}, 0, WHITE);
         if (world->location == WORLD_MAINTENANCE) draw_maintenance_details(world);
     } else {
         draw_sector(room);
@@ -1308,6 +1350,39 @@ void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets
     } else {
         draw_interior(ui, world, assets);
     }
+}
+
+void world_draw_interior_foreground(const World *world, const WorldAssets *assets, Vector2 feet)
+{
+    if (world->location <= WORLD_EXTERIOR || world->location >= WORLD_LOCATION_COUNT ||
+        !CheckCollisionPointRec(feet, interior_portal_depth)) return;
+
+    bool has_room_art = false;
+    switch (world->location) {
+        case WORLD_MAINTENANCE: has_room_art = assets->maintenance_interior.id != 0; break;
+        case WORLD_DEPOT: has_room_art = assets->depot_interior.id != 0; break;
+        case WORLD_NURSERY: has_room_art = assets->nursery_interior.id != 0; break;
+        case WORLD_BRIDGE_CONTROL: has_room_art = assets->bridge_control_interior.id != 0; break;
+        default: break;
+    }
+    if (!has_room_art) return;
+
+    Texture2D portal = assets->interior_portal_foreground[world->location];
+    if (!portal.id) return;
+
+    Rectangle room = rooms[world->location].bounds;
+    const float scale_x = room.width / (float)INTERIOR_CROP_WIDTH;
+    const float scale_y = room.height / (float)INTERIOR_CROP_HEIGHT;
+    Rectangle destination = {
+        room.x + (PORTAL_CROP_X - INTERIOR_CROP_X) * scale_x,
+        room.y + (PORTAL_CROP_Y - INTERIOR_CROP_Y) * scale_y,
+        PORTAL_CROP_WIDTH * scale_x,
+        PORTAL_CROP_HEIGHT * scale_y
+    };
+
+    DrawTexturePro(portal,
+                   (Rectangle){0, 0, PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT},
+                   destination, (Vector2){0}, 0, WHITE);
 }
 
 static void draw_relay_action(const UiTheme *ui, Rectangle bounds, const char *label, bool enabled)

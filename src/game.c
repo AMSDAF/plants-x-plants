@@ -230,6 +230,8 @@ void game_draw(const Game *game)
             world_draw(ui, &game->world, &game->world_assets);
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, false);
             player_draw(ui, &game->player, &game->player_assets, camera);
+            world_draw_interior_foreground(&game->world, &game->world_assets,
+                                           game->player.feet);
             world_draw_tree_canopy(&game->world, &game->world_assets, game->player.feet);
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, true);
             EndMode2D();
