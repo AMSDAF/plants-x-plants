@@ -70,6 +70,8 @@ e o título de reserva. O prólogo usa seus atlas próprios também nos textos
 narrativos; `ui_text_wrap_reveal_pixels` conserva a quebra e a revelação,
 alinhando cada linha à resolução física, sem alterar a fonte dos NPCs.
 O primeiro guardião preserva a equipe e abre somente a montagem da fórmula.
+Na seleção inicial, Girassol e Babosa ficam fora da lista por serem guardiões.
+As seis plantas jogáveis usam silhuetas provisórias quando não há sprite próprio.
 `CampaignSession.has_team` indica a equipe inicial pronta; `has_formula` indica
 a configuração de combate concluída. Os encontros seguintes reutilizam a
 equipe restaurada e a fórmula. `NameEntryScreen` preserva o rascunho ao voltar,
@@ -161,7 +163,7 @@ A IA escolhe uma ação, mas não aplica dano nem altera equipes diretamente. Su
 | Arquivo | Responsabilidade |
 |---|---|
 | `include/battle_screen.h` | Declarar os menus, o local do encontro e os recursos próprios da arena, além da entrada e desenho. |
-| `src/battle_screen.c` | Arena botânica, menu Atacar/Trocar, submenus de golpes/reservas, placeholders bloqueados, fórmula e resultado. Encaminha ações ao motor; desenho somente de leitura. Reutiliza as seis sprites iniciais e os atlas Pixelify já pertencentes a `Game`. |
+| `src/battle_screen.c` | Arena botânica, menu Atacar/Trocar, três golpes, reservas, placeholders bloqueados, fórmula por planta, status, espera não bloqueante e resultado. Encaminha ações ao motor; desenho somente de leitura. Reutiliza as seis sprites iniciais e os atlas Pixelify já pertencentes a `Game`. |
 | `src/battle_screen_assets.c` | Carregar e liberar `Game.battle_assets`: dois cenários, terra, três molduras e dois bosses definitivos. Confere dimensões, calcula limites de alfa uma vez e desenha molduras em nove partes com filtro pontual. Não altera o mundo nem recursos emprestados. |
 | `tools/check_battle_screen.c` | Entradas raylib e capturas OpenGL dos dois locais, oito espécies, submenus, ações bloqueadas, quatro posições, substituição, CPU, resultado, resoluções e fallback; confere desenho imutável e liberação. |
 
@@ -239,13 +241,13 @@ Ao alterar uma estrutura ou a assinatura de uma função, também é necessário
 O combate da campanha inclui:
 
 - Encontros contra guardiões controlados pela IA.
-- Duas plantas por equipe, com capacidade máxima prevista de quatro.
-- Dois golpes de dano por planta.
+- Três plantas iniciais por equipe, com capacidade máxima de quatro.
+- Três golpes por planta, incluindo dano e alterações de atributo.
 - Troca voluntária consumindo o turno.
 - Substituição obrigatória de plantas derrotadas.
 - Exibição de vida, turno e mensagem da última ação.
 - Identificação do vencedor e retorno à exploração.
-- Visual provisório, sem depender de sprites finalizados.
+- Arena botânica com sprites definitivas e reserva geométrica se faltarem imagens.
 
 Após personagem, nome e prólogo, a campanha abre um mapa com câmera, fachadas e interiores conectados
 por portas e escotilha. Guardiões e controles distribuídos liberam

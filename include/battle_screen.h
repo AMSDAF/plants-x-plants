@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include "battle.h"
+#include "ai.h"
 #include "raylib.h"
 #include "plant_data.h"
 #include "selection_ui.h"
@@ -29,11 +30,25 @@ typedef enum {
     BATTLE_SCREEN_RETURN
 } BattleScreenAction;
 
+typedef enum {
+    BATTLE_PENDING_NONE,
+    BATTLE_PENDING_CPU,
+    BATTLE_PENDING_MOVE,
+    BATTLE_PENDING_SWITCH,
+    BATTLE_PENDING_PARALYSIS
+} BattlePendingAction;
+
 typedef struct {
     BattleState battle;
-    float cpu_wait;
+    BattlePendingAction pending_action;
+    float action_timer;
+    int pending_move_index;
+    int pending_plant_index;
+    AIActionType pending_cpu_action;
+    int pending_cpu_index;
     int setup_side; /* -1 quando a montagem está concluída. */
     bool choosing_team;
+    bool show_statuses;
     int roster_cursor;
     int team_slot;
     LogicFormula draft;
@@ -41,6 +56,7 @@ typedef struct {
     BattleScene scene;
     BattleMenu menu;
     int menu_cursor;
+    int draft_plant_index;
 } BattleScreen;
 
 void battle_screen_assets_load(BattleScreenAssets *assets);

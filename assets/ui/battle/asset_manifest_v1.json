@@ -347,7 +347,7 @@
       "species": "SPECIES_ORCHID",
       "mirror_in_file": false
     },
-    "SPECIES_VENUS_FLYTRAP": {
+    "SPECIES_CARNIVOROUS_PLANT": {
       "file": "assets/sprites/plants/venus_flytrap_v2.png",
       "role": "plant",
       "size_px": [
@@ -366,7 +366,7 @@
         255
       ],
       "sha256": "e39ecba9d75d809c1f761b08b83805e17d94aa3105c41ec8ff2e01146eeba790",
-      "species": "SPECIES_VENUS_FLYTRAP",
+      "species": "SPECIES_CARNIVOROUS_PLANT",
       "mirror_in_file": false
     },
     "SPECIES_ALOE": {

@@ -168,12 +168,36 @@ static void walk_axis(Game *game, bool horizontal, float target)
     tick(game);
 }
 
+/* Isola o fluxo da campanha dos sorteios e do bloqueio do golpe fortalecido. */
+static void configure_guardian_check(Game *game)
+{
+    BattleState *battle = &game->battle_screen.battle;
+    for (int side = 0; side < 2; side++) {
+        Team *team = side ? &battle->enemy_team : &battle->player_team;
+        for (int i = 0; i < team->count; i++) {
+            battle->boosted_move_indices[side][i] = 2;
+            team->plants[i].moves[0].accuracy = 100;
+            team->plants[i].moves[0].critical_chance = 0;
+        }
+    }
+}
+
+static void resolve_guardian_action(Game *game)
+{
+    assert(game->battle_screen.pending_action != BATTLE_PENDING_NONE);
+    for (int i = 0; i < 24 && game->battle_screen.pending_action != BATTLE_PENDING_NONE; i++)
+        battle_screen_update(&game->battle_screen,.1f);
+    assert(game->battle_screen.pending_action == BATTLE_PENDING_NONE);
+}
+
 static void win_guardian(Game *game)
 {
+    configure_guardian_check(game);
     BattleState *battle = &game->battle_screen.battle;
     for (int i = 0; i < battle->enemy_team.count; i++) {
         battle->enemy_team.plants[i].current_hp = 1;
         key(game, KEY_ONE);
+        resolve_guardian_action(game);
         if (battle->state == BATTLE_STATE_PLAYER_WIN) break;
         assert(battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 1);
         assert(Battle_SwitchPlant(battle, i + 1));
@@ -187,6 +211,7 @@ static void win_guardian(Game *game)
 
 static void lose_guardian(Game *game)
 {
+    configure_guardian_check(game);
     BattleState *battle = &game->battle_screen.battle;
     for (int i = 0; i < battle->player_team.count; i++) {
         Plant *plant = &battle->player_team.plants[i];

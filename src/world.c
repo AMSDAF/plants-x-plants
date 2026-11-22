@@ -972,9 +972,9 @@ static void draw_aloe_guard(const UiTheme *ui, Texture2D texture, Object object,
     float time = (float)GetTime();
     float bob = sinf(time * 2.4f) * 1.6f;
     float sway = sinf(time * 1.7f) * 1.2f;
-    const float width = 140.0f;
-    const float height = 116.0f;
-    DrawEllipse((int)base.x, (int)(base.y + 4), 28, 7, Fade(ink, 0.32f));
+    const float height = 190.0f;
+    const float width = height * (float)texture.width / (float)texture.height;
+    DrawEllipse((int)base.x, (int)(base.y + 4), 48, 9, Fade(ink, 0.32f));
     Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
     Rectangle destination = {base.x, base.y + bob, width, height};
     DrawTexturePro(texture, source, destination, (Vector2){width / 2, height}, sway, WHITE);

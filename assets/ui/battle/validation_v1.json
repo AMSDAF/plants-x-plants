@@ -38,8 +38,8 @@
   ],
   "runtime_checks": {
     "build": "plants_x_plants, battle_screen_check, battle_check, intro_check, name_entry_check: passou",
-    "battle_check": "PASS: catálogo e regras compartilhadas, ações inválidas, derrota, trocas, IA e vitória.",
-    "battle_screen_check": "PASS: dois locais, oito espécies, menus, placeholders, quatro posições, CPU, substituição, resultado, resoluções, fallback e desenho imutável.",
+    "battle_check": "PASS: catálogo, velocidade inicial, fórmula por planta, bloqueio lógico, limites de atributo, frutos, restauração, ações inválidas, trocas, IA, derrota e vitória.",
+    "battle_screen_check": "PASS: dois locais, oito espécies, três golpes, frutos, fórmula por planta, paralisia, consulta de status, espera não bloqueante, entradas duplicadas bloqueadas, placeholders, CPU, trocas, substituição, resultado, resoluções, fallback e desenho imutável.",
     "intro_check": "PASS: escolhas, equipe preservada, cenários associados aos encontros, dois bosses e retorno.",
     "name_entry_check": "PASS: nome, transições e campanha completa, com diálogos, escotilha, ponte, guardiões e saída."
   }

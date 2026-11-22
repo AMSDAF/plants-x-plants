@@ -6,6 +6,12 @@ cmake_minimum_required(VERSION 3.24)
 
 project(plants_x_plants VERSION 0.1.0 LANGUAGES C)
 
+# O prefix localizado do /showIncludes é detectado incorretamente pelo CMake
+# neste Windows em português, fazendo o Ninja ignorar dependências de headers.
+if(MSVC AND CMAKE_GENERATOR MATCHES "Ninja")
+    set(CMAKE_CL_SHOWINCLUDES_PREFIX "Observação: incluindo arquivo: ")
+endif()
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)

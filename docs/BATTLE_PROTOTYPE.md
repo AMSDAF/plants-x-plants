@@ -10,8 +10,9 @@ Detalhes e capturas em [BATTLE_UI_PREPARATION.md](BATTLE_UI_PREPARATION.md).
 
 | Comando | Ação |
 | --- | --- |
-| **1** ou **2** | Usar um golpe na batalha; durante a montagem, escolher qual recebe o bônus. |
+| **1**, **2** ou **3** | Usar um golpe; o escolhido para o buff só fica disponível quando a fórmula for verdadeira. |
 | **Q/W/E/R** | Escolher uma das quatro posições da equipe para entrar em campo. |
+| **TAB** | Abrir ou fechar o painel com os status e atributos atuais de todas as plantas. |
 | **ENTER** no resultado | Retornar à estufa. |
 | **ESC** | Retornar à estufa, inclusive durante a montagem ou a batalha. |
 
@@ -22,17 +23,17 @@ automaticamente as reservas. Os atalhos diretos 1/2 e Q/W/E/R foram preservados.
 
 ## Fortaleça um golpe da equipe
 
-Antes da luta, cada jogador humano combina duas condições distintas. Use
-**Q/W** para mudar as condições, **E** para mudar o operador e **Enter** para
-confirmar. Os mesmos controles estão disponíveis por clique. A fórmula vale
-para a equipe inteira, acompanha a planta ativa e é preservada nos encontros
-seguintes. Escolha o espaço do golpe com **1/2** ou clique em um dos golpes da
-planta ativa. O mesmo espaço recebe o bônus quando qualquer planta da equipe
-entrar em campo.
+Antes da luta, configure cada planta da equipe separadamente. Selecione-a com
+**←/→** ou pelo cartão; use **Q/W** para mudar suas condições, **E** para mudar
+o operador e **1/2/3** para escolher qual golpe recebe o bônus. Os controles
+também aceitam cliques. A configuração completa de cada planta é preservada nos
+encontros seguintes e a acompanha quando ela entra em campo.
 
 As condições disponíveis são ter uma reserva viva, o rival ter uma reserva
-viva, a planta ativa estar viva com até metade do HP e a planta ativa rival
-estar viva com até metade do HP. Uma reserva é uma planta viva fora da posição ativa.
+viva, a planta que recebe o buff estar viva com até metade do HP e a planta
+ativa rival estar viva com até metade do HP. Uma reserva é uma planta viva fora
+da posição ativa. Cada planta escolhe as próprias condições, operador e golpe
+que recebe o bônus.
 
 | Operador | Regra | Bônus de poder |
 | --- | --- | --- |
@@ -42,13 +43,18 @@ estar viva com até metade do HP. Uma reserva é uma planta viva fora da posiç�
 
 O OU oferece o menor bônus por ativar em mais combinações da tabela-verdade.
 O E oferece o maior bônus por exigir ambas as condições. O XOR fica entre os
-dois. O golpe mantém o próprio nome e precisão; a fórmula só aumenta seu poder.
+dois. O golpe mantém o próprio nome e precisão; a fórmula aumenta seu poder.
+Na batalha, o golpe escolhido para receber o bônus só fica disponível quando
+a fórmula daquela planta for verdadeira. Os outros golpes continuam disponíveis
+com poder normal. Uma tentativa de usar o golpe bloqueado é rejeitada sem
+gastar o turno.
 
-Por exemplo, com **Sua ativa tem até metade do HP E O adversário tem reserva
-viva**, o golpe começa bloqueado com `F E V = F`. Se sua planta perder
-metade do HP ou mais e o rival ainda tiver reserva, a arena passa a mostrar
-`V E V = V` e fortalece o golpe selecionado. O motor reavalia a expressão ao
-receber o comando e aplica o bônus somente enquanto ela for verdadeira.
+Por exemplo, com **Esta planta tem até metade do HP E O adversário tem reserva
+viva**, o golpe fica bloqueado com `F E V = F`. Se sua planta perder metade do
+HP ou mais e o rival ainda tiver reserva, a arena passa a mostrar `V E V = V`
+e libera o golpe fortalecido. Os outros golpes continuam disponíveis pelo poder
+base. O motor reavalia a expressão ao receber o comando, então uma fórmula
+que deixou de ser verdadeira bloqueia apenas o golpe escolhido para o buff.
 
 ## Equipes e turnos
 
@@ -57,6 +63,7 @@ Cacto, Orquídea e Planta Carnívora. Babosa e Girassol são os bosses do depós
 do viveiro e não aparecem entre as opções iniciais. O catálogo contém somente
 essas oito espécies. As equipes dos guardiões mantêm o boss na posição inicial
 e reservas predefinidas do elenco atual, com o mesmo tamanho da equipe do jogador. Cada espécie usa diretamente os atributos base do catálogo e tem dois golpes próprios.
+Cada espécie tem três golpes, incluindo buffs/debuffs de atributo quando disponíveis.
 
 A montagem de reserva da interface de batalha continua disponível como alternativa
 interna de duas a quatro plantas, usando somente as seis iniciais. Na campanha,
@@ -67,7 +74,9 @@ trocam de lugar. Para adicionar em uma vaga livre, escolha uma espécie que
 ainda esteja fora do grupo. **Backspace** remove uma reserva, mantendo
 pelo menos duas plantas no grupo.
 
-O jogador faz a primeira ação. Ao retornar à exploração, sua equipe é
+No início do encontro, a planta ativa com maior velocidade age primeiro. Em
+caso de empate, o jogador começa. Depois da primeira ação, os turnos alternam
+como antes. Ao retornar à exploração, sua equipe é
 restaurada e sua fórmula é preservada para os encontros seguintes. Cada equipe comporta até quatro plantas.
 
 1. Em um turno normal, a equipe pode atacar ou colocar em campo uma reserva viva.
@@ -90,22 +99,74 @@ sempre. Os demais usam um sorteio de 0 a 99 e acertam quando o número sorteado
 e deixa o HP do alvo intacto.
 
 O dano usa a fórmula sem nível `((poder × ataque ÷ defesa) ÷ 2 + 2) × multiplicadores`.
-Os multiplicadores ficam neutros por enquanto; não há bônus de tipo. O HP fica
-limitado a zero e a mensagem informa quanto HP o alvo perdeu. O poder usado
-inclui o bônus de fórmula quando as condições são verdadeiras.
+Cada golpe possui sua própria chance de crítico, indicada na arena. Um crítico
+multiplica o dano por 1,5. O HP fica limitado a zero e a mensagem informa o dano
+e se houve crítico. O poder usado inclui o bônus de fórmula quando as condições
+são verdadeiras.
+
+Cada espécie possui velocidade base, exibida na montagem da equipe. Ela define
+quem começa o encontro; em empate, o jogador tem a primeira ação. A prioridade
+dos golpes não altera essa ordem inicial. Os turnos seguintes continuam
+alternados.
+
+Golpes de dano são classificados como **Físico** ou **À distância**. Golpes de
+atributo exibem o aumento ou redução correspondente e não causam dano direto.
+
+## Habilidades das espécies
+
+- **Girassol (guardião):** recupera 30% da vida máxima a cada dois turnos próprios; seu terceiro golpe aumenta o ataque em 1x, até 3x do valor inicial.
+- **Babosa (guardião):** depois de receber dano de um golpe, recupera 25% do dano sofrido naquele golpe (arredondado para baixo).
+- **Trevo:** dobra a chance crítica dos próprios golpes, limitada a 100%; seu terceiro golpe aumenta a velocidade em 0,5x, até 2x do valor inicial.
+- **Hera Venenosa:** ao receber um golpe físico, tem 30% de chance de envenenar quem atacou; seu terceiro golpe aumenta a defesa em 0,5x, até 2,5x do valor inicial.
+- **Pimenta:** gera um fruto a cada dois turnos próprios em campo. O terceiro golpe consome um fruto e tem 30% de chance de causar Queimadura; seu segundo golpe aumenta o ataque em 0,5x, até 2x do valor inicial. O contador aparece enquanto ela está ativa.
+- **Cacto:** devolve 20% do dano recebido de golpes físicos; seu terceiro golpe reduz a defesa adversária em passos de 0,5x, até acumular 2x da defesa inicial.
+- **Orquídea:** cada golpe que acerta tem 40% de chance de aplicar Hospedeiro; seu terceiro golpe aumenta a defesa em 0,5x, até 2,5x do valor inicial.
+- **Planta Carnívora:** cada golpe que acerta tem 20% de chance de paralisar o alvo pela próxima ação; seu terceiro golpe aumenta o ataque em 0,5x, até 2x do valor inicial.
+
+Os golpes de atributo são ações normais e consomem o turno, sem causar dano.
+Eles acumulam os aumentos a partir do atributo inicial. O golpe do Cacto usa
+`defesa atual × (defesa atual / (defesa atual + debuff))`. Ao trocar a planta,
+seus aumentos e reduções temporários desaparecem. Os nomes dos golpes de
+atributo são provisórios e podem ser ajustados depois.
+
+## Status
+
+Cada planta comporta até um status de cada tipo; efeitos diferentes coexistem,
+mas `Plant_AddStatus` rejeita a segunda aplicação do mesmo tipo. Os tipos
+disponíveis são Veneno, Queimadura, Sorte, Paralisado, Hospedeiro e buffs de
+velocidade, ataque, defesa e precisão. Ao fim do turno da planta ativa, Veneno
+causa dano igual a 1/8 da vida máxima e Queimadura causa 1/16. Hospedeiro causa
+1/8 da vida máxima em dano e cura a planta ativa adversária pela quantidade de
+vida efetivamente perdida; o efeito é removido quando a planta afetada volta
+à reserva. Paralisado bloqueia ataque e troca e consome a próxima ação da planta
+afetada, independentemente de qual lado esteja jogando; então o efeito acaba.
+A aplicação guarda duração em turnos e um valor:
+`PLANT_STATUS_LUCK` usa 2,0 para dobrar a chance crítica quando esse efeito for
+conectado ao cálculo de combate; status de buff guardam o multiplicador do
+atributo. Duração 0 significa permanente, e `Plant_TickStatuses` reduz durações
+temporárias e remove as expiradas. `Team_Restore` limpa todos os status.
+
+`Battle_ApplyStatus` aplica um status a uma planta viva durante uma batalha em
+andamento. Os golpes ainda não aplicam status automaticamente. Sorte e os
+status de buff ainda aguardam conexão com as regras correspondentes.
 
 ## Computador e interface
 
 Cada guardião usa uma fórmula fixa de **E**, combinando uma condição de HP
 com a existência de reservas na própria equipe. Quando sua fórmula é verdadeira,
-o bônus se aplica ao espaço de golpe definido para a equipe. A CPU escolhe o golpe
-com maior produto de poder efetivo por precisão. Esse critério
-é uma aproximação simples e ignora o HP do alvo. Para repor uma planta
-derrotada, escolhe a primeira reserva válida na ordem da equipe. A CPU só
-troca quando a substituição é obrigatória.
+o bônus se aplica ao espaço de golpe de dano escolhido para cada planta. A CPU
+usa um golpe de atributo quando sua planta tem mais de 70% de HP, o adversário
+ativo tem mais de 30% de HP e ainda há espaço até o limite. Caso contrário,
+escolhe o golpe de dano com maior produto de poder por precisão. Se a fórmula
+for falsa, o golpe escolhido para o bônus lógico fica bloqueado; os demais
+golpes de dano continuam disponíveis. Para repor uma planta derrotada, escolhe
+a primeira reserva válida na ordem da equipe. A CPU só troca quando a
+substituição é obrigatória.
 
-A tela acumula o tempo dos quadros antes de cada ação da CPU. Isso dá tempo
-para ler as mensagens enquanto a janela continua desenhando e aceitando ESC.
+A tela mostra a ação escolhida por dois segundos antes de resolvê-la. Por
+exemplo, “Trevo usou Folha Tripla...” aparece enquanto o HP ainda não mudou;
+ao fim da contagem, o dano e o resultado são aplicados e exibidos. Uma barra
+mostra o tempo restante, e a janela continua responsiva durante a espera.
 A interface e a CPU chamam as mesmas funções de ataque e troca. O motor
 valida a ação e modifica o estado. O desenho apenas consulta esse estado,
 e `game.c` coordena entrada e saída dos encontros.
@@ -121,8 +182,8 @@ cmake --build build --target plants_x_plants battle_check name_entry_check menu_
 .\build\menu_screen_check.exe
 ```
 
-`battle_check` verifica o elenco de oito espécies, a lista de seis iniciais sem bosses,
-os dois golpes de cada inicial e os atributos do catálogo, tabelas-verdade, ações inválidas,
+`battle_check` verifica atributos das oito espécies, as seis iniciais sem bosses,
+os golpes e as tabelas-verdade, além de ações inválidas,
 trocas, derrota, substituição pela IA, vitória e restauração. `name_entry_check`
 percorre a campanha com guardiões e progresso. `menu_screen_check` confere a
 entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerramento.

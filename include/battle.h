@@ -38,15 +38,23 @@ typedef struct {
     Team enemy_team;
     int current_turn; /* 0 para o primeiro lado, 1 para o segundo. */
     BattleStateEnum state;
-    LogicFormula formulas[2];
-    int boosted_move_indices[2];
+    LogicFormula formulas[2][MAX_TEAM_SIZE];
+    int boosted_move_indices[2][MAX_TEAM_SIZE];
     char last_message[128];
 } BattleState;
 
 void Battle_Init(BattleState *battle, Team player_team, Team enemy_team);
 LogicEvaluation Battle_EvaluateFormula(const BattleState *battle, int side, LogicFormula formula);
+LogicEvaluation Battle_EvaluatePlantFormula(const BattleState *battle, int side,
+                                             int plant_index, LogicFormula formula);
 int Battle_GetFormulaPowerBonus(LogicOperator operator);
 int Battle_GetMovePower(const BattleState *battle, int side, int move_index);
+int Battle_GetPlantMovePower(const BattleState *battle, int side, int plant_index, int move_index);
+int Battle_GetCriticalChance(const Plant *attacker, const Move *move);
+int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int move_index);
+int Battle_ApplyStatus(BattleState *battle, int side, int plant_index,
+                       PlantStatusType type, int remaining_turns, float value);
+int Battle_SkipParalyzedTurn(BattleState *battle);
 int Battle_ExecuteMove(BattleState *battle, int move_index);
 int Battle_CanSwitch(const BattleState *battle, int plant_index);
 int Battle_SwitchPlant(BattleState *battle, int plant_index);

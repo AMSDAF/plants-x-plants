@@ -34,7 +34,7 @@ static void click(Game *game, int x, int y)
 static void reset(Game *game)
 {
     Team player = {0}, enemy = {0};
-    const int starters[] = {SPECIES_PEPPER,SPECIES_CLOVER,SPECIES_POISON_IVY,SPECIES_VENUS_FLYTRAP};
+    const int starters[] = {SPECIES_PEPPER,SPECIES_CLOVER,SPECIES_POISON_IVY,SPECIES_CARNIVOROUS_PLANT};
     const int rivals[] = {SPECIES_ALOE,SPECIES_CACTUS,SPECIES_ORCHID,SPECIES_SUNFLOWER};
     for (int i = 0; i < 4; i++) {
         assert(Team_SelectSpecies(&player,i,starters[i]));
@@ -43,6 +43,19 @@ static void reset(Game *game)
     game->screen = GAME_BATTLE;
     game->battle_screen = (BattleScreen){.setup_side=-1};
     Battle_Init(&game->battle_screen.battle,player,enemy);
+    for (int side = 0; side < 2; side++) for (int i = 0; i < MAX_TEAM_SIZE; i++)
+        game->battle_screen.battle.formulas[side][i] =
+            (LogicFormula){LOGIC_OWN_RESERVE,LOGIC_ENEMY_RESERVE,LOGIC_OR};
+    game->battle_screen.battle.player_team.plants[0].moves[0].accuracy = 100;
+}
+
+/* Avança o relógio simulado sem esperar dois segundos reais. */
+static void resolve_action(Game *game)
+{
+    assert(game->battle_screen.pending_action != BATTLE_PENDING_NONE);
+    for (int i = 0; i < 24 && game->battle_screen.pending_action != BATTLE_PENDING_NONE; i++)
+        battle_screen_update(&game->battle_screen,.1f);
+    assert(game->battle_screen.pending_action == BATTLE_PENDING_NONE);
 }
 
 static void capture(Game *game, int width, int height, const char *name)
@@ -96,17 +109,28 @@ int main(void)
     click(&game,650,545); /* A ativa não pode ser trocada por ela mesma. */
     assert(memcmp(&before,&game.battle_screen.battle,sizeof(before)) == 0);
     click(&game,1050,545);
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_SWITCH);
+    assert(memcmp(&before,&game.battle_screen.battle,sizeof(before)) == 0);
+    resolve_action(&game);
     assert(game.battle_screen.battle.player_team.active_index == 1 && game.battle_screen.battle.current_turn == 1);
     assert(game.battle_screen.scene == BATTLE_SCENE_DEPOT);
     capture(&game,1280,720,"cpu_turn");
     before = game.battle_screen.battle;
     key(&game,KEY_ONE);
     assert(memcmp(&before,&game.battle_screen.battle,sizeof(before)) == 0);
-    game.battle_screen.cpu_wait = .65f; tick(&game);
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_CPU);
+    resolve_action(&game);
     assert(game.battle_screen.battle.current_turn == 0 || game.battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN);
 
     reset(&game);
     click(&game,650,545); click(&game,700,545);
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_MOVE);
+    capture(&game,1280,720,"pending_move");
+    before = game.battle_screen.battle;
+    key(&game,KEY_TWO); key(&game,KEY_W);
+    assert(game.battle_screen.pending_move_index == 0);
+    assert(memcmp(&before,&game.battle_screen.battle,sizeof(before)) == 0);
+    resolve_action(&game);
     assert(game.battle_screen.battle.enemy_team.plants[0].current_hp < 110);
     assert(game.battle_screen.menu == BATTLE_MENU_ROOT && game.battle_screen.battle.current_turn == 1);
 
@@ -119,10 +143,39 @@ int main(void)
     assert(game.battle_screen.menu == BATTLE_MENU_TEAM && memcmp(&before,battle,sizeof(before)) == 0);
     capture(&game,1920,1080,"forced_replacement_1080p");
     key(&game,KEY_W);
+    resolve_action(&game);
     assert(battle->state == BATTLE_STATE_ONGOING && battle->current_turn == 0 && battle->player_team.active_index == 1);
     before = *battle;
     key(&game,KEY_Q);
     assert(memcmp(&before,battle,sizeof(before)) == 0);
+
+    reset(&game);
+    battle = &game.battle_screen.battle;
+    battle->boosted_move_indices[0][0] = 2;
+    before = *battle;
+    key(&game,KEY_THREE); /* Sem fruto, não enfileira nem consome o turno. */
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_NONE);
+    assert(memcmp(&before,battle,sizeof(before)) == 0);
+    battle->player_team.plants[0].fruit_count = 1;
+    key(&game,KEY_THREE);
+    assert(game.battle_screen.pending_move_index == 2);
+    resolve_action(&game);
+    assert(battle->player_team.plants[0].fruit_count == 0);
+    reset(&game);
+    battle = &game.battle_screen.battle;
+    battle->formulas[0][0] = (LogicFormula){LOGIC_OWN_LOW_HP,LOGIC_ENEMY_LOW_HP,LOGIC_AND};
+    before = *battle;
+    key(&game,KEY_ONE);
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_NONE);
+    assert(memcmp(&before,battle,sizeof(before)) == 0);
+    assert(Battle_ApplyStatus(battle,0,0,PLANT_STATUS_PARALYZED,1,1));
+    tick(&game);
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_PARALYSIS);
+    key(&game,KEY_TAB);
+    assert(game.battle_screen.show_statuses);
+    capture(&game,1920,1080,"status_overlay");
+    resolve_action(&game);
+    assert(battle->current_turn == 1 && !Plant_HasStatus(&battle->player_team.plants[0],PLANT_STATUS_PARALYZED));
 
     reset(&game);
     game.battle_screen.scene = BATTLE_SCENE_NURSERY;
@@ -134,9 +187,17 @@ int main(void)
         capture(&game,1280,720,TextFormat("species_%d",id));
     }
     game.battle_screen.setup_side = 0;
+    game.battle_screen.draft = game.battle_screen.battle.formulas[0][0];
     capture(&game,1920,1080,"formula_1080p");
-    key(&game,KEY_Q); key(&game,KEY_E); key(&game,KEY_TWO); key(&game,KEY_ENTER);
-    assert(game.battle_screen.setup_side == -1 && game.battle_screen.battle.boosted_move_indices[0] == 1);
+    key(&game,KEY_Q); key(&game,KEY_E); key(&game,KEY_TWO);
+    LogicFormula first = game.battle_screen.draft;
+    key(&game,KEY_RIGHT);
+    assert(game.battle_screen.draft_plant_index == 1);
+    assert(memcmp(&first,&game.battle_screen.battle.formulas[0][0],sizeof(first)) == 0);
+    key(&game,KEY_Q); key(&game,KEY_LEFT);
+    assert(memcmp(&first,&game.battle_screen.draft,sizeof(first)) == 0);
+    key(&game,KEY_ENTER);
+    assert(game.battle_screen.setup_side == -1 && game.battle_screen.battle.boosted_move_indices[0][0] == 1);
     game.battle_screen.choosing_team = true; game.battle_screen.setup_side = 0;
     capture(&game,1280,720,"legacy_team_setup");
     game.battle_screen.choosing_team = false; game.battle_screen.setup_side = -1;

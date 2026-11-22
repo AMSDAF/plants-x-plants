@@ -33,10 +33,10 @@ static bool transition_input_down(void)
 static Team guardian_team(WorldEncounter encounter, int size)
 {
     static const SpeciesId aloe[MAX_TEAM_SIZE] = {
-        SPECIES_ALOE, SPECIES_POISON_IVY, SPECIES_VENUS_FLYTRAP, SPECIES_CLOVER
+        SPECIES_ALOE, SPECIES_POISON_IVY, SPECIES_CARNIVOROUS_PLANT, SPECIES_CLOVER
     };
     static const SpeciesId sunflower[MAX_TEAM_SIZE] = {
-        SPECIES_SUNFLOWER, SPECIES_PEPPER, SPECIES_ORCHID, SPECIES_CACTUS
+        SPECIES_SUNFLOWER, SPECIES_PEPPER, SPECIES_ORCHID, SPECIES_CARNIVOROUS_PLANT
     };
     const SpeciesId *species = encounter == WORLD_ENCOUNTER_ALOE ? aloe : sunflower;
     Team team = {0};
@@ -52,8 +52,8 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         team = game->campaign.team;
         Team_Restore(&team);
     } else {
-        for (int i = 0; i < MIN_TEAM_SIZE; i++)
-            Team_SelectSpecies(&team, i, PlantData_GetStarter(i)->id);
+        Team_SelectSpecies(&team, 0, SPECIES_CACTUS);
+        Team_SelectSpecies(&team, 1, SPECIES_CLOVER);
     }
 
     BattleScreen *screen = &game->battle_screen;
@@ -64,14 +64,20 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
     };
     Battle_Init(&screen->battle, team, guardian_team(encounter, team.count));
-    if (game->campaign.has_formula) {
-        screen->battle.formulas[0] = game->campaign.formula;
-        screen->battle.boosted_move_indices[0] = game->campaign.boosted_move_index;
-    }
+    LogicFormula initial_formula = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
     LogicCondition condition = encounter == WORLD_ENCOUNTER_ALOE
         ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
-    screen->battle.formulas[1] = (LogicFormula){condition, LOGIC_OWN_RESERVE, LOGIC_AND};
-    screen->battle.boosted_move_indices[1] = 0;
+    LogicFormula guardian_formula = {condition, LOGIC_OWN_RESERVE, LOGIC_AND};
+    for (int i = 0; i < team.count; i++) {
+        screen->battle.formulas[0][i] = game->campaign.has_formula
+            ? game->campaign.formulas[i] : initial_formula;
+        if (game->campaign.has_formula)
+            screen->battle.boosted_move_indices[0][i] = game->campaign.boosted_move_indices[i];
+    }
+    for (int i = 0; i < screen->battle.enemy_team.count; i++) {
+        screen->battle.formulas[1][i] = guardian_formula;
+        screen->battle.boosted_move_indices[1][i] = 0;
+    }
     game->encounter = encounter;
     change_screen(game, GAME_BATTLE);
 }
@@ -82,8 +88,10 @@ static void leave_encounter(Game *game)
     if (screen->setup_side < 0) {
         game->campaign.team = screen->battle.player_team;
         Team_Restore(&game->campaign.team);
-        game->campaign.formula = screen->battle.formulas[0];
-        game->campaign.boosted_move_index = screen->battle.boosted_move_indices[0];
+        for (int i = 0; i < screen->battle.player_team.count; i++)
+            game->campaign.formulas[i] = screen->battle.formulas[0][i];
+        for (int i = 0; i < screen->battle.player_team.count; i++)
+            game->campaign.boosted_move_indices[i] = screen->battle.boosted_move_indices[0][i];
         game->campaign.has_team = true;
         game->campaign.has_formula = true;
     }
@@ -207,6 +215,13 @@ void game_update(Game *game)
             if (action == BATTLE_SCREEN_TEAM_READY) {
                 BattleState *battle = &game->battle_screen.battle;
                 battle->enemy_team = guardian_team(game->encounter, battle->player_team.count);
+                LogicCondition condition = game->encounter == WORLD_ENCOUNTER_ALOE
+                    ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
+                for (int i = 0; i < battle->enemy_team.count; i++) {
+                    battle->formulas[1][i] =
+                        (LogicFormula){condition, LOGIC_OWN_RESERVE, LOGIC_AND};
+                    battle->boosted_move_indices[1][i] = 0;
+                }
             }
             if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
             break;

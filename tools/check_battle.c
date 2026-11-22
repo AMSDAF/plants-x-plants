@@ -29,11 +29,54 @@ static void check_logic_truth_tables(BattleState battle)
     }
 }
 
+/* Confere os contratos novos sem depender de sorteios de dano ou status. */
+static void check_refreshed_rules(void)
+{
+    Team player = {0}, enemy = {0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_PEPPER));
+    assert(Team_SelectSpecies(&player,1,SPECIES_CLOVER));
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_ALOE));
+    assert(Team_SelectSpecies(&enemy,1,SPECIES_SUNFLOWER));
+    BattleState battle;
+    Battle_Init(&battle,player,enemy);
+    assert(battle.current_turn == 0);
+    assert(Plant_HasStatus(&battle.player_team.plants[1],PLANT_STATUS_LUCK));
+    assert(!Battle_CanUseMove(&battle,0,0,0));
+    BattleState before = battle;
+    assert(!Battle_ExecuteMove(&battle,0));
+    assert(!Battle_ExecuteMove(&battle,2));
+    assert(memcmp(&before,&battle,sizeof(before)) == 0);
+    battle.formulas[0][1] = (LogicFormula){LOGIC_OWN_LOW_HP,LOGIC_ENEMY_LOW_HP,LOGIC_OR};
+    battle.player_team.plants[1].current_hp = 1;
+    assert(Battle_EvaluatePlantFormula(&battle,0,1,battle.formulas[0][1]).result);
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,battle.formulas[0][0]).result);
+    int initial_attack = battle.player_team.plants[0].attack;
+    for (int i = 0; i < 2; i++) {
+        assert(Battle_ExecuteMove(&battle,1));
+        assert(Battle_SwitchPlant(&battle,1-battle.enemy_team.active_index));
+    }
+    assert(battle.player_team.plants[0].attack == 2*initial_attack);
+    assert(battle.player_team.plants[0].fruit_count == 1);
+    assert(Battle_CanUseMove(&battle,0,0,2));
+    before = battle;
+    assert(!Battle_ExecuteMove(&battle,1));
+    assert(memcmp(&before,&battle,sizeof(before)) == 0);
+    assert(Battle_SwitchPlant(&battle,1));
+    assert(battle.player_team.plants[0].attack == initial_attack);
+    Team_Restore(&battle.player_team);
+    for (int i = 0; i < battle.player_team.count; i++)
+        assert(battle.player_team.plants[i].status_count ==
+            (battle.player_team.plants[i].id == SPECIES_CLOVER ? 1 : 0));
+    Battle_Init(&battle,enemy,player);
+    assert(battle.current_turn == 1);
+}
+
 int main(void)
 {
+    check_refreshed_rules();
     static const SpeciesId starters[STARTER_SPECIES_COUNT] = {
         SPECIES_CLOVER, SPECIES_POISON_IVY, SPECIES_PEPPER,
-        SPECIES_CACTUS, SPECIES_ORCHID, SPECIES_VENUS_FLYTRAP
+        SPECIES_CACTUS, SPECIES_ORCHID, SPECIES_CARNIVOROUS_PLANT
     };
     static const char *const names[STARTER_SPECIES_COUNT] = {
         "Trevo", "Hera Venenosa", "Pimenta", "Cacto", "Orquídea", "Planta Carnívora"
@@ -50,12 +93,16 @@ int main(void)
             assert(starter->id != PlantData_GetStarter(previous)->id);
         /* Cada inicial pode entrar na equipe e usar os dois golpes contra um boss. */
         for (int move = 0; move < MAX_MOVES; move++) {
+            if (starter->moves[move].effect != MOVE_EFFECT_DAMAGE) continue;
             Team player = {0}, enemy = {0};
             assert(Team_SelectSpecies(&player, 0, starter->id));
             assert(Team_SelectSpecies(&enemy, 0, SPECIES_ALOE));
             player.plants[0].moves[move].accuracy = 100;
             BattleState encounter;
             Battle_Init(&encounter, player, enemy);
+            encounter.formulas[0][0] = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_OR};
+            encounter.player_team.plants[0].current_hp = player.plants[0].max_hp / 2;
+            encounter.player_team.plants[0].fruit_count = 1;
             assert(Battle_ExecuteMove(&encounter, move));
             assert(encounter.enemy_team.plants[0].current_hp < enemy.plants[0].current_hp);
         }
@@ -67,12 +114,17 @@ int main(void)
         assert(plant.max_hp == data->base_hp && plant.current_hp == data->base_hp);
         assert(plant.attack == data->base_attack && plant.defense == data->base_defense);
         assert(plant.max_hp > 0 && plant.attack > 0 && plant.defense > 0);
+        assert(plant.speed == data->base_speed);
         for (int i = 0; i < MAX_MOVES; i++) {
             assert(strcmp(plant.moves[i].name, data->moves[i].name) == 0);
             assert(plant.moves[i].power == data->moves[i].power);
             assert(plant.moves[i].accuracy == data->moves[i].accuracy);
-            assert(plant.moves[i].name[0] && plant.moves[i].power > 0);
+            assert(plant.moves[i].name[0]);
+            if (plant.moves[i].effect == MOVE_EFFECT_DAMAGE) assert(plant.moves[i].power > 0);
+            else assert(plant.moves[i].effect_step > 0 && plant.moves[i].effect_cap > 0);
             assert(plant.moves[i].accuracy > 0 && plant.moves[i].accuracy <= 100);
+            assert(plant.moves[i].critical_chance == data->moves[i].critical_chance);
+            assert(plant.moves[i].priority == data->moves[i].priority);
         }
     }
     Plant empty = {0}, invalid = Plant_CreateFromSpecies(-1);
@@ -99,6 +151,7 @@ int main(void)
     assert(!Battle_SwitchPlant(&battle, 0));
     assert(!Battle_SwitchPlant(&battle, MAX_TEAM_SIZE));
     assert(memcmp(&battle, &before, sizeof(battle)) == 0);
+    battle.boosted_move_indices[0][0] = 1;
     battle.player_team.plants[0].moves[0].power = 10000;
     battle.player_team.plants[0].moves[0].accuracy = 100;
     assert(Battle_ExecuteMove(&battle, 0));

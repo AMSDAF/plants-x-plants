@@ -58,10 +58,10 @@ estado. Creme/verde claro indica disponível ou selecionado; cinza indica
 indisponível. O texto “Em breve” e o aviso “Vamos implementar em breve” são
 dinâmicos. Mochila e Fugir ficam bloqueados, sem consumir turno.
 
-Atacar abre os dois golpes já existentes. Trocar abre as posições da equipe,
+Atacar abre os três golpes do catálogo atualizado. Trocar abre as posições da equipe,
 com as miniaturas das mesmas sprites e HP/estado dinâmicos. A disposição
 interna desses submenus foi montada e conferida nas capturas reais: golpes
-em duas linhas e equipe em uma grade de quatro posições, com ativa, derrotada
+em três linhas e equipe em uma grade de quatro posições, com ativa, derrotada
 e vaga livre identificadas. Não foram necessários novos PNGs.
 
 Fórmula, montagem interna de equipe, substituição obrigatória, espera da CPU e
@@ -92,20 +92,27 @@ Os atlas são atualizados no tamanho físico do viewport também durante a batal
 `BattleScreen.scene` é definido pelo encontro e permanece igual ao trocar
 plantas; `BattleMenu` guarda apenas o submenu e o foco da interface. O desenho
 não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
-`Battle_SwitchPlant` e `AI_PlayTurn`, sem calcular dano ou alterar HP na tela.
+`Battle_SwitchPlant` e `Battle_SkipParalyzedTurn`, com planejamento por `AI_GetPlannedAction`, sem calcular dano ou alterar HP na tela.
 
 - Setas e ENTER/Espaço navegam e confirmam; clique também funciona.
-- Atacar abre os golpes; **1/2** continuam disponíveis como atalhos diretos.
+- Atacar abre os golpes; **1/2/3** continuam disponíveis como atalhos diretos.
 - Trocar abre a equipe; **Q/W/E/R** continuam escolhendo as posições.
 - **ESC**, Backspace ou Voltar fecham um submenu voluntário sem consumir turno.
 - Na raiz, na montagem ou na substituição obrigatória, **ESC** preserva o retorno
   anterior à estufa; o aviso não aparece no topo.
 - Na troca obrigatória, a equipe abre automaticamente e somente reservas vivas
-  podem entrar. A CPU mantém o intervalo não bloqueante anterior.
+  podem entrar. Ações humanas, da CPU e paralisia usam a espera não bloqueante de dois segundos.
 - No resultado, ENTER ou o botão retorna à estufa. Ações de combate ficam bloqueadas.
 
-Fórmula e montagem interna de equipe mantêm os controles anteriores, agora com
-fonte Pixelify, painel botânico e o cenário do encontro escurecido.
+Fórmula e montagem interna de equipe usam fonte Pixelify, painel botânico e o
+cenário do encontro escurecido. Na fórmula, setas esquerda/direita ou os cartões
+alternam a planta; cada uma preserva sua fórmula e seu golpe de dano escolhido.
+Golpes de atributo não recebem bônus de poder. Uma fórmula falsa bloqueia o
+golpe escolhido; limites de atributo e frutos também são validados pelo motor.
+O menu indica indisponibilidade sem enfileirar ações inválidas.
+**TAB** alterna a consulta de HP, atributos, frutos e status das duas equipes.
+Durante uma ação pendente, o painel mostra a ação e o progresso da espera,
+impedindo nova entrada de combate até sua resolução.
 
 ## Validação executada
 
@@ -136,4 +143,5 @@ As capturas ficam em `build/battle_ui_preview/`: depósito/viveiro, todas as
 espécies, submenus, quatro posições, espera da CPU, troca obrigatória, fórmula,
 montagem interna, resultado e ausência de imagens. Incluem 720p, 1080p e viewport
 1024 × 576 em janela 4:3. Os testes verificam também bloqueio dos placeholders,
-trocas inválidas, desenho imutável e liberação dos recursos.
+trocas inválidas, fórmula por planta, terceiro golpe com e sem fruto, bloqueio lógico,
+paralisia, consulta de status, fila sem ação duplicada, desenho imutável e liberação dos recursos.

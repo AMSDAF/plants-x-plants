@@ -231,21 +231,27 @@
   },
   "submenus": {
     "moves": {
-      "items": 2,
-      "content_pt": "Dois golpes, poder efetivo, precisão e indicação de fortalecimento; fórmula resumida no rodapé.",
+      "items": 3,
+      "content_pt": "Três golpes, dano/atributo, poder, precisão, crítico e prioridade; disponibilidade pelo motor, fórmula individual no rodapé.",
       "back_pt": "Retornar ao menu sem consumir turno.",
       "bounds": [
         [
           568,
-          518,
+          500,
           647,
-          60
+          50
         ],
         [
           568,
-          587,
+          554,
           647,
-          60
+          50
+        ],
+        [
+          568,
+          608,
+          647,
+          50
         ]
       ]
     },
@@ -283,9 +289,9 @@
     "pending_pt": "Submenus conferidos em capturas OpenGL, incluindo quatro posições e substituição obrigatória.",
     "back_bounds": [
       1095,
-      651,
+      664,
       120,
-      30
+      28
     ]
   },
   "other_screens": {
@@ -296,12 +302,15 @@
     "formula_panel_renderer": "ui_botanical_panel"
   },
   "state_rules_pt": [
-    "Atacar abre os dois golpes existentes; Trocar abre a equipe.",
+    "Atacar abre os três golpes existentes; Trocar abre a equipe.",
     "Mochila e Fugir são placeholders desabilitados; não executam ação nem consomem turno.",
     "A CPU, a substituição obrigatória, os golpes e trocas inválidos e o fim de batalha continuam regidos por battle/ai.",
     "Não associar o cenário à planta ativa rival: reservas não mudam o local do encontro.",
     "O pedido de remover ESC · Estufa é visual; o tratamento da tecla deve preservar o fluxo existente ao integrar.",
-    "Os atalhos e o retorno dos submenus devem ser definidos na implementação sem alterar regras."
+    "Os atalhos e o retorno dos submenus devem ser definidos na implementação sem alterar regras.",
+    "Ações aguardam dois segundos sem bloquear a janela; entradas adicionais não substituem a ação pendente.",
+    "TAB consulta HP, atributos, frutos e status das duas equipes.",
+    "Cada planta preserva fórmula e golpe fortalecido; fórmula falsa bloqueia esse golpe."
   ],
   "composition_pt": [
     "Desenhar cenário, plataformas, sprites, status, plaque do local e painel inferior nessa ordem coerente com as sobreposições da referência.",

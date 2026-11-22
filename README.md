@@ -18,10 +18,9 @@ O elenco definitivo tem oito espécies: as seis iniciais acima e os bosses
 **Babosa**, no depósito, e **Girassol**, no viveiro. Os bosses não aparecem na
 seleção inicial. As espécies antigas fora desse elenco foram retiradas do catálogo.
 
-Atributos e dois golpes de dano por espécie continuam provisórios, centralizados
-em `src/plant_data.c`. Pimenta e Planta Carnívora reaproveitam valores da base;
-Hera Venenosa mantém os atributos e golpes da antiga Hera. Os nomes não aplicam
-veneno, queimadura ou captura. Na seleção inicial, os cartões usam as novas sprites
+Atributos e três golpes por espécie ficam centralizados em `src/plant_data.c`.
+O combate inclui golpes de dano e de atributo, fórmulas individuais, habilidades
+e efeitos de status. Na seleção inicial, os cartões usam as novas sprites
 `*_v2.png` de `assets/sprites/plants/`, com transparência, proporção preservada e
 filtro pontual. O enquadramento considera o alfa da imagem; se ela faltar, o cartão
 usa o desenho geométrico de reserva. Os cartões seguem a referência aprovada: molduras
@@ -41,7 +40,9 @@ A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativa
 
 - Cada equipe pode ter até quatro plantas.
 - Apenas uma planta de cada equipe fica ativa por vez.
-- No turno, o jogador pode usar um golpe ou trocar a planta ativa.
+- No turno, o jogador pode usar o golpe fortalecido quando a fórmula for verdadeira ou trocar a planta ativa.
+- A planta ativa com maior velocidade começa cada encontro; depois, os turnos alternam.
+- Cada golpe possui sua própria chance de crítico, que aumenta o dano em 50%.
 - A troca voluntária consome o turno.
 - Quando uma planta é derrotada e há reserva viva, o lado derrotado escolhe a substituta e então joga seu turno.
 - Vence quem derrotar todas as plantas da equipe adversária.
@@ -315,9 +316,12 @@ para selecionar ou remover plantas; **ENTER** confirma somente com três escolhi
 A chegada abre o mapa existente da estufa; não há um mapa adicional de vila.
 
 Na campanha, o primeiro encontro com um guardião preserva a equipe inicial e
-abre somente a configuração da fórmula de fortalecimento. Na fórmula, **Q/W** escolhem condições, **E** muda o operador,
-**1/2** escolhem qual golpe receberá o bônus, e **ENTER** confirma. Durante a
-batalha, **1/2** usam os golpes da espécie e **Q/W/E/R** trocam a planta ativa.
+abre a configuração individual do buff, sem remontar a equipe. Selecione a planta
+com **←/→** ou pelos cartões; **Q/W** escolhem condições, **E** muda o operador,
+e **1/2/3** escolhem qual golpe recebe o bônus. **ENTER** confirma a fórmula de cada
+planta. Durante a batalha, **1/2/3** usam golpes: o escolhido para o buff fica
+bloqueado enquanto a fórmula for falsa, e os outros seguem disponíveis com poder
+normal. **Q/W/E/R** trocam a planta ativa.
 **ENTER** no resultado ou **ESC** retorna à estufa. Consulte
 [o relatório do combate](docs/BATTLE_PROTOTYPE.md).
 
@@ -371,7 +375,8 @@ cmake --build build --target intro_check battle_check
 .\build\battle_check.exe
 ```
 
-O primeiro alvo verifica o fluxo do nome à chegada, as seis candidatas, a seleção
-de três, o retorno entre etapas, o reinício da sessão e a equipe na primeira batalha.
-As capturas ficam em `build/intro_preview/`. O prólogo reutiliza o fundo e as
-fontes existentes, com as novas sprites das seis iniciais nos cartões.
+O primeiro alvo verifica o fluxo do nome à chegada, as seis candidatas jogáveis,
+a seleção de três, o retorno entre etapas, o reinício da sessão e a equipe na
+primeira batalha. As capturas ficam em `build/intro_preview/`. O prólogo reutiliza
+o fundo e as fontes existentes, com as sprites das iniciais nos cartões e silhuetas
+provisórias quando falta um recurso.
