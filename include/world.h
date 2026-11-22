@@ -32,10 +32,12 @@ typedef struct {
     Texture2D tiles;
     Texture2D maintenance_interior;
     Texture2D courtyard_detail;
+    Texture2D tree_canopy_foreground;
     Texture2D depot_interior;
     Texture2D basement_interior;
     Texture2D bridge_control_interior;
     Texture2D nursery_interior;
+    Texture2D interior_portal_foreground[WORLD_LOCATION_COUNT];
     Texture2D aloe_guard;
     Texture2D sunflower_guard;
 } WorldAssets;
@@ -93,7 +95,9 @@ Camera2D world_camera(const World *world);
 void world_update_relay_panel(World *world, const char *player_name);
 void world_update_dialogue(World *world, float dt);
 void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets);
+void world_draw_interior_foreground(const World *world, const WorldAssets *assets, Vector2 feet);
 void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet, Camera2D camera, bool foreground);
+void world_draw_tree_canopy(const World *world, const WorldAssets *assets, Vector2 feet);
 HudInteraction world_interaction_view(const World *world, Vector2 feet);
 void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet);
 #endif
