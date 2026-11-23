@@ -36,7 +36,7 @@ typedef struct {
     int logic_dropdown;
     int logic_option;
     unsigned int logic_confirmed;
-    unsigned int logic_rejected;
+    unsigned int logic_wrong_answers;
     BattlePendingAction pending_action;
     BattleMenu battle_menu;
     int battle_cursor;

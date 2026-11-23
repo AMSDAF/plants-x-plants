@@ -12,6 +12,10 @@ typedef struct {
     unsigned int confirmed_mask;
     unsigned int dirty_mask;
     unsigned int rejected_mask;
+    unsigned int wrong_answer_count;
+    unsigned int questions_seen_mask;
+    unsigned int question_assigned_mask;
+    int question_indices[MAX_TEAM_SIZE];
     int selected;
     int focus;
     int dropdown; /* -1 fechado; 0 ataque, 1 condição P, 2 condição Q. */

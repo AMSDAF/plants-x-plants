@@ -1,6 +1,33 @@
 /* Compõe o modal botânico e edita fórmulas sem executar ações de combate. */
 #include "logic_setup_screen.h"
 #include <math.h>
+#include <stdlib.h>
+
+enum { LOGIC_QUIZ_QUESTION_COUNT = 13 };
+
+typedef struct {
+    bool p;
+    bool has_q;
+    bool q;
+    const char *expression;
+    bool answer;
+} LogicQuizQuestion;
+
+static const LogicQuizQuestion questions[LOGIC_QUIZ_QUESTION_COUNT] = {
+    {true, true, false, "P OU Q", true},
+    {true, true, false, "P E Q", false},
+    {false, false, false, "NÃO P", true},
+    {true, true, true, "P E Q", true},
+    {false, true, false, "P OU Q", false},
+    {false, true, true, "P XOR Q", true},
+    {true, true, true, "P XOR Q", false},
+    {true, true, false, "P E NÃO Q", true},
+    {false, true, true, "P OU NÃO Q", false},
+    {false, true, false, "NÃO P E NÃO Q", true},
+    {true, true, false, "NÃO P OU Q", false},
+    {false, false, false, "NÃO P", true},
+    {true, false, false, "NÃO P", false}
+};
 
 static const Color ink = {24,52,30,255};
 static const Color cream = {253,245,216,255};
@@ -53,6 +80,40 @@ static bool valid_formula(LogicFormula value)
         value.operator >= 0 && value.operator < LOGIC_OPERATOR_COUNT;
 }
 
+static void assign_question(LogicSetupScreen *screen, int plant_index)
+{
+    unsigned int plant_bit = 1u << plant_index;
+    if (screen->question_assigned_mask & plant_bit) return;
+
+    unsigned int all_questions = (1u << LOGIC_QUIZ_QUESTION_COUNT) - 1u;
+    if ((screen->questions_seen_mask & all_questions) == all_questions)
+        screen->questions_seen_mask = 0;
+
+    int available[LOGIC_QUIZ_QUESTION_COUNT];
+    int available_count = 0;
+    for (int i = 0; i < LOGIC_QUIZ_QUESTION_COUNT; i++)
+        if (!(screen->questions_seen_mask & (1u << i))) available[available_count++] = i;
+
+    int choice = available[rand() % available_count];
+    screen->question_indices[plant_index] = choice;
+    screen->questions_seen_mask |= 1u << choice;
+    screen->question_assigned_mask |= plant_bit;
+}
+
+static void advance_question(LogicSetupScreen *screen, int plant_index)
+{
+    unsigned int plant_bit = 1u << plant_index;
+    int previous = screen->question_indices[plant_index];
+    screen->question_assigned_mask &= ~plant_bit;
+    assign_question(screen, plant_index);
+
+    if (screen->question_indices[plant_index] == previous) {
+        screen->questions_seen_mask &= ~(1u << previous);
+        screen->question_assigned_mask &= ~plant_bit;
+        assign_question(screen, plant_index);
+    }
+}
+
 void logic_setup_begin(LogicSetupScreen *screen, const Team *team,
                        const LogicFormula formulas[MAX_TEAM_SIZE], const int moves[MAX_TEAM_SIZE])
 {
@@ -72,6 +133,7 @@ void logic_setup_begin(LogicSetupScreen *screen, const Team *team,
         if (moves[i] >= 0) screen->confirmed_mask |= bit;
     }
     if (screen->selected < 0 || screen->selected >= team->count) screen->selected = 0;
+    assign_question(screen, screen->selected);
     screen->dropdown = -1;
     screen->focus = 0;
 }
@@ -91,6 +153,7 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
     for (int i = 0; i < team->count; i++) {
         if (clicked(tab_box(i,team->count))) {
             screen->selected = i;
+            assign_question(screen, i);
             screen->focus = 0;
             screen->dropdown = -1;
             return false;
@@ -130,6 +193,7 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
     if (screen->focus == 0 && (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT))) {
         int direction = IsKeyPressed(KEY_RIGHT) ? 1 : -1;
         screen->selected = (selected+direction+team->count)%team->count;
+        assign_question(screen, screen->selected);
         return false;
     }
     if (!unlocked) {
@@ -142,12 +206,17 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
             if (clicked(answer_box(i)) || (screen->focus == i+1 && confirm_key())) answer = i;
         if (screen->focus == 3 && confirm_key()) return true;
         if (answer >= 0) {
-            if (answer == (selected%3 == 1 ? 1 : 0)) {
+            const LogicQuizQuestion *question = &questions[screen->question_indices[selected]];
+            if ((answer == 0) == question->answer) {
                 *solved |= 1u << selected;
                 screen->dirty_mask |= 1u << selected;
                 screen->rejected_mask &= ~(1u << selected);
                 screen->focus = 1;
-            } else screen->rejected_mask |= 1u << selected;
+            } else {
+                screen->rejected_mask |= 1u << selected;
+                screen->wrong_answer_count++;
+                advance_question(screen, selected);
+            }
         }
         return false;
     }
@@ -275,16 +344,15 @@ void logic_setup_draw(const UiTheme *ui, const SelectionUiAssets *fonts, const I
     label(ui,fonts,unlocked ? state : "Um golpe lógico",(Rectangle){112,566,231,22},20);
     DrawLine(377,232,377,617,(Color){102,126,67,255});
     if (!unlocked) {
-        static const char *const expressions[] = {"P OU Q","P E Q","NÃO P"};
-        int question = index%3;
+        const LogicQuizQuestion *question = &questions[screen->question_indices[index]];
         frame((Rectangle){414,265,350,65},false,false);
-        label(ui,fonts,question == 2 ? "P: Falso" : "P: Verdadeiro",(Rectangle){424,277,330,40},28);
-        if (question != 2) {
+        label(ui,fonts,question->p ? "P: Verdadeiro" : "P: Falso",(Rectangle){424,277,330,40},28);
+        if (question->has_q) {
             frame((Rectangle){794,265,350,65},false,false);
-            label(ui,fonts,"Q: Falso",(Rectangle){804,277,330,40},28);
+            label(ui,fonts,question->q ? "Q: Verdadeiro" : "Q: Falso",(Rectangle){804,277,330,40},28);
         }
         frame((Rectangle){560,363,430,85},false,false);
-        label(ui,fonts,expressions[question],(Rectangle){574,375,402,59},36);
+        label(ui,fonts,question->expression,(Rectangle){574,375,402,59},36);
         label(ui,fonts,"Essa expressão é verdadeira?",(Rectangle){414,467,730,35},28);
         for (int i = 0; i < 2; i++) {
             Rectangle box = answer_box(i);
