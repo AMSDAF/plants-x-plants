@@ -55,22 +55,16 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         .scene = encounter == WORLD_ENCOUNTER_ALOE ? BATTLE_SCENE_DEPOT : BATTLE_SCENE_NURSERY,
         .setup_side = configured ? -1 : 0,
         .choosing_team = !configured,
-        .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
+        .animation_side = -1,
+        .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND}
     };
     Battle_Init(&screen->battle, team, guardian_team(encounter));
-    LogicFormula initial_formula = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-    LogicCondition condition = encounter == WORLD_ENCOUNTER_ALOE
-        ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
-    LogicFormula guardian_formula = {condition, LOGIC_ENEMY_RESERVE, LOGIC_AND};
+    LogicFormula initial_formula = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND};
     for (int i = 0; i < team.count; i++) {
         screen->battle.formulas[0][i] = game->campaign.has_formula
             ? game->campaign.formulas[i] : initial_formula;
         if ((game->world.logic_move_mask & (1u << i)) && game->campaign.has_formula)
             screen->battle.boosted_move_indices[0][i] = game->campaign.boosted_move_indices[i];
-    }
-    for (int i = 0; i < screen->battle.enemy_team.count; i++) {
-        screen->battle.formulas[1][i] = guardian_formula;
-        screen->battle.boosted_move_indices[1][i] = 0;
     }
     game->encounter = encounter;
     change_screen(game, GAME_BATTLE);
@@ -223,15 +217,7 @@ void game_update(Game *game)
             BattleScreenAction action = battle_screen_update(&game->battle_screen, GetFrameTime());
             if (action == BATTLE_SCREEN_TEAM_READY) {
                 game->battle_screen.setup_side = -1;
-                BattleState *battle = &game->battle_screen.battle;
-                battle->enemy_team = guardian_team(game->encounter);
-                LogicCondition condition = game->encounter == WORLD_ENCOUNTER_ALOE
-                    ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
-                for (int i = 0; i < battle->enemy_team.count; i++) {
-                    battle->formulas[1][i] =
-                        (LogicFormula){condition, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-                    battle->boosted_move_indices[1][i] = 0;
-                }
+                game->battle_screen.battle.enemy_team = guardian_team(game->encounter);
             }
             if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
             break;

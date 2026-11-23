@@ -10,9 +10,12 @@ static const Rectangle condition_boxes[2] = {{414,350,350,58},{794,350,350,58}};
 static const Rectangle confirm_box = {865,574,290,44};
 static const Rectangle back_box = {98,642,200,38};
 static const char *const conditions[LOGIC_CONDITION_COUNT] = {
-    "Minha planta tem até 50% de HP", "O rival tem reserva viva",
-    "A planta rival tem até 50% de HP", "Minha equipe tem reserva viva"
+    "Minha planta até 50% de HP", "Rival com status",
+    "Rival até 50% de HP", "Rival mais rápido",
+    "Tenho mais ATQ que o rival", "Tenho mais DEF que o rival",
+    "Minha equipe tem reserva"
 };
+static const int option_height = 32;
 static const char *const operators[LOGIC_OPERATOR_COUNT] = {"E","OU","XOR"};
 static const char *const explanations[LOGIC_OPERATOR_COUNT] = {
     "As duas condições devem ser verdadeiras.",
@@ -33,7 +36,7 @@ static Rectangle field_box(int field) { return field == 0 ? attack_box : conditi
 static Rectangle option_box(int field, int index)
 {
     Rectangle box = field_box(field);
-    return (Rectangle){box.x,box.y+box.height+index*54,box.width,54};
+    return (Rectangle){box.x,box.y+box.height+index*option_height,box.width,option_height};
 }
 
 static bool clicked(Rectangle box)
@@ -57,7 +60,7 @@ void logic_setup_begin(LogicSetupScreen *screen, const Team *team,
         unsigned int bit = 1u << i;
         if (!(screen->initialized_mask & bit)) {
             screen->formulas[i] = valid_formula(formulas[i]) ? formulas[i]
-                : (LogicFormula){LOGIC_OWN_LOW_HP,LOGIC_ENEMY_RESERVE,LOGIC_OR};
+                : (LogicFormula){LOGIC_OWN_LOW_HP,LOGIC_ENEMY_STATUS,LOGIC_OR};
             int move = moves[i];
             if (move < 0 || move >= MAX_MOVES || team->plants[i].moves[move].effect != MOVE_EFFECT_DAMAGE) {
                 move = 0;
@@ -194,10 +197,11 @@ static void label(const UiTheme *ui, const SelectionUiAssets *fonts, const char 
     selection_ui_pixel_box(ui,fonts,value,box,size,ink);
 }
 
-static void wrapped(const UiTheme *ui, const SelectionUiAssets *fonts, const char *value, Rectangle box)
+static void wrapped(const UiTheme *ui, const SelectionUiAssets *fonts, const char *value,
+                    Rectangle box, int font_size)
 {
     float size;
-    Font font = selection_ui_font(ui,fonts,22,&size);
+    Font font = selection_ui_font(ui,fonts,font_size,&size);
     ui_text_wrap_reveal_pixels(font,value,box,size,ink,10000,fonts->font_scale);
 }
 
@@ -303,7 +307,7 @@ void logic_setup_draw(const UiTheme *ui, const SelectionUiAssets *fonts, const I
             text(ui,fonts,i ? "Condição Q" : "Condição P",box.x+6,325,22);
             frame(box,false,screen->focus == i+2);
             wrapped(ui,fonts,conditions[i ? formula.right : formula.left],
-                (Rectangle){box.x+16,box.y+2,box.width-49,54});
+                (Rectangle){box.x+16,box.y+2,box.width-49,54},22);
             arrow(box.x+box.width-28,box.y+24,screen->dropdown == i+1);
         }
         text(ui,fonts,"Operador",420,413,22);
@@ -329,17 +333,17 @@ void logic_setup_draw(const UiTheme *ui, const SelectionUiAssets *fonts, const I
         int current = field == 0 ? screen->moves[index] : (int)(field == 1
             ? screen->formulas[index].left : screen->formulas[index].right);
         Rectangle first = option_box(field,0);
-        DrawRectangle((int)first.x+4,(int)first.y+4,(int)first.width,count*54,Fade(ink,.7f));
+        DrawRectangle((int)first.x+4,(int)first.y+4,(int)first.width,count*option_height-8,Fade(ink,.7f));
         for (int i = 0; i < count; i++) {
             Rectangle box = option_box(field,i);
             bool enabled = option_enabled(screen,plant,i);
             bool focused = screen->option == i;
             frame(box,i == current || (enabled && focused),enabled && focused);
             if (!enabled) DrawRectangleRec((Rectangle){box.x+5,box.y+5,box.width-10,box.height-10},(Color){213,210,192,255});
-            if (i == current) check(box.x+12,box.y+18);
+            if (i == current) check(box.x+12,box.y+9);
             else if (focused && enabled) pointer(fonts,box);
             wrapped(ui,fonts,field == 0 ? plant->moves[i].name : conditions[i],
-                (Rectangle){box.x+33,box.y+1,box.width-48,52});
+                (Rectangle){box.x+33,box.y+1,box.width-48,option_height-2},18);
         }
     }
 }

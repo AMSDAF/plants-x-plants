@@ -141,11 +141,11 @@ de veneno, queimadura ou captura, nem balanceamento final.
 | Arquivo | Responsabilidade |
 |---|---|
 | `include/battle.h` | Definir o estado da batalha, as ações disponíveis e as funções de combate. |
-| `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, controlar turnos e identificar o vencedor. |
+| `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, resolver as duas ações da rodada por velocidade e identificar o vencedor. |
 
 Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a interface já impede uma escolha inválida.
 
-Uma ação inválida não deve alterar a batalha nem consumir o turno.
+`Battle_PrepareRound` registra as ações dos dois lados e a ordem de velocidade; `Battle_ExecuteRoundStep` executa uma etapa por vez, e `Battle_FinishRound` aplica nocautes e substituições. `Battle_ExecuteRound` continua disponível como atalho para resolver a rodada inteira. A tela usa as etapas para exibir cada evento por dois segundos. Uma ação inválida não deve alterar a batalha nem consumir a rodada.
 
 A abertura oferece Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora, com três escolhas distintas obrigatórias. O catálogo definitivo contém oito espécies; Girassol e Babosa são os bosses e ficam fora da seleção inicial. Cada guardião luta sozinho; sua resistência é definida nos atributos de Babosa e Girassol em `plant_data.c`.
 Cada planta pode associar duas condições e um operador a um golpe de dano.

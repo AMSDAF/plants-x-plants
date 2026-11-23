@@ -185,7 +185,7 @@ static void configure_guardian_check(Game *game)
 static void resolve_guardian_action(Game *game)
 {
     assert(game->battle_screen.pending_action != BATTLE_PENDING_NONE);
-    for (int i = 0; i < 24 && game->battle_screen.pending_action != BATTLE_PENDING_NONE; i++)
+    for (int i = 0; i < 600 && game->battle_screen.pending_action != BATTLE_PENDING_NONE; i++)
         battle_screen_update(&game->battle_screen,.1f);
     assert(game->battle_screen.pending_action == BATTLE_PENDING_NONE);
 }

@@ -35,8 +35,13 @@ typedef enum {
     BATTLE_PENDING_CPU,
     BATTLE_PENDING_MOVE,
     BATTLE_PENDING_SWITCH,
-    BATTLE_PENDING_PARALYSIS
+    BATTLE_PENDING_PARALYSIS,
+    BATTLE_PENDING_ROUND,
+    BATTLE_PENDING_ROUND_RESULT
 } BattlePendingAction;
+
+/* Cada mensagem da rodada aparece por dois segundos, na ordem em que ocorreu. */
+#define BATTLE_ROUND_MESSAGES 12
 
 typedef struct {
     BattleState battle;
@@ -46,6 +51,17 @@ typedef struct {
     int pending_plant_index;
     AIActionType pending_cpu_action;
     int pending_cpu_index;
+    BattleAction pending_player_action;
+    BattleAction pending_enemy_action;
+    BattleRound round;
+    bool round_active;
+    char round_result_message[160];
+    int round_message_offsets[BATTLE_ROUND_MESSAGES];
+    int round_message_count;
+    int round_message_index;
+    int animation_side; /* -1 quando nenhuma planta está animando. */
+    int animation_plant_index;
+    bool animation_status; /* Golpes de status pulam; físicos avançam e voltam. */
     int setup_side; /* -1 quando a montagem está concluída. */
     bool choosing_team;
     bool show_statuses;

@@ -3,14 +3,18 @@
 
 #include <stddef.h>
 
-AIActionType AI_GetPlannedAction(const BattleState *battle, int *action_index)
+AIActionType AI_GetActionForSide(const BattleState *battle, int side, int *action_index)
 {
     if (action_index) *action_index = -1;
-    if (battle->current_turn != 1) return AI_ACTION_NONE;
+    if (!battle || (side != 0 && side != 1)) return AI_ACTION_NONE;
+
+    const Team *own_team = side == 0 ? &battle->player_team : &battle->enemy_team;
+    const Team *opponent_team = side == 0 ? &battle->enemy_team : &battle->player_team;
 
     if (battle->state == BATTLE_STATE_REPLACEMENT) {
-        for (int i = 0; i < battle->enemy_team.count; i++) {
-            if (Battle_CanSwitch(battle, i)) {
+        if (battle->current_turn != side) return AI_ACTION_NONE;
+        for (int i = 0; i < own_team->count; i++) {
+            if (Battle_CanSideSwitch(battle, side, i)) {
                 if (action_index) *action_index = i;
                 return AI_ACTION_SWITCH;
             }
@@ -20,21 +24,19 @@ AIActionType AI_GetPlannedAction(const BattleState *battle, int *action_index)
 
     if (battle->state != BATTLE_STATE_ONGOING) return AI_ACTION_NONE;
 
-    const Team *enemy_team = &battle->enemy_team;
-    const Plant *active = enemy_team->active_index >= 0 &&
-                          enemy_team->active_index < enemy_team->count
-        ? &enemy_team->plants[enemy_team->active_index] : NULL;
+    const Plant *active = own_team->active_index >= 0 &&
+                          own_team->active_index < own_team->count
+        ? &own_team->plants[own_team->active_index] : NULL;
     if (!active) return AI_ACTION_NONE;
 
-    const Team *player_team = &battle->player_team;
-    const Plant *opponent = player_team->active_index >= 0 &&
-                            player_team->active_index < player_team->count
-        ? &player_team->plants[player_team->active_index] : NULL;
+    const Plant *opponent = opponent_team->active_index >= 0 &&
+                            opponent_team->active_index < opponent_team->count
+        ? &opponent_team->plants[opponent_team->active_index] : NULL;
     if (opponent && active->current_hp * 10 > active->max_hp * 7 &&
         opponent->current_hp * 10 > opponent->max_hp * 3) {
         for (int i = 0; i < MAX_MOVES; i++) {
             if (active->moves[i].effect != MOVE_EFFECT_DAMAGE &&
-                Battle_CanUseMove(battle, 1, battle->enemy_team.active_index, i)) {
+                Battle_CanUseMove(battle, side, own_team->active_index, i)) {
                 if (action_index) *action_index = i;
                 return AI_ACTION_MOVE;
             }
@@ -43,16 +45,16 @@ AIActionType AI_GetPlannedAction(const BattleState *battle, int *action_index)
 
     int best_move = -1;
     for (int i = 0; i < MAX_MOVES; i++) {
-        if (!Battle_CanUseMove(battle, 1, battle->enemy_team.active_index, i)) continue;
+        if (!Battle_CanUseMove(battle, side, own_team->active_index, i)) continue;
         if (best_move < 0) {
             best_move = i;
             continue;
         }
         const Move *candidate = &active->moves[i];
         const Move *best = &active->moves[best_move];
-        int candidate_score = Battle_GetMovePower(battle, 1, i) * candidate->accuracy +
+        int candidate_score = Battle_GetMovePower(battle, side, i) * candidate->accuracy +
             candidate->critical_chance * 4 + candidate->priority * 500;
-        int best_score = Battle_GetMovePower(battle, 1, best_move) * best->accuracy +
+        int best_score = Battle_GetMovePower(battle, side, best_move) * best->accuracy +
             best->critical_chance * 4 + best->priority * 500;
         if (candidate_score > best_score) best_move = i;
     }
@@ -61,22 +63,18 @@ AIActionType AI_GetPlannedAction(const BattleState *battle, int *action_index)
         return AI_ACTION_MOVE;
     }
 
-    for (int i = 0; i < battle->enemy_team.count; i++) {
-        if (Battle_CanSwitch(battle, i) &&
-            Battle_EvaluatePlantFormula(battle, 1, i,
-                battle->formulas[1][i]).result)
-        {
-            if (action_index) *action_index = i;
-            return AI_ACTION_SWITCH;
-        }
-    }
-    for (int i = 0; i < battle->enemy_team.count; i++) {
-        if (Battle_CanSwitch(battle, i)) {
+    for (int i = 0; i < own_team->count; i++) {
+        if (Battle_CanSideSwitch(battle, side, i)) {
             if (action_index) *action_index = i;
             return AI_ACTION_SWITCH;
         }
     }
     return AI_ACTION_NONE;
+}
+
+AIActionType AI_GetPlannedAction(const BattleState *battle, int *action_index)
+{
+    return AI_GetActionForSide(battle, 1, action_index);
 }
 
 int AI_PlayTurn(BattleState *battle)
