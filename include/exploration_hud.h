@@ -18,6 +18,6 @@ typedef struct {
 Rectangle exploration_prompt_bounds(const UiTheme *ui, const HudInteraction *interaction);
 Rectangle exploration_marker_bounds(const HudInteraction *interaction, Camera2D camera, float animation_time);
 void exploration_hud_draw(const UiTheme *ui, const char *location, const char *objective,
-                          int clues, const HudInteraction *interaction, Camera2D camera);
+                          const HudInteraction *interaction, Camera2D camera);
 
 #endif

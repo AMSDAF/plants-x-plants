@@ -2,6 +2,7 @@
 #include "game.h"
 #include "ui_theme.h"
 #include "plant_data.h"
+#include "game_audio.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -55,22 +56,16 @@ static void start_encounter(Game *game, WorldEncounter encounter)
         .scene = encounter == WORLD_ENCOUNTER_ALOE ? BATTLE_SCENE_DEPOT : BATTLE_SCENE_NURSERY,
         .setup_side = configured ? -1 : 0,
         .choosing_team = !configured,
-        .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND}
+        .animation_side = -1,
+        .draft = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND}
     };
     Battle_Init(&screen->battle, team, guardian_team(encounter));
-    LogicFormula initial_formula = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-    LogicCondition condition = encounter == WORLD_ENCOUNTER_ALOE
-        ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
-    LogicFormula guardian_formula = {condition, LOGIC_ENEMY_RESERVE, LOGIC_AND};
+    LogicFormula initial_formula = {LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND};
     for (int i = 0; i < team.count; i++) {
         screen->battle.formulas[0][i] = game->campaign.has_formula
             ? game->campaign.formulas[i] : initial_formula;
         if ((game->world.logic_move_mask & (1u << i)) && game->campaign.has_formula)
             screen->battle.boosted_move_indices[0][i] = game->campaign.boosted_move_indices[i];
-    }
-    for (int i = 0; i < screen->battle.enemy_team.count; i++) {
-        screen->battle.formulas[1][i] = guardian_formula;
-        screen->battle.boosted_move_indices[1][i] = 0;
     }
     game->encounter = encounter;
     change_screen(game, GAME_BATTLE);
@@ -106,12 +101,14 @@ void game_init(Game *game)
     *game = (Game){0};
     for (int i = 0; i < MAX_TEAM_SIZE; i++) game->campaign.boosted_move_indices[i] = -1;
     ui_theme_load(&game->ui);
+    audio_init(&game->audio);
     srand((unsigned int)time(NULL));
     menu_screen_init(&game->menu);
     player_assets_load(&game->player_assets);
     trainer_select_assets_load(&game->trainer_select_assets);
     intro_assets_load(&game->intro_assets);
     battle_screen_assets_load(&game->battle_assets);
+    relay_ui_load(&game->relay_assets);
     world_init(&game->world);
     world_assets_load(&game->world_assets);
     trainer_select_screen_init(&game->trainer_select);
@@ -119,11 +116,11 @@ void game_init(Game *game)
     player_init(&game->player, TRAINER_MALE, world_spawn());
 }
 
-void game_update(Game *game)
+static void update_screens(Game *game)
 {
     if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT ||
         game->screen == GAME_NAME_ENTRY || game->screen == GAME_BATTLE ||
-        (game->screen == GAME_EXPLORATION && game->world.logic_quiz_open)) {
+        (game->screen == GAME_EXPLORATION && (game->world.logic_quiz_open || game->world.relay_panel_open))) {
         float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
         selection_ui_update_fonts(&game->trainer_select_assets.ui, scale);
     }
@@ -223,15 +220,7 @@ void game_update(Game *game)
             BattleScreenAction action = battle_screen_update(&game->battle_screen, GetFrameTime());
             if (action == BATTLE_SCREEN_TEAM_READY) {
                 game->battle_screen.setup_side = -1;
-                BattleState *battle = &game->battle_screen.battle;
-                battle->enemy_team = guardian_team(game->encounter);
-                LogicCondition condition = game->encounter == WORLD_ENCOUNTER_ALOE
-                    ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP;
-                for (int i = 0; i < battle->enemy_team.count; i++) {
-                    battle->formulas[1][i] =
-                        (LogicFormula){condition, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-                    battle->boosted_move_indices[1][i] = 0;
-                }
+                game->battle_screen.battle.enemy_team = guardian_team(game->encounter);
             }
             if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
             break;
@@ -239,6 +228,14 @@ void game_update(Game *game)
         case GAME_INTRO:
         case GAME_NAME_ENTRY: break; /* Atualizadas acima para manter os relógios contínuos. */
     }
+}
+
+/* Compara o estado antes e depois das telas para escolher sons sem alterar regras. */
+void game_update(Game *game)
+{
+    GameAudioSnapshot before = game_audio_capture(game);
+    update_screens(game);
+    game_audio_react(game, &before);
 }
 
 void game_draw(const Game *game)
@@ -273,6 +270,8 @@ void game_draw(const Game *game)
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, true);
             EndMode2D();
             world_draw_interface(ui, &game->world, game->player.feet);
+            if (game->world.relay_panel_open)
+                relay_ui_draw(ui,&game->trainer_select_assets.ui,&game->relay_assets,&game->world);
             if (game->world.logic_quiz_open)
                 logic_setup_draw(ui,&game->trainer_select_assets.ui,&game->intro_assets,
                     &game->logic_setup,&game->campaign.team,game->world.logic_move_mask);
@@ -283,11 +282,13 @@ void game_draw(const Game *game)
 
 void game_shutdown(Game *game)
 {
+    audio_shutdown(&game->audio);
     ui_theme_unload(&game->ui);
     world_assets_unload(&game->world_assets);
     player_assets_unload(&game->player_assets);
     trainer_select_assets_unload(&game->trainer_select_assets);
     intro_assets_unload(&game->intro_assets);
     battle_screen_assets_unload(&game->battle_assets);
+    relay_ui_unload(&game->relay_assets);
     menu_screen_shutdown(&game->menu);
 }

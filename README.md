@@ -16,8 +16,8 @@ O jogador começa escolhendo três companheiras entre Trevo, Hera Venenosa, Pime
 
 O elenco definitivo tem oito espécies: as seis iniciais acima e os bosses
 **Babosa**, no depósito, e **Girassol**, no viveiro. Os bosses não aparecem na
-seleção inicial. Cada boss luta sozinho contra a equipe: Babosa tem 275 HP/46 ATQ e
-Girassol 225 HP/50 ATQ, com defesa e velocidade preservadas. As espécies antigas fora desse elenco foram retiradas do catálogo.
+seleção inicial. Cada boss luta sozinho contra a equipe: Babosa tem 235 HP/36 ATQ e
+Girassol 220 HP/36 ATQ. Ambos têm defesa base 38 e buffs limitados a 1,5x. As espécies antigas fora desse elenco foram retiradas do catálogo.
 
 Atributos e três golpes por espécie ficam centralizados em `src/plant_data.c`.
 O combate inclui golpes de dano e de atributo, fórmulas individuais, habilidades
@@ -216,6 +216,7 @@ Na tela **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no ca
 - **Shift na estufa:** correr enquanto se move.
 - **F8 na estufa:** comparar o mapa original e a versão completa com mais detalhe.
 - **F11:** alternar a tela cheia; o desenho agora usa a resolução física do viewport.
+- **F9:** silenciar ou reativar efeitos sonoros e música. Consulte [os sons do jogo](assets/sounds/README.md).
 - **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a central ao se aproximar.
 - **ESC na seleção ou exploração:** voltar à tela inicial, sem fechar o jogo.
 - **ESC na tela inicial** ou **X** da janela: encerrar.
@@ -234,9 +235,13 @@ um canal e ajuste o dreno externo para atingir pressão 3.
 A porta do viveiro exige `Água E Luz E NÃO Alarme`.
 Siga os caminhos claros e as placas. O painel indica o setor atual e um
 marcador destaca os objetos ao alcance de **E**.
-Vença o Girassol no viveiro e registre as duas pistas espalhadas pelo mapa.
-Na central, use **1–8** ou clique nos relés e pressione **Enter** para validar
-uma regra por vez. Se uma regra anterior falhar, a central volta para ela.
+Vença o Girassol no viveiro para liberar a central. As pistas do mapa são dicas opcionais.
+Na central, use **1–3** ou clique nos relés e **Enter** para validar cada etapa:
+ligar A, resolver A E B, depois (A OU B) E NÃO C. A, B e C ficam disponíveis desde o começo.
+As etapas são independentes; errar não apaga acertos anteriores e ESC preserva o progresso.
+O painel usa molduras industriais, interruptores e indicadores, com a mesma fonte
+Pixelify dos menus. Setas movem o foco e Espaço alterna o relé; ENTER valida.
+Confira [a interface da central](docs/RELAY_UI_PREPARATION.md).
 Consulte o [relatório da Estufa Lógica](docs/CAMPAIGN_GREENHOUSE.md).
 
 O HUD de exploração usa molduras botânicas de madeira, fundo creme, fonte

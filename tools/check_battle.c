@@ -78,9 +78,70 @@ static void check_refreshed_rules(void)
     assert(battle.current_turn == 1);
 }
 
+/* Condições de status, velocidade, ataque e defesa, além do bônus do operador E. */
+static void check_logic_conditions(void)
+{
+    Team player = {0}, enemy = {0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_CACTUS));
+    assert(Team_SelectSpecies(&player,1,SPECIES_CLOVER));
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_ALOE));
+    BattleState battle;
+    Battle_Init(&battle,player,enemy);
+    Plant *own = &battle.player_team.plants[0];
+    Plant *rival = &battle.enemy_team.plants[0];
+    LogicFormula status_formula = {LOGIC_OWN_LOW_HP,LOGIC_ENEMY_STATUS,LOGIC_AND};
+    LogicFormula faster_formula = {LOGIC_OWN_LOW_HP,LOGIC_ENEMY_FASTER,LOGIC_OR};
+    LogicFormula attack_formula = {LOGIC_OWN_LOW_HP,LOGIC_OWN_HIGHER_ATTACK,LOGIC_OR};
+    LogicFormula defense_formula = {LOGIC_OWN_LOW_HP,LOGIC_OWN_HIGHER_DEFENSE,LOGIC_OR};
+    assert(Battle_GetFormulaPowerBonus(LOGIC_AND) == 70);
+    assert(Battle_GetFormulaPowerBonus(LOGIC_OR) == 45);
+    assert(Battle_GetFormulaPowerBonus(LOGIC_XOR) == 55);
+
+    own->current_hp = own->max_hp / 2;
+    battle.boosted_move_indices[0][0] = 0;
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,status_formula).result);
+    assert(Battle_GetPlantMovePower(&battle,0,0,0) == own->moves[0].power);
+
+    const PlantStatusType harmful[] = {PLANT_STATUS_POISON, PLANT_STATUS_BURN,
+        PLANT_STATUS_HOST, PLANT_STATUS_PARALYZED};
+    for (size_t i = 0; i < sizeof(harmful)/sizeof(harmful[0]); i++) {
+        assert(Plant_AddStatus(rival,harmful[i],2,1.0f));
+        LogicEvaluation value = Battle_EvaluatePlantFormula(&battle,0,0,status_formula);
+        assert(value.right && value.result);
+        assert(Battle_GetPlantMovePower(&battle,0,0,0) == own->moves[0].power + 70);
+        assert(Plant_RemoveStatus(rival,harmful[i]));
+        assert(!Battle_EvaluatePlantFormula(&battle,0,0,status_formula).result);
+        assert(Battle_GetPlantMovePower(&battle,0,0,0) == own->moves[0].power);
+    }
+
+    own->current_hp = own->max_hp;
+    assert(rival->speed > own->speed);
+    assert(Battle_EvaluatePlantFormula(&battle,0,0,faster_formula).right);
+    rival->speed = own->speed;
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,faster_formula).right);
+    rival->speed = own->speed - 1;
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,faster_formula).right);
+    rival->speed = own->speed + 1;
+    assert(Battle_EvaluatePlantFormula(&battle,0,0,faster_formula).right);
+
+    own->attack = rival->attack;
+    own->defense = rival->defense;
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,attack_formula).right);
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,defense_formula).right);
+    own->attack = rival->attack + 1;
+    own->defense = rival->defense + 1;
+    assert(Battle_EvaluatePlantFormula(&battle,0,0,attack_formula).right);
+    assert(Battle_EvaluatePlantFormula(&battle,0,0,defense_formula).right);
+    own->attack = rival->attack - 1;
+    own->defense = rival->defense - 1;
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,attack_formula).right);
+    assert(!Battle_EvaluatePlantFormula(&battle,0,0,defense_formula).right);
+}
+
 int main(void)
 {
     check_refreshed_rules();
+    check_logic_conditions();
     /* Um guardião sozinho encerra a luta ao cair, sem pedir reserva. */
     for (int id = SPECIES_SUNFLOWER; id <= SPECIES_ALOE; id++) {
         Team players = {0}, boss = {0};
@@ -93,6 +154,8 @@ int main(void)
         assert(solo.enemy_team.count == 1 && solo.player_team.count == 3);
         solo.player_team.plants[0].moves[0].power = 10000;
         solo.player_team.plants[0].moves[0].accuracy = 100;
+        /* A ordem depende da velocidade; este caso testa apenas o nocaute. */
+        solo.current_turn = 0;
         assert(Battle_ExecuteMove(&solo,0));
         assert(solo.state == BATTLE_STATE_PLAYER_WIN);
         BattleState ended = solo;
@@ -125,9 +188,11 @@ int main(void)
             player.plants[0].moves[move].accuracy = 100;
             BattleState encounter;
             Battle_Init(&encounter, player, enemy);
-            encounter.formulas[0][0] = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_OR};
+            encounter.formulas[0][0] = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_OR};
             encounter.player_team.plants[0].current_hp = player.plants[0].max_hp / 2;
             encounter.player_team.plants[0].fruit_count = 1;
+            /* A ordem depende da velocidade; este caso testa apenas o golpe. */
+            encounter.current_turn = 0;
             assert(Battle_ExecuteMove(&encounter, move));
             assert(encounter.enemy_team.plants[0].current_hp < enemy.plants[0].current_hp);
         }

@@ -22,6 +22,57 @@ static int has_low_hp(const Team *team)
     return Plant_IsAlive(plant) && plant->current_hp <= plant->max_hp / 2;
 }
 
+static const Plant *active_plant(const Team *team)
+{
+    if (!team || team->active_index < 0 || team->active_index >= team->count) return NULL;
+    return &team->plants[team->active_index];
+}
+
+/* Statuses que prejudicam a planta ativa e podem satisfazer a condição lógica. */
+static int has_damaging_status(const Plant *plant)
+{
+    if (!plant || !Plant_IsAlive(plant)) return 0;
+    return Plant_HasStatus(plant, PLANT_STATUS_POISON) ||
+           Plant_HasStatus(plant, PLANT_STATUS_BURN) ||
+           Plant_HasStatus(plant, PLANT_STATUS_HOST) ||
+           Plant_HasStatus(plant, PLANT_STATUS_PARALYZED);
+}
+
+static int enemy_is_faster(const Team *own, const Team *enemy, int own_plant_index)
+{
+    if (own_plant_index < 0 || own_plant_index >= own->count) return 0;
+    const Plant *own_plant = &own->plants[own_plant_index];
+    const Plant *enemy_plant = active_plant(enemy);
+    if (!Plant_IsAlive(own_plant) || !enemy_plant || !Plant_IsAlive(enemy_plant)) return 0;
+    return enemy_plant->speed > own_plant->speed;
+}
+
+/* O buff lógico pertence somente ao jogador; o guardião usa golpes normais. */
+static int logic_buff_enabled(int side)
+{
+    return side == 0;
+}
+
+static Team *team_for_side(BattleState *battle, int side)
+{
+    return side == 0 ? &battle->player_team : &battle->enemy_team;
+}
+
+static const Team *const_team_for_side(const BattleState *battle, int side)
+{
+    return side == 0 ? &battle->player_team : &battle->enemy_team;
+}
+
+static int can_switch_side(const BattleState *battle, int side, int plant_index)
+{
+    if (!battle || (side != 0 && side != 1)) return 0;
+    if (battle->state != BATTLE_STATE_ONGOING && battle->state != BATTLE_STATE_REPLACEMENT)
+        return 0;
+    const Team *team = const_team_for_side(battle, side);
+    return plant_index >= 0 && plant_index < team->count &&
+           plant_index != team->active_index && Plant_IsAlive(&team->plants[plant_index]);
+}
+
 static void append_status_message(BattleState *battle, const char *message)
 {
     size_t length = strlen(battle->last_message);
@@ -59,6 +110,16 @@ static int get_plant_stat(const Plant *plant, MoveStat stat)
     if (stat == MOVE_STAT_DEFENSE) return plant->defense;
     if (stat == MOVE_STAT_SPEED) return plant->speed;
     return 0;
+}
+
+/* Compara o atributo atual da planta do buff com o da planta ativa rival. */
+static int own_stat_higher(const Team *own, const Team *enemy, int own_plant_index, MoveStat stat)
+{
+    if (own_plant_index < 0 || own_plant_index >= own->count) return 0;
+    const Plant *own_plant = &own->plants[own_plant_index];
+    const Plant *enemy_plant = active_plant(enemy);
+    if (!Plant_IsAlive(own_plant) || !enemy_plant || !Plant_IsAlive(enemy_plant)) return 0;
+    return get_plant_stat(own_plant, stat) > get_plant_stat(enemy_plant, stat);
 }
 
 static int get_plant_base_stat(const Plant *plant, MoveStat stat)
@@ -136,7 +197,7 @@ static void apply_turn_statuses(BattleState *battle, int side, int plant_index)
         PlantStatusType type = plant->statuses[i].type;
         int denominator = type == PLANT_STATUS_POISON ? 8
                         : type == PLANT_STATUS_BURN ? 16
-                        : type == PLANT_STATUS_HOST ? 8 : 0;
+                        : type == PLANT_STATUS_HOST ? 16 : 0;
         if (denominator == 0) continue;
 
         int requested_damage = status_damage(plant, denominator);
@@ -171,7 +232,8 @@ static void apply_turn_statuses(BattleState *battle, int side, int plant_index)
     Plant_TickStatuses(plant);
 
     if (!Plant_IsAlive(plant) || team->active_index != plant_index) return;
-    plant->ability_turn_count = (plant->ability_turn_count + 1) % 2;
+    int ability_period = plant->id == SPECIES_SUNFLOWER ? 3 : 2;
+    plant->ability_turn_count = (plant->ability_turn_count + 1) % ability_period;
     if (plant->ability_turn_count != 0) return;
 
     if (plant->id == SPECIES_SUNFLOWER) {
@@ -283,8 +345,13 @@ static int evaluate_condition(LogicCondition condition, const Team *own, const T
             if (own_plant_index < 0 || own_plant_index >= own->count) return 0;
             return Plant_IsAlive(&own->plants[own_plant_index]) &&
                    own->plants[own_plant_index].current_hp <= own->plants[own_plant_index].max_hp / 2;
-        case LOGIC_ENEMY_RESERVE: return has_reserve(enemy);
+        case LOGIC_ENEMY_STATUS: return has_damaging_status(active_plant(enemy));
         case LOGIC_ENEMY_LOW_HP: return has_low_hp(enemy);
+        case LOGIC_ENEMY_FASTER: return enemy_is_faster(own, enemy, own_plant_index);
+        case LOGIC_OWN_HIGHER_ATTACK:
+            return own_stat_higher(own, enemy, own_plant_index, MOVE_STAT_ATTACK);
+        case LOGIC_OWN_HIGHER_DEFENSE:
+            return own_stat_higher(own, enemy, own_plant_index, MOVE_STAT_DEFENSE);
         case LOGIC_OWN_RESERVE: return has_reserve(own);
         default: return 0;
     }
@@ -325,7 +392,7 @@ LogicEvaluation Battle_EvaluateFormula(const BattleState *battle, int side, Logi
 
 int Battle_GetFormulaPowerBonus(LogicOperator operator)
 {
-    static const int power_bonus[LOGIC_OPERATOR_COUNT] = {60, 45, 55};
+    static const int power_bonus[LOGIC_OPERATOR_COUNT] = {70, 45, 55};
     if (operator < 0 || operator >= LOGIC_OPERATOR_COUNT) return 0;
     return power_bonus[operator];
 }
@@ -338,6 +405,7 @@ int Battle_GetPlantMovePower(const BattleState *battle, int side, int plant_inde
     if (plant_index < 0 || plant_index >= team->count || plant_index >= MAX_TEAM_SIZE) return 0;
     const Move *move = &team->plants[plant_index].moves[move_index];
     if (move->effect != MOVE_EFFECT_DAMAGE) return 0;
+    if (!logic_buff_enabled(side)) return move->power;
     LogicFormula formula = battle->formulas[side][plant_index];
     if (move_index != battle->boosted_move_indices[side][plant_index] ||
         !Battle_EvaluatePlantFormula(battle, side, plant_index, formula).result)
@@ -382,6 +450,7 @@ int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int 
     }
     if (move->effect != MOVE_EFFECT_DAMAGE) return 0;
 
+    if (!logic_buff_enabled(side)) return 1;
     if (move_index != battle->boosted_move_indices[side][plant_index]) return 1;
 
     LogicFormula formula = battle->formulas[side][plant_index];
@@ -444,12 +513,12 @@ void Battle_Init(BattleState *battle, Team player_team, Team enemy_team)
         .enemy_team = enemy_team,
         .last_message = "A batalha começou!"
     };
-    for (int side = 0; side < 2; side++) {
-        for (int i = 0; i < MAX_TEAM_SIZE; i++) {
-            battle->formulas[side][i] =
-                (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-            battle->boosted_move_indices[side][i] = -1;
-        }
+    for (int i = 0; i < MAX_TEAM_SIZE; i++) {
+        battle->formulas[0][i] =
+            (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND};
+        battle->boosted_move_indices[0][i] = -1;
+        battle->formulas[1][i] = (LogicFormula){0};
+        battle->boosted_move_indices[1][i] = -1;
     }
     for (int side = 0; side < 2; side++) {
         Team *team = side == 0 ? &battle->player_team : &battle->enemy_team;
@@ -553,7 +622,7 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
 
     if (damage > 0 && defender->id == SPECIES_ALOE && Plant_IsAlive(defender)) {
         int healed = 0;
-        int healing = damage / 4;
+        int healing = damage / 8;
         if (healing > 0) {
             int previous_hp = defender->current_hp;
             defender->current_hp += healing;
@@ -627,12 +696,13 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
 
 int Battle_CanSwitch(const BattleState *battle, int plant_index)
 {
-    if (battle->state != BATTLE_STATE_ONGOING && battle->state != BATTLE_STATE_REPLACEMENT)
-        return 0;
+    if (!battle) return 0;
+    return can_switch_side(battle, battle->current_turn, plant_index);
+}
 
-    const Team *team = battle->current_turn == 0 ? &battle->player_team : &battle->enemy_team;
-    return plant_index >= 0 && plant_index < team->count &&
-           plant_index != team->active_index && Plant_IsAlive(&team->plants[plant_index]);
+int Battle_CanSideSwitch(const BattleState *battle, int side, int plant_index)
+{
+    return can_switch_side(battle, side, plant_index);
 }
 
 int Battle_SwitchPlant(BattleState *battle, int plant_index)
@@ -681,4 +751,141 @@ void Battle_CheckConditions(BattleState *battle)
     } else if (!Team_HasLivingPlants(&battle->player_team)) {
         battle->state = BATTLE_STATE_ENEMY_WIN;
     }
+}
+
+/* As duas ações são escolhidas antes da resolução; a mais rápida resolve primeiro. */
+static int validate_round_action(const BattleState *battle, int side, BattleAction action)
+{
+    if (action.type == BATTLE_ACTION_NONE) return 1;
+    if (!battle || (side != 0 && side != 1)) return 0;
+    const Team *team = const_team_for_side(battle, side);
+    if (action.type == BATTLE_ACTION_MOVE)
+        return Battle_CanUseMove(battle, side, team->active_index, action.index);
+    if (action.type == BATTLE_ACTION_SWITCH)
+        return can_switch_side(battle, side, action.index);
+    return 0;
+}
+
+static void skip_round_side(BattleState *battle, int side)
+{
+    Team *team = team_for_side(battle, side);
+    Plant *active = Team_GetActivePlant(team);
+    if (!active || !Plant_IsAlive(active)) return;
+    int index = team->active_index;
+    if (Plant_HasStatus(active, PLANT_STATUS_PARALYZED)) {
+        battle->current_turn = side;
+        Battle_SkipParalyzedTurn(battle);
+        return;
+    }
+    apply_turn_statuses(battle, side, index);
+    Battle_CheckConditions(battle);
+}
+
+static int execute_round_action(BattleState *battle, int side, BattleAction action)
+{
+    if (action.type == BATTLE_ACTION_NONE) {
+        skip_round_side(battle, side);
+        return 1;
+    }
+    battle->current_turn = side;
+    if (action.type == BATTLE_ACTION_MOVE) return Battle_ExecuteMove(battle, action.index);
+    if (action.type == BATTLE_ACTION_SWITCH) return Battle_SwitchPlant(battle, action.index);
+    return 0;
+}
+
+static void finish_round(BattleState *battle, int first_side,
+                         int player_index, int enemy_index)
+{
+    Battle_CheckConditions(battle);
+    if (battle->state != BATTLE_STATE_ONGOING && battle->state != BATTLE_STATE_REPLACEMENT) {
+        battle->current_turn = 0;
+        return;
+    }
+    battle->state = BATTLE_STATE_ONGOING;
+    for (int order = 0; order < 2; order++) {
+        int side = order == 0 ? first_side : 1 - first_side;
+        int index = side == 0 ? player_index : enemy_index;
+        Team *team = team_for_side(battle, side);
+        if (index >= 0 && index < team->count &&
+            !Plant_IsAlive(&team->plants[index]) && has_reserve(team)) {
+            battle->current_turn = side;
+            battle->state = BATTLE_STATE_REPLACEMENT;
+            return;
+        }
+    }
+    battle->current_turn = 0;
+}
+
+/* A ordem e os índices são registrados antes de qualquer dano ser aplicado. */
+int Battle_PrepareRound(BattleState *battle, BattleAction player_action,
+                        BattleAction enemy_action, BattleRound *round)
+{
+    if (!battle || !round || battle->state != BATTLE_STATE_ONGOING) return 0;
+    if (!validate_round_action(battle, 0, player_action) ||
+        !validate_round_action(battle, 1, enemy_action)) return 0;
+
+    Team *player_team = &battle->player_team;
+    Team *enemy_team = &battle->enemy_team;
+    const Plant *player = Team_GetActivePlant(player_team);
+    const Plant *enemy = Team_GetActivePlant(enemy_team);
+    if (!player || !enemy || !Plant_IsAlive(player) || !Plant_IsAlive(enemy)) return 0;
+
+    round->actions[0] = player_action;
+    round->actions[1] = enemy_action;
+    round->acted_indices[0] = player_team->active_index;
+    round->acted_indices[1] = enemy_team->active_index;
+    round->sides[0] = enemy->speed > player->speed ? 1 : 0;
+    round->sides[1] = 1 - round->sides[0];
+    round->step = 0;
+    return 1;
+}
+
+/* Ações canceladas por nocaute não são executadas, mas encerram a rodada. */
+int Battle_ExecuteRoundStep(BattleState *battle, BattleRound *round)
+{
+    if (!battle || !round || round->step < 0 || round->step >= 2) return 0;
+    if (battle->state != BATTLE_STATE_ONGOING && battle->state != BATTLE_STATE_REPLACEMENT) {
+        round->step = 2;
+        return 2;
+    }
+
+    int side = round->sides[round->step];
+    if (round->step > 0) {
+        if (battle->state == BATTLE_STATE_REPLACEMENT) battle->state = BATTLE_STATE_ONGOING;
+        if (battle->state != BATTLE_STATE_ONGOING) {
+            round->step = 2;
+            return 2;
+        }
+        Team *team = team_for_side(battle, side);
+        Plant *active = Team_GetActivePlant(team);
+        if (!active || !Plant_IsAlive(active) ||
+            team->active_index != round->acted_indices[side]) {
+            round->step = 2;
+            return 2;
+        }
+    }
+
+    if (!execute_round_action(battle, side, round->actions[side])) {
+        round->step = 2;
+        return 0;
+    }
+    round->step++;
+    return 1;
+}
+
+int Battle_FinishRound(BattleState *battle, BattleRound *round)
+{
+    if (!battle || !round) return 0;
+    finish_round(battle, round->sides[0], round->acted_indices[0], round->acted_indices[1]);
+    return 1;
+}
+
+int Battle_ExecuteRound(BattleState *battle, BattleAction player_action, BattleAction enemy_action)
+{
+    BattleRound round;
+    if (!Battle_PrepareRound(battle, player_action, enemy_action, &round)) return 0;
+    for (int step = 0; step < 2; step++)
+        if (Battle_ExecuteRoundStep(battle, &round) == 0) return 0;
+    Battle_FinishRound(battle, &round);
+    return 1;
 }

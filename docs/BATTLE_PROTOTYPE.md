@@ -2,8 +2,8 @@
 
 Na campanha, interaja com um guardião para iniciar um encontro.
 A equipe do prólogo é preservada e a batalha começa diretamente. Golpes lógicos são recompensas opcionais da placa perto do depósito.
-A arena mostra a planta ativa, o HP das duas equipes, de quem é o turno e o
-resultado da última ação. A interface usa os cenários próprios do depósito e
+A arena mostra a planta ativa, o HP das duas equipes, a ação preparada e o
+resultado da última rodada. A interface usa os cenários próprios do depósito e
 viveiro, oito sprites definitivas, Pixelify Sans e o menu Atacar/Trocar. Mochila
 e Fugir aparecem bloqueados com aviso de implementação futura.
 Detalhes e capturas em [BATTLE_UI_PREPARATION.md](BATTLE_UI_PREPARATION.md).
@@ -44,15 +44,19 @@ Acertos, rascunhos e confirmações duram a sessão atual e são zerados ao inic
 outra campanha; não há salvamento em disco. O editor interno da batalha continua
 somente como ferramenta de desenvolvimento. O motor oferece as regras abaixo.
 
-As condições disponíveis são ter uma reserva viva, o rival ter uma reserva
-viva, a planta que recebe o buff estar viva com até metade do HP e a planta
-ativa rival estar viva com até metade do HP. Uma reserva é uma planta viva fora
-da posição ativa. Cada planta escolhe as próprias condições, operador e golpe
-que recebe o bônus.
+As condições disponíveis são a planta que recebe o buff estar viva com até metade
+do HP, a planta ativa rival estar viva com até metade do HP, o rival estar com
+status (envenenado, queimado, Hospedeiro ou paralisado), o rival ser mais rápido
+que a planta em campo, a planta do buff ter ataque maior que a ativa rival, ter
+defesa maior que a ativa rival e a própria equipe ter uma reserva viva. A reserva
+rival não é mais uma condição. Ataque, defesa e velocidade comparados são os
+atuais, incluindo buffs e debuffs. Uma reserva é uma planta viva fora da posição
+ativa.
+Cada planta escolhe as próprias condições, operador e golpe que recebe o bônus.
 
 | Operador | Regra | Bônus de poder |
 | --- | --- | --- |
-| **E** | As duas condições são verdadeiras. | +60 |
+| **E** | As duas condições são verdadeiras. | +70 |
 | **OU** | Pelo menos uma condição é verdadeira. | +45 |
 | **XOR** | Exatamente uma condição é verdadeira. | +55 |
 
@@ -64,10 +68,10 @@ a fórmula daquela planta for verdadeira. Os outros golpes continuam disponívei
 com poder normal. Uma tentativa de usar o golpe bloqueado é rejeitada sem
 gastar o turno.
 
-Por exemplo, com **Esta planta tem até metade do HP E O adversário tem reserva
-viva**, o golpe fica bloqueado com `F E V = F`. Se sua planta perder metade do
-HP ou mais e o rival ainda tiver reserva, a arena passa a mostrar `V E V = V`
-e libera o golpe fortalecido. Os outros golpes continuam disponíveis pelo poder
+Por exemplo, com **Esta planta tem até metade do HP E Rival com status**, o golpe
+fica bloqueado com `F E F = F`. Se sua planta perder metade do HP ou mais e o
+rival estiver envenenado, queimado, com Hospedeiro ou paralisado, a arena passa
+a mostrar `V E V = V` e libera o golpe fortalecido. Os outros golpes continuam disponíveis pelo poder
 base. O motor reavalia a expressão ao receber o comando, então uma fórmula
 que deixou de ser verdadeira bloqueia apenas o golpe escolhido para o buff.
 
@@ -77,9 +81,10 @@ O jogador escolhe três plantas no prólogo entre Trevo, Hera Venenosa, Pimenta,
 Cacto, Orquídea e Planta Carnívora. Babosa e Girassol são os bosses do depósito e
 do viveiro e não aparecem entre as opções iniciais. O catálogo contém somente
 essas oito espécies. Os guardiões lutam sozinhos, sem reservas, contra as três plantas do jogador.
-Babosa tem 275 HP e 46 ATQ; Girassol tem 225 HP e 50 ATQ. Defesa, velocidade,
-golpes e habilidades foram preservados. A fórmula do guardião consulta as reservas
-do jogador, pois o próprio boss não tem equipe de apoio. Cada espécie usa diretamente os atributos base do catálogo.
+Babosa tem 275 HP e 45 ATQ; Girassol tem 240 HP e 65 ATQ. Defesa, velocidade,
+golpes e habilidades foram preservados. O buff lógico é exclusivo do jogador:
+os guardiões não recebem fórmula nem golpe fortalecido. Cada espécie usa
+diretamente os atributos base do catálogo.
 Cada espécie tem três golpes, incluindo buffs/debuffs de atributo quando disponíveis.
 
 A montagem de reserva da interface de batalha continua disponível como alternativa
@@ -91,19 +96,21 @@ trocam de lugar. Para adicionar em uma vaga livre, escolha uma espécie que
 ainda esteja fora do grupo. **Backspace** remove uma reserva, mantendo
 pelo menos duas plantas no grupo.
 
-No início do encontro, a planta ativa com maior velocidade age primeiro. Em
-caso de empate, o jogador começa. Depois da primeira ação, os turnos alternam
-como antes. Ao retornar à exploração, sua equipe é
+As ações são escolhidas ao mesmo tempo: você seleciona seu golpe ou sua troca
+e a CPU planeja a resposta antes de qualquer dano. As duas ações são então
+resolvidas pela velocidade das plantas ativas no início da rodada; em empate,
+o jogador resolve primeiro. Se a ação mais rápida derrubar a planta adversária,
+a ação lenta já escolhida é cancelada. Ao fim da rodada, a escolha volta ao
+jogador. Ao retornar à exploração, sua equipe é
 restaurada e sua fórmula é preservada para os encontros seguintes. Cada equipe comporta até quatro plantas.
 
-1. Em um turno normal, a equipe pode atacar ou colocar em campo uma reserva viva.
-   Qualquer uma dessas ações passa o turno ao adversário. Tentar trocar pela
-   planta já ativa, por uma derrotada ou por uma posição inexistente mantém
-   o estado e o turno.
+1. Em uma rodada normal, cada lado pode atacar ou colocar em campo uma reserva
+   viva. Tentar trocar pela planta já ativa, por uma derrotada ou por uma
+   posição inexistente mantém o estado e não consome a rodada.
 2. Quando um ataque derruba a planta ativa e ainda há reserva viva, o combate
    passa ao estado de substituição obrigatória. O lado que sofreu o nocaute
-   só pode escolher uma reserva. Depois da escolha, esse mesmo lado faz seu
-   turno normal.
+   só pode escolher uma reserva. Depois da escolha, esse mesmo lado participa
+   da próxima rodada.
 3. Quando uma equipe perde a última planta, o combate registra o vencedor
    imediatamente. A tela continua exibindo a última ação e oferece retorno
    à estufa. O motor rejeita ataques e trocas após o resultado.
@@ -122,16 +129,16 @@ e se houve crítico. O poder usado inclui o bônus de fórmula quando as condiç
 são verdadeiras.
 
 Cada espécie possui velocidade base, exibida na montagem da equipe. Ela define
-quem começa o encontro; em empate, o jogador tem a primeira ação. A prioridade
-dos golpes não altera essa ordem inicial. Os turnos seguintes continuam
-alternados.
+qual das duas ações escolhidas é resolvida primeiro em cada rodada; em empate,
+o jogador resolve primeiro. A prioridade dos golpes não altera essa ordem.
+A ordem é recalculada a cada rodada com as velocidades vigentes.
 
 Golpes de dano são classificados como **Físico** ou **À distância**. Golpes de
 atributo exibem o aumento ou redução correspondente e não causam dano direto.
 
 ## Habilidades das espécies
 
-- **Girassol (guardião):** recupera 30% da vida máxima a cada dois turnos próprios; seu terceiro golpe aumenta o ataque em 1x, até 3x do valor inicial.
+- **Girassol (guardião):** recupera 30% da vida máxima a cada três turnos próprios; seu terceiro golpe aumenta o ataque em 1x, até 3x do valor inicial.
 - **Babosa (guardião):** depois de receber dano de um golpe, recupera 25% do dano sofrido naquele golpe (arredondado para baixo).
 - **Trevo:** dobra a chance crítica dos próprios golpes, limitada a 100%; seu terceiro golpe aumenta a velocidade em 0,5x, até 2x do valor inicial.
 - **Hera Venenosa:** ao receber um golpe físico, tem 30% de chance de envenenar quem atacou; seu terceiro golpe aumenta a defesa em 0,5x, até 2,5x do valor inicial.
@@ -153,7 +160,7 @@ mas `Plant_AddStatus` rejeita a segunda aplicação do mesmo tipo. Os tipos
 disponíveis são Veneno, Queimadura, Sorte, Paralisado, Hospedeiro e buffs de
 velocidade, ataque, defesa e precisão. Ao fim do turno da planta ativa, Veneno
 causa dano igual a 1/8 da vida máxima e Queimadura causa 1/16. Hospedeiro causa
-1/8 da vida máxima em dano e cura a planta ativa adversária pela quantidade de
+1/16 da vida máxima em dano e cura a planta ativa adversária pela quantidade de
 vida efetivamente perdida; o efeito é removido quando a planta afetada volta
 à reserva. Paralisado bloqueia ataque e troca e consome a próxima ação da planta
 afetada, independentemente de qual lado esteja jogando; então o efeito acaba.
@@ -169,24 +176,29 @@ status de buff ainda aguardam conexão com as regras correspondentes.
 
 ## Computador e interface
 
-Cada guardião usa uma fórmula fixa de **E**, combinando uma condição de HP
-com a existência de reservas na própria equipe. Quando sua fórmula é verdadeira,
-o bônus se aplica ao espaço de golpe de dano escolhido para cada planta. A CPU
-usa um golpe de atributo quando sua planta tem mais de 70% de HP, o adversário
-ativo tem mais de 30% de HP e ainda há espaço até o limite. Caso contrário,
-escolhe o golpe de dano com maior produto de poder por precisão. Se a fórmula
-for falsa, o golpe escolhido para o bônus lógico fica bloqueado; os demais
-golpes de dano continuam disponíveis. Para repor uma planta derrotada, escolhe
+Os guardiões não usam o buff lógico: todos os golpes de dano da CPU têm poder
+normal e nenhum fica bloqueado por fórmula. A CPU usa um golpe de atributo
+quando sua planta tem mais de 70% de HP, o adversário ativo tem mais de 30% de
+HP e ainda há espaço até o limite. Caso contrário, escolhe o golpe de dano com
+maior produto de poder por precisão. Para repor uma planta derrotada, escolhe
 a primeira reserva válida na ordem da equipe. A CPU só troca quando a
 substituição é obrigatória.
 
-A tela mostra a ação escolhida por dois segundos antes de resolvê-la. Por
-exemplo, “Trevo usou Folha Tripla...” aparece enquanto o HP ainda não mudou;
-ao fim da contagem, o dano e o resultado são aplicados e exibidos. Uma barra
-mostra o tempo restante, e a janela continua responsiva durante a espera.
-A interface e a CPU chamam as mesmas funções de ataque e troca. O motor
-valida a ação e modifica o estado. O desenho apenas consulta esse estado,
-e `game.c` coordena entrada e saída dos encontros.
+Cada coisa que acontece na rodada ganha dois segundos de tela. Primeiro aparece
+o anúncio da ação que vai resolver, como “Planta Carnívora vai usar Morder...”.
+Depois o motor executa apenas aquela etapa, e cada frase gerada aparece
+separadamente: dano, cura da Babosa, veneno, fruto, paralisia ou troca. Só então
+vem o anúncio da próxima ação, na ordem de velocidade. No beat da mensagem da
+ação, a planta que agiu avança e volta se usou golpe físico, pula se usou golpe
+de status e fica parada se usou golpe à distância. A animação usa o próprio
+timer do beat, sem novas regras de combate. Uma barra mostra o tempo
+restante, e a janela continua responsiva durante a espera. Se a batalha terminar,
+a fila é descartada na hora: a mensagem final fica visível e ENTER retorna sem
+esperar o restante do intervalo.
+A interface envia as duas ações à mesma API de combate usada pela CPU. O motor
+valida as ações e modifica o estado; a tela apenas divide as mensagens e controla
+o intervalo. O desenho não modifica o estado, e `game.c` coordena entrada e saída
+dos encontros.
 
 ## Como validar
 
@@ -205,3 +217,6 @@ trocas, derrota, substituição pela IA, vitória e restauração. `name_entry_c
 percorre a campanha com guardiões e progresso. `menu_screen_check` confere a
 entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerramento.
 O modo de batalha independente e seus recursos exclusivos foram removidos.
+
+O balanceamento dos guardiões é conferido por `boss_balance_check`; metodologia
+e comparação em [BOSS_BALANCE.md](BOSS_BALANCE.md).

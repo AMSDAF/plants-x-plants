@@ -18,7 +18,7 @@ entre pergunta e editor. Não há progresso linear ou fórmula atribuída pelo j
 
 A composição usa coordenadas lógicas de 1280 × 720, com modal em
 `(56,38,1168,654)`, abas em y=151, card em `(100,232,255,365)` e rodapé em y=632.
-As listas de condição têm quatro opções de 54 pixels; encerram acima do rodapé.
+As listas de condição têm sete opções de 32 pixels; encerram acima do rodapé.
 
 ## Estados e confirmação
 

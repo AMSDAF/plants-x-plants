@@ -20,7 +20,7 @@ Os limites de circulação acompanham os contornos do piso. O jogador começa
 do lado interno do portão sul e pode caminhar na diagonal e deslizar junto
 às bordas. Os NPCs e objetos interativos são desenhados sobre o cenário.
 No exterior, o cenário ocupa toda a área do jogo. O HUD indica o setor, o
-objetivo atual e as pistas reunidas. Ao se aproximar de um objeto, a ação
+objetivo atual. As pistas são ajudas opcionais, sem contador de coleta. Ao se aproximar de um objeto, a ação
 aparece no centro inferior da tela, acompanhada da tecla E somente quando
 está disponível. Uma seta creme aponta para o alvo, tanto no exterior como
 nos interiores. Bloqueios e pistas registradas mostram uma explicação no
@@ -86,28 +86,33 @@ Lógico no primeiro encontro. A equipe recupera o HP entre lutas e mantém
 a composição escolhida. Uma derrota ou recuo leva o jogador de volta ao
 pátio, preservando o progresso do mapa.
 
-Vencer o Girassol no viveiro libera a central. Uma regra pede a pista dos
-canais e outra pede a pista do bilhete na casa de manutenção. O painel tem oito relés e
-nove restrições simultâneas. Elas combinam XOR, equivalência, implicação e
-uma contagem exata de relés ligados. Há uma única configuração válida
-entre as 256 possíveis.
+Vencer o Girassol no viveiro libera a central. O desafio possui três etapas
+lineares e independentes, com dificuldade gradual:
 
-Use **1–8** ou clique para alternar um relé. A central mostra uma regra por
-vez. **Enter** valida a configuração até a regra atual e avança quando todas
-essas regras forem verdadeiras. Se uma tentativa falhar, a central mostra
-a primeira regra violada. As nove precisam valer juntas na última etapa.
-Use **seta esquerda** para rever a regra anterior e **Esc** para fechar
-a central. A etapa, a configuração e as tentativas são preservadas ao sair
-do painel. Depois de resolver, Íris agradece em uma conversa com o nome do jogador.
+1. **A:** ligar o primeiro relé.
+2. **A E B:** ligar os dois relés.
+3. **(A OU B) E NÃO C:** ligar A ou B (ou ambos) e manter C desligado.
+
+A, B e C aparecem e podem ser alternados desde a primeira etapa; somente os
+relés citados na expressão atual influenciam a validação. Use **1–3** ou clique para
+alternar e **Enter** para validar. Ao acertar, a próxima etapa começa com seus
+relés desligados; as regras anteriores não precisam continuar valendo. Errar
+mantém a etapa atual e mostra uma dica, sem punição ou limite de tentativas.
+Não é preciso voltar às etapas já concluídas. **ESC** fecha o painel e preserva
+a etapa, os ajustes atuais e as tentativas durante a sessão.
+
+A placa dos canais explica OU e o bilhete da manutenção explica NÃO; ambos são
+dicas opcionais e não bloqueiam a central. Na última etapa, as configurações válidas são A, B ou A+B ligados,
+sempre com C desligado.
+
+Depois de resolver, Íris agradece em uma conversa com o nome do jogador.
 Ao fechar essa conversa, a tela de conclusão permite voltar ao menu com
 **Enter** ou **Esc**.
 
 ## Implementação e teste
 
 `world.c` mantém a região ativa, as transições por proximidade, a colisão
-das fachadas e da ponte e as regras de acesso. A central valida as nove
-restrições sobre a configuração atual
-dos relés antes de concluir a missão. O desenho consulta o estado. `game.c`
+das fachadas e da ponte e as regras de acesso. A central valida apenas a etapa atual dos três desafios antes de concluir a missão. O desenho consulta o estado. `game.c`
 coordena a câmera e as transições entre exploração e combate, e aplica a
 recompensa do encontro depois de uma vitória.
 
@@ -135,10 +140,11 @@ Os marcadores acompanham as posições atualizadas dos controles, pistas e guard
 
 Os recursos opcionais `depot_interior.png`, `basement_interior.png`,
 `bridge_control_interior.png` e `nursery_interior.png` em `assets/maps/`, e
-`aloe_guard.png` e `sunflower_guard.png` em `assets/sprites/`, são referenciados
-pelo código de interiores, mas não acompanharam o commit remoto integrado.
-Enquanto estiverem ausentes, o jogo desenha as salas e os guardiões com as
-formas de reserva. A manutenção continua usando sua ilustração existente.
+`sunflower_guard.png` em `assets/sprites/`, são referenciados pelo código de
+interiores, mas não acompanharam o commit remoto integrado. A Babosa usa
+`assets/sprites/plants/aloe_v2.png`, a mesma arte da arena. Enquanto algum
+recurso estiver ausente, o jogo desenha a sala ou o guardião com a forma de
+reserva. A manutenção continua usando sua ilustração existente.
 
 A validação usa caminhos livres diante dos móveis sólidos e preserva os testes
 de bloqueio, acesso aos controles, vitória/derrota e progressão dos encontros.
