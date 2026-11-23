@@ -55,6 +55,13 @@ typedef struct {
     int step;
 } BattleRound;
 
+/* Resultado descritivo do último golpe válido; interface e som apenas o observam. */
+typedef struct {
+    unsigned int sequence;
+    int side, plant_index, move_index, target_side;
+    int hit, critical, boosted, damage;
+} BattleMoveFeedback;
+
 typedef struct {
     Team player_team;
     Team enemy_team;
@@ -63,6 +70,7 @@ typedef struct {
     LogicFormula formulas[2][MAX_TEAM_SIZE]; /* Índice 1 permanece sem buff lógico. */
     int boosted_move_indices[2][MAX_TEAM_SIZE]; /* -1 mantém todos os golpes normais. */
     char last_message[128];
+    BattleMoveFeedback feedback;
 } BattleState;
 
 void Battle_Init(BattleState *battle, Team player_team, Team enemy_team);
@@ -76,6 +84,10 @@ int Battle_GetCriticalChance(const Plant *attacker, const Move *move);
 int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int move_index);
 int Battle_ApplyStatus(BattleState *battle, int side, int plant_index,
                        PlantStatusType type, int remaining_turns, float value);
+/* Aplica um efeito registrando qual planta o originou, como exige Hospedeiro. */
+int Battle_ApplyStatusFrom(BattleState *battle, int source_side, int source_plant_index,
+                           int target_side, int target_plant_index,
+                           PlantStatusType type, int remaining_turns, float value);
 int Battle_SkipParalyzedTurn(BattleState *battle);
 int Battle_ExecuteMove(BattleState *battle, int move_index);
 int Battle_CanSwitch(const BattleState *battle, int plant_index);

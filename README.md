@@ -6,7 +6,7 @@ Monte sua equipe, evolua suas plantas e escolha seu caminho por diferentes bioma
 
 ## Status
 
-A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pressionar **ENTER**. Depois do nome, um prólogo apresenta o pedido de ajuda de Lia, o aceite, a escolha de três entre seis plantas e a viagem até a vila. A chegada abre a Estufa Lógica, com exploração e batalhas contra guardiões. A progressão posterior de campanha é planejada.
+A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pressionar **ENTER**. Depois do nome, um prólogo apresenta o pedido de ajuda de Lia, o aceite, a escolha de três entre seis plantas e a viagem até a vila. A chegada abre a Estufa Lógica, com exploração e batalhas contra guardiões. A progressão posterior de campanha é planejada. Ao concluir a estufa e o diálogo final, uma tela celebra a equipe e permite jogar novamente ou voltar ao menu. Derrotas abrem uma tela própria para tentar o mesmo guardião outra vez ou voltar à vila, com equipe recuperada e progresso preservado.
 
 ## Modos de jogo
 
@@ -32,8 +32,7 @@ compartilham título pixelado, progresso, subtítulo, instruções e botões de
 madeira; o rótulo superior da marca foi removido.
 Consulte [o desenho da seleção](docs/PLANT_SELECTION_DESIGN.md). O combate usa
 as oito sprites definitivas, cenários próprios do depósito/viveiro e o menu
-Atacar/Trocar, com Mochila e Fugir bloqueados. As artes antigas dos bosses são
-preservadas na exploração. Consulte [a interface de combate](docs/BATTLE_UI_PREPARATION.md).
+Atacar/Trocar, com Mochila e Fugir bloqueados. Os bosses usam as mesmas sprites definitivas na exploração, com bases de terra. Consulte [a interface de combate](docs/BATTLE_UI_PREPARATION.md).
 
 A campanha inclui um tutorial e três arenas, escolhidas entre rotas alternativas.
 

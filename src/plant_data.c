@@ -40,7 +40,7 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
         }
     },
     {SPECIES_ALOE, "Babosa", 275, 57, 60, 30,
-        {DAMAGE_MOVE("Espinho", MOVE_CATEGORY_RANGED, 40, 100, 50, 0),
+        {DAMAGE_MOVE("Espinho", MOVE_CATEGORY_RANGED, 40, 100, 45, 0),
          DAMAGE_MOVE("Corte", MOVE_CATEGORY_PHYSICAL, 67, 85, 35, 0),
          ATTRIBUTE_MOVE("Casca Grossa", MOVE_TARGET_SELF, MOVE_STAT_DEFENSE,
                         1.0f, 3.0f, MOVE_STAT_CHANGE_ADD_TO_CAP)}},
@@ -54,7 +54,7 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
          ATTRIBUTE_MOVE("Crescer", MOVE_TARGET_SELF, MOVE_STAT_ATTACK,
                         0.5f, 2.0f, MOVE_STAT_CHANGE_ADD_TO_CAP),
          DAMAGE_MOVE("Fruto Incendiário", MOVE_CATEGORY_RANGED, 125, 100, 20, 0)}},
-    {SPECIES_ORCHID, "Orquídea", 30, 40, 90, 65,
+    {SPECIES_ORCHID, "Orquídea", 45, 40, 90, 65,
         {DAMAGE_MOVE("Pétala Rosa", MOVE_CATEGORY_RANGED, 67, 80, 14, 0),
          DAMAGE_MOVE("Raíz Perfurante", MOVE_CATEGORY_PHYSICAL, 40, 100, 62, 0),
          ATTRIBUTE_MOVE("Manto Floral", MOVE_TARGET_SELF, MOVE_STAT_DEFENSE,

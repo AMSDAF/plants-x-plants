@@ -103,7 +103,7 @@ não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
 - Na raiz, na montagem ou na substituição obrigatória, **ESC** preserva o retorno
   anterior à estufa; o aviso não aparece no topo.
 - Na troca obrigatória, a equipe abre automaticamente e somente reservas vivas
-  podem entrar. Ações humanas, da CPU e paralisia usam a espera não bloqueante de dois segundos.
+  podem entrar. Ações humanas, da CPU e paralisia exibem mensagens com avanço automático em 1,5 s após a animação, com opção de adiantar.
 - No beat da mensagem, golpe físico avança e volta, golpe de status pula e golpe
   à distância mantém a planta parada.
 - No resultado, ENTER ou o botão retorna à estufa. Ações de combate ficam bloqueadas.
@@ -161,3 +161,48 @@ paralisia, consulta de status, fila sem ação duplicada, desenho imutável e li
 
 Os três ataques ocupam y=522–680, dentro da área creme do painel. O botão Voltar
 fica no alto da coluna esquerda, em `(390,520,120,28)`, junto ao atalho de efeitos.
+
+## Efeitos de ataque v0
+
+Os golpes possuem famílias visuais: folhas, pétalas, espinhos, cipós/raízes, fogo,
+raio solar, eletricidade, mordida, avanço físico, buff e debuff. São formas e
+partículas desenhadas no raylib, sem novas imagens. As partículas usam grade de
+três pixels; o recuo e o movimento da planta ficam alinhados à mesma grade.
+
+Cada golpe válido inicia um efeito de 0,95 s, com impacto em 0,38 s. O HP mostrado
+fica no valor anterior até o impacto e converge ao valor já calculado pelo motor
+nos 0,45 s seguintes. O número exibido acompanha a barra. Apenas a apresentação é
+interpolada: HP real, dano, turnos, precisão e críticos continuam no motor.
+
+Acertos têm recuo e piscada; críticos têm mais partículas douradas e uma tremida
+curta na planta atingida. Erros terminam com partículas de passagem sem reação de
+acerto nem som de impacto. Golpes fortalecidos só recebem brilho e som extras
+quando o motor confirmou o bônus. Buffs/debuffs mostram setas verdes/roxas, e
+recuperação líquida de HP recebe partículas verdes. Dano passivo recebe partículas
+roxas. Um último impacto conclui a animação antes da tela de derrota.
+
+Som e imagem compartilham o mesmo resultado de golpe e instante de impacto.
+Os novos sons são sintetizados no carregamento, com recursos liberados no
+encerramento. Nenhum efeito visual ou variação sonora usa o RNG do combate.
+O modal de saída pausa o relógio visual e a fila de efeitos sonoros pendentes.
+
+Verificação: `cmake --build build --target battle_fx_check` e
+`build/battle_fx_check.exe`. Exercita 24 golpes nos dois lados, erro, crítico,
+fortalecimento, HP exibido, eventos inválidos, último impacto, carregamento de
+áudio e desenho imutável. Capturas em `build/battle_fx_preview/`.
+
+## Leitura da rodada v0
+
+A barrinha de dois segundos foi removida. Durante a resolução, os comandos são
+substituídos por um cartão com a mensagem atual e a indicação **Avança sozinho · ENTER / clique: adiantar**. A esquerda mostra **Rodada em andamento** e a ordem real das
+plantas. Durante o efeito, a indicação passa a **Aguarde a animação...**.
+
+Cada confirmação adianta uma única página: uso do golpe, dano ou atributo e efeitos
+extras, sem repetir a animação. Segurar a entrada que escolheu o golpe ou confirmar
+durante a animação não pula mensagens. TAB consulta os efeitos sem avançar páginas;
+ESC fecha essa consulta. Cada página avança sozinha após 1,5 s, contados depois da animação. A consulta de
+efeitos e o modal de saída pausam esse intervalo. O fim da batalha aguarda a leitura
+do último resultado.
+
+Verificação: `cmake --build build --target battle_flow_check` e
+`build/battle_flow_check.exe`; capturas em `build/battle_flow_preview/`.

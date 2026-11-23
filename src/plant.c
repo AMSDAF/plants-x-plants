@@ -77,14 +77,43 @@ int Plant_GetStatusValue(const Plant *plant, PlantStatusType type, float *value)
     return 0;
 }
 
+int Plant_GetStatusSource(const Plant *plant, PlantStatusType type,
+                          int *source_side, int *source_plant_index)
+{
+    if (!plant || type < 0 || type >= PLANT_STATUS_COUNT ||
+        plant->status_count < 0 || plant->status_count > PLANT_STATUS_COUNT) return 0;
+    for (int i = 0; i < plant->status_count; i++) {
+        if (plant->statuses[i].type != type) continue;
+        if (source_side) *source_side = plant->statuses[i].source_side;
+        if (source_plant_index) *source_plant_index = plant->statuses[i].source_plant_index;
+        return 1;
+    }
+    return 0;
+}
+
 int Plant_AddStatus(Plant *plant, PlantStatusType type, int remaining_turns, float value)
 {
+    return Plant_AddStatusFrom(plant, type, remaining_turns, value, -1, -1);
+}
+
+int Plant_AddStatusFrom(Plant *plant, PlantStatusType type, int remaining_turns,
+                        float value, int source_side, int source_plant_index)
+{
+    int has_source = source_side >= 0;
     if (!plant || type < 0 || type >= PLANT_STATUS_COUNT || remaining_turns < 0 ||
         !isfinite(value) || value <= 0 || plant->status_count < 0 ||
-        plant->status_count >= PLANT_STATUS_COUNT || Plant_HasStatus(plant, type))
+        plant->status_count >= PLANT_STATUS_COUNT || Plant_HasStatus(plant, type) ||
+        source_side < -1 || source_side > 1 || source_plant_index < -1 ||
+        has_source != (source_plant_index >= 0))
         return 0;
 
-    plant->statuses[plant->status_count++] = (PlantStatus){type, remaining_turns, value};
+    plant->statuses[plant->status_count++] = (PlantStatus){
+        .type = type,
+        .remaining_turns = remaining_turns,
+        .value = value,
+        .source_side = source_side,
+        .source_plant_index = source_plant_index
+    };
     return 1;
 }
 

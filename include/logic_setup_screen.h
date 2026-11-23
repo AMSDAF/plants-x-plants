@@ -20,6 +20,9 @@ typedef struct {
     int focus;
     int dropdown; /* -1 fechado; 0 ataque, 1 condição P, 2 condição Q. */
     int option;
+    int dropdown_scroll;
+    float elapsed;
+    float success_time;
 } LogicSetupScreen;
 
 void logic_setup_begin(LogicSetupScreen *screen, const Team *team,

@@ -101,3 +101,34 @@ void exploration_hud_draw(const UiTheme *ui, const char *location, const char *o
 
     draw_prompt(ui, interaction, camera);
 }
+
+/* Ícones pequenos e sem textura: pulso suave e tamanho fixo em pixels de interface. */
+void exploration_discovery_draw(const HudDiscoveryMarker *markers, int count, float elapsed)
+{
+    if (!markers || count <= 0) return;
+    for (int i = 0; i < count; i++) {
+        const HudDiscoveryMarker *marker = &markers[i];
+        float wave = (1-cosf(elapsed*2*PI/1.8f+i*0.7f))/2;
+        int x = (int)roundf(marker->position.x);
+        int y = (int)roundf(marker->position.y-12-2*wave);
+        if (marker->conversation) {
+            Color border = {27,49,32,220}, fill = {249,238,198,245};
+            DrawRectangle(x-10,y-10,20,17,border);
+            DrawRectangle(x-12,y-8,24,13,border);
+            DrawRectangle(x-9,y-8,18,13,fill);
+            DrawRectangle(x-10,y-7,20,11,fill);
+            DrawRectangle(x-6,y+5,6,5,(Color){27,49,32,220});
+            DrawRectangle(x-4,y+4,3,4,(Color){249,238,198,245});
+            for (int dot = 0; dot < 3; dot++) DrawRectangle(x-7+dot*5,y-3,3,3,(Color){61,83,41,255});
+        } else {
+            Color glow = marker->blocked ? (Color){205,182,125,220}
+                                        : Fade((Color){255,214,83,255},0.7f+0.3f*wave);
+            DrawRectangle(x-2,y-9,6,20,(Color){49,57,25,180});
+            DrawRectangle(x-9,y-2,20,6,(Color){49,57,25,180});
+            DrawRectangle(x-1,y-8,3,17,glow);
+            DrawRectangle(x-8,y-1,17,3,glow);
+            DrawRectangle(x-3,y-3,7,7,glow);
+            DrawRectangle(x-1,y-1,3,3,(Color){255,247,207,255});
+        }
+    }
+}

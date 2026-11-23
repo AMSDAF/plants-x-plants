@@ -32,6 +32,9 @@ typedef enum {
     SFX_LOW_HP,
     SFX_JINGLE_VICTORY,
     SFX_JINGLE_DEFEAT,
+    SFX_ATTACK_LEAF, SFX_ATTACK_WHIP, SFX_ATTACK_FIRE, SFX_ATTACK_SOLAR,
+    SFX_ATTACK_BITE, SFX_ATTACK_SPARK, SFX_ATTACK_BODY, SFX_BUFF, SFX_DEBUFF,
+    SFX_MISS, SFX_CRITICAL, SFX_HEAL, SFX_STATUS_TICK,
     SFX_COUNT
 } SoundId;
 
@@ -57,6 +60,9 @@ typedef struct {
 typedef struct {
     bool ready;
     bool muted;
+    bool effects_paused;
+    unsigned int variation_counter;
+    float impact_duck;
     Sound sounds[SFX_COUNT];
     bool sound_loaded[SFX_COUNT];
     Music music[MUSIC_COUNT];

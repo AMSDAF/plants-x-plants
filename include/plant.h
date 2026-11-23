@@ -34,6 +34,8 @@ typedef struct {
     PlantStatusType type;
     int remaining_turns; /* Zero indica que o efeito não expira por turnos. */
     float value;         /* Multiplicador ou potência interpretada pelo efeito. */
+    int source_side;      /* -1 quando o efeito não tem uma planta aplicadora. */
+    int source_plant_index;
 } PlantStatus;
 
 // Estrutura de um golpe
@@ -121,8 +123,13 @@ void Team_Restore(Team *team);
 int Plant_IsAlive(const Plant *plant);
 void Plant_TakeDamage(Plant *plant, int damage);
 int Plant_AddStatus(Plant *plant, PlantStatusType type, int remaining_turns, float value);
+/* Registra a planta aplicadora, usada pelo combate para encerrar Hospedeiro. */
+int Plant_AddStatusFrom(Plant *plant, PlantStatusType type, int remaining_turns,
+                        float value, int source_side, int source_plant_index);
 int Plant_HasStatus(const Plant *plant, PlantStatusType type);
 int Plant_GetStatusValue(const Plant *plant, PlantStatusType type, float *value);
+int Plant_GetStatusSource(const Plant *plant, PlantStatusType type,
+                          int *source_side, int *source_plant_index);
 int Plant_RemoveStatus(Plant *plant, PlantStatusType type);
 void Plant_TickStatuses(Plant *plant);
 void Plant_ClearStatuses(Plant *plant);
