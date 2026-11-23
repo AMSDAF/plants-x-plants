@@ -257,3 +257,11 @@ target_link_libraries(battle_flow_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(battle_flow_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# UI do desafio lógico com entrada real, rolagem e capturas nas resoluções da campanha.
+add_executable(logic_setup_ui_check EXCLUDE_FROM_ALL tools/check_logic_setup_ui.c ${INTRO_CHECK_SOURCES})
+target_include_directories(logic_setup_ui_check PRIVATE include)
+target_link_libraries(logic_setup_ui_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(logic_setup_ui_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
