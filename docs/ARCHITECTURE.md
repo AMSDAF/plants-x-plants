@@ -28,6 +28,8 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |
+| `include/audio.h`, `src/audio.c` | Carregar e liberar efeitos (`assets/sounds/sfx/`) e músicas (`assets/sounds/music/`), tocar efeitos imediatos ou com pequeno atraso, fazer a transição suave entre faixas e silenciar por F9. Arquivos ausentes ou falta de dispositivo deixam o jogo em silêncio, sem erro. Não conhece telas nem regras. |
+| `include/game_audio.h`, `src/game_audio.c` | Capturar campos do estado antes de cada quadro e comparar com o estado depois de `game_update`, escolhendo efeitos de interface, exploração e combate e a música de cada tela. Somente lê o estado; dano, turnos e entrada continuam em `battle`, `battle_screen` e nas telas. |
 
 O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalhes das telas devem ficar nos respectivos módulos.
 

@@ -16,6 +16,7 @@
 #include "ui_theme.h"
 #include "intro_screen.h"
 #include "logic_setup_screen.h"
+#include "audio.h"
 
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
@@ -57,6 +58,7 @@ typedef struct {
     Player player;
     World world;
     WorldAssets world_assets;
+    GameAudio audio;
 } Game;
 
 void game_init(Game *game);
