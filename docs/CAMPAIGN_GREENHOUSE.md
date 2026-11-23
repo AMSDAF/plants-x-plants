@@ -210,3 +210,10 @@ ou os manípulos. A pressão da ponte usa um quadro no canto superior direito da
 tela; não fica mais sobre o manômetro. A placa lógica tem colisão no caminho,
 permitindo aproximar-se para interagir e contornar pelos lados. O aviso da
 escotilha bloqueada é apenas **Escotilha trancada**.
+
+Os dois guardiões usam as sprites `*_v2.png` da arena na exploração, recortadas
+pelo alfa e com filtro pontual. O Girassol tem 174 pixels de altura no mundo e a
+Babosa mantém 190. Ambos repousam na mesma arte de terra da batalha, ajustada
+à escala da sala, sem nomes desenhados no chão. A identificação fica no aviso de proximidade. O marcador do Girassol acompanha
+sua nova altura. `WorldAssets` carrega e libera a textura de terra junto aos bosses;
+a ausência da arte usa uma elipse de terra como reserva.

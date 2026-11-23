@@ -337,7 +337,8 @@ void world_assets_load(WorldAssets *assets)
                 PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT)
         },
         .aloe_guard = load_cropped_sprite_texture("assets/sprites/plants/aloe_v2.png"),
-        .sunflower_guard = load_sprite_texture("assets/sprites/sunflower_guard.png")
+        .sunflower_guard = load_cropped_sprite_texture("assets/sprites/plants/sunflower_v2.png"),
+        .boss_ground = load_sprite_texture("assets/ui/battle/ground_v1.png")
     };
     if (assets->tree_canopy_foreground.id) {
         SetTextureFilter(assets->tree_canopy_foreground, TEXTURE_FILTER_BILINEAR);
@@ -372,6 +373,7 @@ void world_assets_unload(WorldAssets *assets)
     }
     if (assets->aloe_guard.id) UnloadTexture(assets->aloe_guard);
     if (assets->sunflower_guard.id) UnloadTexture(assets->sunflower_guard);
+    if (assets->boss_ground.id) UnloadTexture(assets->boss_ground);
     *assets = (WorldAssets){0};
 }
 
@@ -979,7 +981,7 @@ static void draw_note(const UiTheme *ui, Object object, const char *name, bool c
     centered_text(ui, name, x, y + 23, 18, ink);
 }
 
-static void draw_guard(const UiTheme *ui, Object object, const char *name, Color color)
+static void draw_guard(Object object, Color color)
 {
     int x = (int)objects[object].position.x;
     int y = (int)objects[object].position.y;
@@ -989,10 +991,21 @@ static void draw_guard(const UiTheme *ui, Object object, const char *name, Color
     DrawEllipse(x + 15, y - 8, 15, 7, DARKGREEN);
     DrawCircle(x, y - 23, 22, color);
     DrawCircle(x, y - 22, 11, frame);
-    centered_text(ui, name, x, y + 22, 18, ink);
 }
 
-static void draw_aloe_guard(const UiTheme *ui, Texture2D texture, Object object, const char *name)
+/* Mesmo recorte de terra da arena; as raízes repousam no centro do canteiro. */
+static void draw_boss_ground(Texture2D texture, Object object)
+{
+    Vector2 base = objects[object].position;
+    float width = object == ALOE ? 180 : 156;
+    float height = width*400/1825;
+    Rectangle destination = {base.x-width/2,base.y-height*0.45f,width,height};
+    if (texture.id && texture.width >= 2001 && texture.height >= 585)
+        DrawTexturePro(texture,(Rectangle){176,185,1825,400},destination,(Vector2){0},0,WHITE);
+    else DrawEllipse((int)base.x,(int)(base.y+3),width/2,height/2,(Color){156,89,48,255});
+}
+
+static void draw_aloe_guard(Texture2D texture, Object object)
 {
     Vector2 base = objects[object].position;
     float time = (float)GetTime();
@@ -1000,25 +1013,21 @@ static void draw_aloe_guard(const UiTheme *ui, Texture2D texture, Object object,
     float sway = sinf(time * 1.7f) * 1.2f;
     const float height = 190.0f;
     const float width = height * (float)texture.width / (float)texture.height;
-    DrawEllipse((int)base.x, (int)(base.y + 4), 48, 9, Fade(ink, 0.32f));
     Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
     Rectangle destination = {base.x, base.y + bob, width, height};
     DrawTexturePro(texture, source, destination, (Vector2){width / 2, height}, sway, WHITE);
-    centered_text(ui, name, (int)base.x, (int)base.y + 10, 18, ink);
 }
 
-static void draw_sunflower_guard(const UiTheme *ui, Texture2D texture, Object object, const char *name)
+static void draw_sunflower_guard(Texture2D texture, Object object)
 {
     Vector2 base = objects[object].position;
     float time = (float)GetTime();
     float sway = sinf(time * 1.6f) * 1.0f;
-    const float height = 190.0f;
+    const float height = 174.0f;
     const float width = height * (float)texture.width / (float)texture.height;
-    DrawEllipse((int)base.x, (int)(base.y + 4), 28, 7, Fade(ink, 0.32f));
     Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
     Rectangle destination = {base.x, base.y, width, height};
     DrawTexturePro(texture, source, destination, (Vector2){width / 2, height}, sway, WHITE);
-    centered_text(ui, name, (int)base.x, (int)base.y + 10, 18, ink);
 }
 
 static void draw_room_portal(const UiTheme *ui, Object object, const char *label, bool locked)
@@ -1244,10 +1253,11 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
                 }
             }
             if (!world->maintenance_key) {
+                draw_boss_ground(assets->boss_ground,ALOE);
                 if (assets->aloe_guard.id)
-                    draw_aloe_guard(ui, assets->aloe_guard, ALOE, "Babosa guardiã");
+                    draw_aloe_guard(assets->aloe_guard, ALOE);
                 else
-                    draw_guard(ui, ALOE, "Babosa guardiã", (Color){73, 162, 120, 255});
+                    draw_guard(ALOE, (Color){73, 162, 120, 255});
             }
             break;
         case WORLD_BASEMENT:
@@ -1273,10 +1283,11 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
                 DrawRectangle(875, 284, 99, 194, Fade(DARKGREEN, 0.27f));
             }
             if (!world->guardian_defeated) {
+                draw_boss_ground(assets->boss_ground,SUNFLOWER);
                 if (assets->sunflower_guard.id)
-                    draw_sunflower_guard(ui, assets->sunflower_guard, SUNFLOWER, "Girassol guardião");
+                    draw_sunflower_guard(assets->sunflower_guard, SUNFLOWER);
                 else
-                    draw_guard(ui, SUNFLOWER, "Girassol guardião", GOLD);
+                    draw_guard(SUNFLOWER, GOLD);
             }
             if (!assets->nursery_interior.id)
                 draw_switch(ui, RELAY_PANEL, "Central de relés", world->guardian_defeated);
@@ -1490,8 +1501,8 @@ static const char *interaction_hint(const World *world, Object object)
         [NORTH_CHANNEL] = "Alternar canal norte",
         [SOUTH_CHANNEL] = "Alternar canal sul",
         [DRAIN] = "Alternar dreno",
-        [ALOE] = "Desafiar Babosa pela chave",
-        [SUNFLOWER] = "Desafiar Girassol",
+        [ALOE] = "Desafiar a Babosa Guardiã",
+        [SUNFLOWER] = "Desafiar o Girassol Guardião",
         [CANAL_NOTE] = "Registrar pista dos canais",
         [ALARM_NOTE] = "Ler bilhete da manutenção",
         [MAINTENANCE_DOOR] = "Entrar na casa de manutenção",
@@ -1527,7 +1538,7 @@ static Vector2 interaction_anchor(const World *world, Object object)
     static const Vector2 marker_anchors[OBJECT_COUNT] = {
         [VALVE]={1168, 615}, [POWER]={640, 301}, [ALARM]={433, 250},
         [NORTH_CHANNEL]={539, 274}, [SOUTH_CHANNEL]={742, 274}, [DRAIN]={733, 530},
-        [ALOE]={640, 222}, [SUNFLOWER]={640, 375}, [CANAL_NOTE]={1273, 360},
+        [ALOE]={640, 222}, [SUNFLOWER]={640, 238}, [CANAL_NOTE]={1273, 360},
         [ALARM_NOTE]={540, 273}, [MAINTENANCE_DOOR]={246, 574},
         [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
         [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},

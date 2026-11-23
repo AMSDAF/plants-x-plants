@@ -40,6 +40,7 @@ typedef struct {
     Texture2D interior_portal_foreground[WORLD_LOCATION_COUNT];
     Texture2D aloe_guard;
     Texture2D sunflower_guard;
+    Texture2D boss_ground;
 } WorldAssets;
 
 typedef struct {
