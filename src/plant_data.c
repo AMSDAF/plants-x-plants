@@ -33,10 +33,10 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
         "Girassol",
         240,65,40,34,
         {
-            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 100, 45, 10, 0),
-            DAMAGE_MOVE("Cabeçada", MOVE_CATEGORY_PHYSICAL, 40, 90, 40, 0),
+            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 40, 30, 20, 0),
+            DAMAGE_MOVE("Folha Navalha", MOVE_CATEGORY_RANGED, 40, 100, 10, 0),
             ATTRIBUTE_MOVE("Fotossíntese", MOVE_TARGET_SELF, MOVE_STAT_ATTACK,
-                           1.0f, 3.0f, MOVE_STAT_CHANGE_ADD_TO_CAP)
+                           0.25f, 1.5f, MOVE_STAT_CHANGE_ADD_TO_CAP)
         }
     },
     {SPECIES_ALOE, "Babosa", 275, 57, 60, 30,

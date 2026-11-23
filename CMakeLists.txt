@@ -37,6 +37,7 @@ set(BATTLE_SOURCES
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/relay_ui.c
     src/logic_setup_screen.c
     src/battle_screen_assets.c
 )
@@ -172,6 +173,14 @@ foreach(intro_target plants_x_plants selection_scene_check menu_screen_check
     endif()
 endforeach()
 
+# Áudio acompanha todos os alvos que usam o coordenador de telas.
+foreach(audio_target plants_x_plants selection_scene_check menu_screen_check
+        trainer_background_check name_entry_check exploration_hud_check)
+    if(TARGET ${audio_target})
+        target_sources(${audio_target} PRIVATE src/audio.c src/game_audio.c)
+    endif()
+endforeach()
+
 # A abertura usa os mesmos módulos do executável principal.
 get_target_property(INTRO_CHECK_SOURCES plants_x_plants SOURCES)
 list(REMOVE_ITEM INTRO_CHECK_SOURCES src/main.c)
@@ -196,4 +205,20 @@ add_executable(battle_check EXCLUDE_FROM_ALL
 target_include_directories(battle_check PRIVATE include)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(battle_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Central industrial com recursos reais e capturas OpenGL.
+add_executable(relay_ui_check EXCLUDE_FROM_ALL tools/check_relay_ui.c ${INTRO_CHECK_SOURCES})
+target_include_directories(relay_ui_check PRIVATE include)
+target_link_libraries(relay_ui_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(relay_ui_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Balanceamento reproduzível de bosses solo, sem janela nem golpe lógico do jogador.
+add_executable(boss_balance_check EXCLUDE_FROM_ALL tools/check_boss_balance.c
+    src/plant.c src/plant_data.c src/battle.c src/ai.c)
+target_include_directories(boss_balance_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(boss_balance_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()

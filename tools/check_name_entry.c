@@ -352,15 +352,15 @@ static void check_greenhouse(Game *game)
         assert(world_bridge_pressure(&sample) == pressures[row]);
         assert(world_bridge_open(&sample) == (row == 3 || row == 4));
     }
-    const unsigned int solution = (1u << 1) | (1u << 4) | (1u << 6) | (1u << 7);
+    const unsigned int solution = 2u;
     int solutions = 0;
     for (unsigned int mask = 0; mask < (1u << WORLD_RELAY_COUNT); mask++) {
         if (world_relays_match(mask)) {
-            assert(mask == solution);
+            assert((mask & 3u) != 0 && (mask & 4u) == 0);
             solutions++;
         }
     }
-    assert(solutions == 1 && !world_relays_match(solution | (1u << WORLD_RELAY_COUNT)));
+    assert(solutions == 3 && !world_relays_match(solution | (1u << WORLD_RELAY_COUNT)));
 
     World animated = {.dialogue_title="Teste", .dialogue_pages={"Água, pressão e luz.", NULL}};
     world_update_dialogue(&animated, 0.0125f);
@@ -456,7 +456,7 @@ static void check_greenhouse(Game *game)
     interact_at(game, 537, 281);
     assert(!world->alarm && world->alarm_note);
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Bilhete da manutenção") == 0);
-    assert(strstr(world->dialogue_pages[0], "SE D, ENTÃO C"));
+    assert(strstr(world->dialogue_pages[0], "NÃO C"));
     advance_dialogue(game, KEY_E);
     key(game, KEY_E); /* O bilhete continua legível depois de registrado. */
     assert(world->dialogue_title && world->alarm_note && !world->alarm);
@@ -564,7 +564,7 @@ static void check_greenhouse(Game *game)
     advance_dialogue(game, KEY_E);
     assert(world->dialogue_title && world->dialogue_page == 1);
     advance_dialogue(game, KEY_E);
-    assert(strstr(world->dialogue_pages[world->dialogue_page], "placa nos canais"));
+    assert(strstr(world->dialogue_pages[world->dialogue_page], "opcional"));
     advance_dialogue(game, KEY_E);
     walk_axis(game, true, 740);
     walk_axis(game, false, 375);
@@ -577,63 +577,58 @@ static void check_greenhouse(Game *game)
     walk_axis(game, true, 740);
     walk_axis(game, false, 375);
     interact_at(game, 782, 315);
+    for (int i = 0; i < RELAY_ART_COUNT; i++) assert(game->relay_assets.textures[i].id);
+    capture(game,target,"build/name_entry_preview/relays_stage_one.png");
     key(game, KEY_ENTER);
     assert(world->relay_panel_open && world->relay_rejected && world->relay_step == 0);
-    click(game, 289, 237); /* B satisfaz o primeiro XOR. */
-    key(game, KEY_ENTER);
-    assert(world->relay_step == 1 && !world->relay_rejected);
-    key(game, KEY_ENTER);
-    assert(world->relay_step == 2 && world->relay_attempts == 3);
-    key(game, KEY_ENTER);
-    assert(world->relay_step == 2 && world->relay_attempts == 3); /* Ainda falta a pista. */
-    key(game, KEY_ESCAPE);
-    interact_at(game, 640, 572);
-    assert(world->location == WORLD_EXTERIOR);
-    walk_axis(game, false, 419);
-    interact_at(game, 1271, 401);
-    assert(world->dialogue_title && strcmp(world->dialogue_title, "Placa dos canais") == 0);
-    assert(strstr(world->dialogue_pages[0], "E = (B XOR F)"));
-    advance_dialogue(game, KEY_E);
-    assert(world->canal_note);
-    walk_axis(game, false, 419);
-    approach_nursery(game);
-    assert(world->location == WORLD_NURSERY);
-    walk_axis(game, true, 740);
-    walk_axis(game, false, 375);
-    interact_at(game, 782, 315);
-    assert(world->relay_panel_open && !world->completed && world->relay_step == 2);
-    Vector2 before = game->player.feet;
-    key(game, KEY_D);
-    assert(game->player.feet.x == before.x && game->player.feet.y == before.y);
-    key(game, KEY_TWO); /* Quebra a primeira regra enquanto a terceira está visível. */
-    key(game, KEY_ENTER);
-    assert(world->relay_attempts == 4 && world->relay_rejected && world->relay_step == 0);
-    key(game, KEY_TWO);
-    key(game, KEY_SIX); /* B e F satisfazem as oito primeiras regras. */
-    for (int i = 0; i < WORLD_RELAY_RULE_COUNT - 1; i++) {
-        assert(world->relay_step == i && !world->completed);
-        key(game, KEY_ENTER);
-    }
-    key(game, KEY_ENTER);
-    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 1 && world->relay_rejected && !world->completed);
-    capture(game, target, "build/name_entry_preview/greenhouse_relays.png");
-    key(game, KEY_SIX);
-    key(game, KEY_FIVE);
-    key(game, KEY_SEVEN);
-    key(game, KEY_EIGHT);
-    key(game, KEY_LEFT);
-    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 2);
+    key(game,KEY_THREE); /* C está disponível, mas não interfere no objetivo A. */
+    assert(world->relay_mask == 4);
+    click(game,335,468); key(game,KEY_ENTER);
+    assert(world->relay_step == 1 && world->relay_mask == 0 && !world->relay_rejected);
+    capture(game,target,"build/name_entry_preview/relays_stage_two.png");
+    key(game,KEY_ENTER);
+    assert(world->relay_step == 1 && world->relay_rejected);
+    key(game,KEY_RIGHT); key(game,KEY_SPACE);
+    assert(world->relay_cursor == 1 && world->relay_mask == 2u);
+    key(game,KEY_SPACE);
+    assert(world->relay_mask == 0);
+    key(game,KEY_ONE); key(game,KEY_ENTER);
+    assert(world->relay_step == 1 && world->relay_rejected); /* A sozinho não satisfaz E. */
+    key(game,KEY_TWO); key(game,KEY_ENTER);
+    assert(world->relay_step == 2 && world->relay_mask == 0 && world->relay_attempts == 5);
+    assert(!world->canal_note); /* A pista é opcional, não bloqueia o avanço. */
+    key(game,KEY_LEFT);
+    assert(world->relay_step == 2); /* Acertos anteriores não precisam ser refeitos. */
+    key(game,KEY_THREE); key(game,KEY_ENTER);
+    assert(world->relay_step == 2 && world->relay_rejected && !world->completed);
+    capture(game,target,"build/name_entry_preview/greenhouse_relays.png");
+    capture_native(game,"build/name_entry_preview/relays_stage_three_1080p.png");
+    RelayUiAssets saved_relay_assets = game->relay_assets;
+    game->relay_assets = (RelayUiAssets){0};
+    capture(game,target,"build/name_entry_preview/relays_missing_assets.png");
+    game->relay_assets = saved_relay_assets;
+    key(game,KEY_THREE); key(game,KEY_TWO);
     unsigned int attempts = world->relay_attempts;
-    key(game, KEY_ESCAPE);
-    assert(game->screen == GAME_EXPLORATION && !world->relay_panel_open);
-    key(game, KEY_E);
-    assert(world->relay_panel_open && world->relay_mask == solution && world->relay_attempts == attempts);
-    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 2);
-    key(game, KEY_ENTER);
-    assert(world->relay_step == WORLD_RELAY_RULE_COUNT - 1 && !world->completed);
-    click(game, 232, 615);
-    assert(world->completed);
-    assert(!world->relay_panel_open && world->relay_attempts == attempts + 2);
+    key(game,KEY_ESCAPE);
+    interact_at(game,640,572);
+    assert(world->location == WORLD_EXTERIOR);
+    walk_axis(game,false,419);
+    interact_at(game,1271,401);
+    assert(world->dialogue_title && strcmp(world->dialogue_title,"Placa dos canais") == 0);
+    assert(strstr(world->dialogue_pages[0],"OU"));
+    advance_dialogue(game,KEY_E);
+    assert(world->canal_note);
+    walk_axis(game,false,419);
+    approach_nursery(game);
+    walk_axis(game,true,740); walk_axis(game,false,375);
+    interact_at(game,782,315);
+    assert(world->relay_panel_open && world->relay_step == 2 && !world->completed);
+    assert(world->relay_mask == solution && world->relay_attempts == attempts);
+    Vector2 before = game->player.feet;
+    key(game,KEY_D);
+    assert(game->player.feet.x == before.x && game->player.feet.y == before.y);
+    click(game,1060,653);
+    assert(world->completed && !world->relay_panel_open && world->relay_attempts == attempts+1);
     assert(world->dialogue_title && strcmp(world->dialogue_title, "Íris") == 0);
     assert(strstr(world->dialogue_pages[0], game->campaign.player_name));
     assert(strstr(world->dialogue_pages[0], "Obrigada"));
@@ -770,7 +765,9 @@ int main(int argc, char **argv)
         game.screen=GAME_TRAINER_SELECT;
         capture(&game,target,TextFormat("build/name_entry_preview/selection_end_%d.ppm",gender));
     }
-    UnloadRenderTexture(target); game_shutdown(&game); CloseWindow();
+    UnloadRenderTexture(target); game_shutdown(&game);
+    for (int i = 0; i < RELAY_ART_COUNT; i++) assert(!game.relay_assets.textures[i].id);
+    CloseWindow();
     puts("PASS: UTF-8/acentos, 12 codepoints, Backspace multibyte/repetido, nomes vazios, foco, fila nativa, descarte, entrada mantida, sessão, rascunho, dois sentidos/personagens e desenho imutável.");
     return 0;
 }

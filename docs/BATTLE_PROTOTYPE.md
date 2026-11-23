@@ -218,3 +218,6 @@ trocas, derrota, substituição pela IA, vitória e restauração. `name_entry_c
 percorre a campanha com guardiões e progresso. `menu_screen_check` confere a
 entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerramento.
 O modo de batalha independente e seus recursos exclusivos foram removidos.
+
+O balanceamento dos guardiões é conferido por `boss_balance_check`; metodologia
+e comparação em [BOSS_BALANCE.md](BOSS_BALANCE.md).
