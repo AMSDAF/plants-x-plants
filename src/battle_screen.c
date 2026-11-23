@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 static const Color ink = {28, 58, 46, 255};
 static const Color paper = {253, 245, 216, 255};

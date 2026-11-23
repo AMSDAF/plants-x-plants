@@ -54,7 +54,7 @@ GameAudioSnapshot game_audio_capture(const Game *game)
         .logic_dropdown = logic->dropdown,
         .logic_option = logic->option,
         .logic_confirmed = logic->confirmed_mask,
-        .logic_rejected = logic->rejected_mask,
+        .logic_wrong_answers = logic->wrong_answer_count,
         .pending_action = screen->pending_action,
         .battle_menu = screen->menu,
         .battle_cursor = screen->menu_cursor,
@@ -133,7 +133,8 @@ static void react_steps(GameAudio *audio, const GameAudioSnapshot *before, const
 static void react_logic_setup(GameAudio *audio, const GameAudioSnapshot *before, const Game *game)
 {
     const LogicSetupScreen *logic = &game->logic_setup;
-    if (logic->rejected_mask & ~before->logic_rejected) audio_play(audio, SFX_UI_INVALID);
+    if (logic->wrong_answer_count != before->logic_wrong_answers)
+        audio_play(audio, SFX_UI_INVALID);
     else if (logic->confirmed_mask & ~before->logic_confirmed) audio_play(audio, SFX_UI_CONFIRM);
     else if (logic->selected != before->logic_selected || logic->focus != before->logic_focus ||
              logic->dropdown != before->logic_dropdown || logic->option != before->logic_option)
