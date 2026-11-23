@@ -237,7 +237,7 @@ static void apply_turn_statuses(BattleState *battle, int side, int plant_index)
     if (plant->ability_turn_count != 0) return;
 
     if (plant->id == SPECIES_SUNFLOWER) {
-        int healed = heal_plant(plant, 8);
+        int healed = heal_plant(plant, 15);
         if (healed > 0) {
             char message[96];
             snprintf(message, sizeof(message), "Girassol recuperou %d de vida.", healed);
