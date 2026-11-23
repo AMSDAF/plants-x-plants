@@ -21,6 +21,9 @@ int main(void)
         return 1;
     }
 
+    /* Sem dispositivo de áudio, o jogo segue em silêncio. */
+    InitAudioDevice();
+
     SetTargetFPS(GAME_TARGET_FPS);
 
     /* O fechamento por ESC sera tratado pelo estado do jogo. */
@@ -28,6 +31,7 @@ int main(void)
 
     GameCanvas canvas = {0};
     if (!game_canvas_resize(&canvas, GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight())) {
+        CloseAudioDevice();
         CloseWindow();
         return 1;
     }
@@ -55,6 +59,7 @@ int main(void)
 
     game_shutdown(&game);
     game_canvas_unload(&canvas);
+    CloseAudioDevice();
     CloseWindow();
 
     return result;

@@ -2,6 +2,7 @@
 #include "game.h"
 #include "ui_theme.h"
 #include "plant_data.h"
+#include "game_audio.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -100,6 +101,7 @@ void game_init(Game *game)
     *game = (Game){0};
     for (int i = 0; i < MAX_TEAM_SIZE; i++) game->campaign.boosted_move_indices[i] = -1;
     ui_theme_load(&game->ui);
+    audio_init(&game->audio);
     srand((unsigned int)time(NULL));
     menu_screen_init(&game->menu);
     player_assets_load(&game->player_assets);
@@ -113,7 +115,7 @@ void game_init(Game *game)
     player_init(&game->player, TRAINER_MALE, world_spawn());
 }
 
-void game_update(Game *game)
+static void update_screens(Game *game)
 {
     if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT ||
         game->screen == GAME_NAME_ENTRY || game->screen == GAME_BATTLE ||
@@ -227,6 +229,14 @@ void game_update(Game *game)
     }
 }
 
+/* Compara o estado antes e depois das telas para escolher sons sem alterar regras. */
+void game_update(Game *game)
+{
+    GameAudioSnapshot before = game_audio_capture(game);
+    update_screens(game);
+    game_audio_react(game, &before);
+}
+
 void game_draw(const Game *game)
 {
     const UiTheme *ui = &game->ui;
@@ -269,6 +279,7 @@ void game_draw(const Game *game)
 
 void game_shutdown(Game *game)
 {
+    audio_shutdown(&game->audio);
     ui_theme_unload(&game->ui);
     world_assets_unload(&game->world_assets);
     player_assets_unload(&game->player_assets);
