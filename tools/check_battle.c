@@ -138,10 +138,52 @@ static void check_logic_conditions(void)
     assert(!Battle_EvaluatePlantFormula(&battle,0,0,defense_formula).right);
 }
 
+/* Hospedeiro acompanha a afetada, mas some quando a planta que o aplicou cai. */
+static void check_host_lifetime(void)
+{
+    Team player = {0}, enemy = {0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_ORCHID));
+    assert(Team_SelectSpecies(&player,1,SPECIES_CLOVER));
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_CACTUS));
+    assert(Team_SelectSpecies(&enemy,1,SPECIES_CLOVER));
+    BattleState battle;
+    Battle_Init(&battle,player,enemy);
+    int source = battle.player_team.active_index;
+    int victim = battle.enemy_team.active_index;
+    int source_side = -1, source_index = -1;
+    assert(Battle_ApplyStatusFrom(&battle,0,source,1,victim,
+                                  PLANT_STATUS_HOST,0,1.0f));
+    assert(Plant_HasStatus(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST));
+    assert(Plant_GetStatusSource(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST,
+                                 &source_side,&source_index));
+    assert(source_side == 0 && source_index == source);
+
+    battle.current_turn = 1;
+    assert(Battle_SwitchPlant(&battle,1-victim));
+    assert(battle.enemy_team.active_index == 1-victim);
+    assert(Plant_HasStatus(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST));
+
+    battle.current_turn = 0;
+    assert(Battle_SwitchPlant(&battle,1-source));
+    assert(battle.player_team.active_index == 1-source);
+    assert(Plant_HasStatus(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST));
+
+    battle.enemy_team.plants[1-victim].current_hp = 0;
+    Battle_CheckConditions(&battle);
+    assert(Plant_HasStatus(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST));
+
+    battle.player_team.plants[source].current_hp = 0;
+    Battle_CheckConditions(&battle);
+    assert(!Plant_HasStatus(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST));
+    assert(!Plant_GetStatusSource(&battle.enemy_team.plants[victim],PLANT_STATUS_HOST,
+                                  &source_side,&source_index));
+}
+
 int main(void)
 {
     check_refreshed_rules();
     check_logic_conditions();
+    check_host_lifetime();
     /* Um guardião sozinho encerra a luta ao cair, sem pedir reserva. */
     for (int id = SPECIES_SUNFLOWER; id <= SPECIES_ALOE; id++) {
         Team players = {0}, boss = {0};
@@ -264,6 +306,6 @@ int main(void)
     assert(battle.enemy_team.active_index == 0);
     for (int i = 0; i < battle.enemy_team.count; i++)
         assert(battle.enemy_team.plants[i].current_hp == battle.enemy_team.plants[i].max_hp);
-    puts("PASS: 8 especies, 6 iniciais sem bosses, atributos/golpes, IDs invalidos, equipes, acoes invalidas, trocas, derrota, substituicao pela IA, vitoria e restauracao.");
+    puts("PASS: 8 especies, 6 iniciais sem bosses, atributos/golpes, IDs invalidos, equipes, acoes invalidas, trocas, origem de Hospedeiro, derrota, substituicao pela IA, vitoria e restauracao.");
     return 0;
 }

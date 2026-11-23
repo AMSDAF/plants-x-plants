@@ -467,13 +467,32 @@ int Battle_GetMovePower(const BattleState *battle, int side, int move_index)
 int Battle_ApplyStatus(BattleState *battle, int side, int plant_index,
                        PlantStatusType type, int remaining_turns, float value)
 {
-    if (!battle || battle->state != BATTLE_STATE_ONGOING || side < 0 || side > 1)
+    return Battle_ApplyStatusFrom(battle, -1, -1, side, plant_index,
+                                  type, remaining_turns, value);
+}
+
+int Battle_ApplyStatusFrom(BattleState *battle, int source_side, int source_plant_index,
+                           int target_side, int target_plant_index,
+                           PlantStatusType type, int remaining_turns, float value)
+{
+    if (!battle || battle->state != BATTLE_STATE_ONGOING ||
+        target_side < 0 || target_side > 1)
         return 0;
-    Team *team = side == 0 ? &battle->player_team : &battle->enemy_team;
-    if (plant_index < 0 || plant_index >= team->count ||
-        !Plant_IsAlive(&team->plants[plant_index]))
+    Team *target_team = team_for_side(battle, target_side);
+    if (target_plant_index < 0 || target_plant_index >= target_team->count ||
+        !Plant_IsAlive(&target_team->plants[target_plant_index]))
         return 0;
-    return Plant_AddStatus(&team->plants[plant_index], type, remaining_turns, value);
+    if (source_side >= 0) {
+        if (source_side > 1 || source_plant_index < 0) return 0;
+        Team *source_team = team_for_side(battle, source_side);
+        if (source_plant_index >= source_team->count ||
+            !Plant_IsAlive(&source_team->plants[source_plant_index]))
+            return 0;
+    } else if (source_plant_index >= 0) {
+        return 0;
+    }
+    return Plant_AddStatusFrom(&target_team->plants[target_plant_index], type,
+                               remaining_turns, value, source_side, source_plant_index);
 }
 
 int Battle_SkipParalyzedTurn(BattleState *battle)
@@ -662,9 +681,9 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
         if (Plant_HasStatus(defender, PLANT_STATUS_HOST)) {
             append_status_message(battle, "O adversário já está com Hospedeiro.");
         } else if (rand() % 100 < 40 &&
-                   Battle_ApplyStatus(battle, 1 - acting_side,
-                                      defender_team->active_index,
-                                      PLANT_STATUS_HOST, 0, 1.0f)) {
+                   Battle_ApplyStatusFrom(battle, acting_side, acting_plant_index,
+                                          1 - acting_side, defender_team->active_index,
+                                          PLANT_STATUS_HOST, 0, 1.0f)) {
             append_status_message(battle, "Orquídea aplicou Hospedeiro.");
         } else {
             append_status_message(battle, "Orquídea não aplicou Hospedeiro desta vez.");
@@ -717,10 +736,8 @@ int Battle_SwitchPlant(BattleState *battle, int plant_index)
     }
     int acting_side = battle->current_turn;
     int outgoing_index = team->active_index;
-    if (outgoing_index >= 0 && outgoing_index < team->count) {
+    if (outgoing_index >= 0 && outgoing_index < team->count)
         restore_temporary_stats(&team->plants[outgoing_index]);
-        Plant_RemoveStatus(&team->plants[outgoing_index], PLANT_STATUS_HOST);
-    }
     team->active_index = plant_index;
     snprintf(battle->last_message, sizeof(battle->last_message),
              "%s entrou em campo!", team->plants[plant_index].name_pt);
@@ -744,8 +761,29 @@ int Battle_SwitchPlant(BattleState *battle, int plant_index)
     return 1;
 }
 
+/* Hospedeiro só termina quando a planta que o aplicou é derrotada. */
+static void clear_host_from_fallen_source(BattleState *battle)
+{
+    for (int target_side = 0; target_side < 2; target_side++) {
+        Team *target_team = team_for_side(battle, target_side);
+        for (int index = 0; index < target_team->count; index++) {
+            Plant *target = &target_team->plants[index];
+            int source_side = -1, source_index = -1;
+            if (!Plant_GetStatusSource(target, PLANT_STATUS_HOST,
+                                       &source_side, &source_index))
+                continue;
+            if (source_side < 0 || source_index < 0) continue;
+            Team *source_team = team_for_side(battle, source_side);
+            if (source_index >= source_team->count ||
+                !Plant_IsAlive(&source_team->plants[source_index]))
+                Plant_RemoveStatus(target, PLANT_STATUS_HOST);
+        }
+    }
+}
+
 void Battle_CheckConditions(BattleState *battle)
 {
+    clear_host_from_fallen_source(battle);
     if (!Team_HasLivingPlants(&battle->enemy_team)) {
         battle->state = BATTLE_STATE_PLAYER_WIN;
     } else if (!Team_HasLivingPlants(&battle->player_team)) {

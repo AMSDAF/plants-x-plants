@@ -856,8 +856,8 @@ static void status_overlay(const BattleView *view, const BattleState *battle)
             text_wrap(view,effects,(Rectangle){x+12,card.y+58,524,65},20,ink);
         }
     }
-    text(view,"Hospedeiro: 1/16 da vida máxima do afetado por turno; esse dano cura a planta ativa adversária.",
-         76,672,16,ink);
+    text_wrap(view,"Hospedeiro: 1/16 da vida máxima do afetado por turno; esse dano cura a planta ativa adversária e o efeito só termina quando a aplicadora cai.",
+              (Rectangle){76,668,1128,32},16,ink);
 }
 
 static const char *pending_message(const BattleScreen *screen)

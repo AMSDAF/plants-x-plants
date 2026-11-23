@@ -141,7 +141,7 @@ de veneno, queimadura ou captura, nem balanceamento final.
 | Arquivo | Responsabilidade |
 |---|---|
 | `include/battle.h` | Definir o estado da batalha, as ações disponíveis e as funções de combate. |
-| `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, resolver as duas ações da rodada por velocidade e identificar o vencedor. |
+| `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, resolver as duas ações da rodada por velocidade, rastrear a origem de Hospedeiro e identificar o vencedor. |
 
 Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a interface já impede uma escolha inválida.
 

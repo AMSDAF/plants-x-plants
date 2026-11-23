@@ -161,8 +161,9 @@ disponíveis são Veneno, Queimadura, Sorte, Paralisado, Hospedeiro e buffs de
 velocidade, ataque, defesa e precisão. Ao fim do turno da planta ativa, Veneno
 causa dano igual a 1/8 da vida máxima e Queimadura causa 1/16. Hospedeiro causa
 1/16 da vida máxima em dano e cura a planta ativa adversária pela quantidade de
-vida efetivamente perdida; o efeito é removido quando a planta afetada volta
-à reserva. Paralisado bloqueia ataque e troca e consome a próxima ação da planta
+vida efetivamente perdida; o efeito permanece na planta afetada mesmo quando ela
+volta à reserva e só termina quando a planta que o aplicou é derrotada.
+Paralisado bloqueia ataque e troca e consome a próxima ação da planta
 afetada, independentemente de qual lado esteja jogando; então o efeito acaba.
 A aplicação guarda duração em turnos e um valor:
 `PLANT_STATUS_LUCK` usa 2,0 para dobrar a chance crítica quando esse efeito for

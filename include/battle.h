@@ -76,6 +76,10 @@ int Battle_GetCriticalChance(const Plant *attacker, const Move *move);
 int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int move_index);
 int Battle_ApplyStatus(BattleState *battle, int side, int plant_index,
                        PlantStatusType type, int remaining_turns, float value);
+/* Aplica um efeito registrando qual planta o originou, como exige Hospedeiro. */
+int Battle_ApplyStatusFrom(BattleState *battle, int source_side, int source_plant_index,
+                           int target_side, int target_plant_index,
+                           PlantStatusType type, int remaining_turns, float value);
 int Battle_SkipParalyzedTurn(BattleState *battle);
 int Battle_ExecuteMove(BattleState *battle, int move_index);
 int Battle_CanSwitch(const BattleState *battle, int plant_index);
