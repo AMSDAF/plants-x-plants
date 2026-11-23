@@ -39,7 +39,7 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
         45,
         38,
         {
-            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 50, 90, 20, 0),
+            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 40, 30, 20, 0),
             DAMAGE_MOVE("Folha Navalha", MOVE_CATEGORY_RANGED, 40, 100, 10, 0),
             ATTRIBUTE_MOVE("Fotossíntese", MOVE_TARGET_SELF, MOVE_STAT_ATTACK,
                            1.0f, 3.0f, MOVE_STAT_CHANGE_ADD_TO_CAP)
