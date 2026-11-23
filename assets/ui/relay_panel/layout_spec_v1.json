@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "status": "integrado_v0",
+  "viewport": [
+    1280,
+    720
+  ],
+  "reference": "assets/ui/relay_panel/approved_reference_v1.png",
+  "modal": [
+    56,
+    38,
+    1168,
+    654
+  ],
+  "title": [
+    120,
+    59,
+    1040,
+    55
+  ],
+  "subtitle": [
+    120,
+    114,
+    1040,
+    28
+  ],
+  "progress": {
+    "bounds": [
+      [
+        205,
+        145,
+        280,
+        44
+      ],
+      [
+        500,
+        145,
+        280,
+        44
+      ],
+      [
+        795,
+        145,
+        280,
+        44
+      ]
+    ],
+    "interactive": false,
+    "states_pt": "Concluída: centro verde; atual: âmbar; futura: marfim."
+  },
+  "stage_caption": [
+    120,
+    192,
+    1040,
+    24
+  ],
+  "objective": [
+    150,
+    228,
+    980,
+    124
+  ],
+  "relay_cards": {
+    "three": [
+      [
+        195,
+        370,
+        280,
+        196
+      ],
+      [
+        500,
+        370,
+        280,
+        196
+      ],
+      [
+        805,
+        370,
+        280,
+        196
+      ]
+    ],
+    "two": [
+      [
+        195,
+        370,
+        280,
+        196
+      ],
+      [
+        500,
+        370,
+        280,
+        196
+      ],
+      [
+        805,
+        370,
+        280,
+        196
+      ]
+    ],
+    "one": [
+      [
+        195,
+        370,
+        280,
+        196
+      ],
+      [
+        500,
+        370,
+        280,
+        196
+      ],
+      [
+        805,
+        370,
+        280,
+        196
+      ]
+    ],
+    "control_relative": [
+      72,
+      47,
+      136,
+      82
+    ],
+    "fit": "contain com proporção preservada",
+    "content_pt": "Título Relé A/B/C, sprite ligado/desligado, estado e tecla são compostos dinamicamente.",
+    "visibility_pt": "A, B e C visíveis e interativos nas três etapas, sempre nas mesmas posições."
+  },
+  "hint": [
+    100,
+    584,
+    820,
+    26
+  ],
+  "attempts": [
+    960,
+    584,
+    220,
+    26
+  ],
+  "footer": {
+    "separator_y": 619,
+    "close": [
+      100,
+      631,
+      210,
+      44
+    ],
+    "instructions": [
+      350,
+      641,
+      550,
+      25
+    ],
+    "validate": [
+      940,
+      631,
+      240,
+      44
+    ]
+  },
+  "palette": {
+    "ink": "#18341E",
+    "ivory": "#F7EFE3",
+    "steel_light": "#C7D8E0",
+    "steel": "#667F8D",
+    "steel_dark": "#293F48",
+    "selected": "#D6E5AA",
+    "current": "#F5BD42"
+  },
+  "runtime_pt": [
+    "Desenhar o cenário atual e aplicar escurecimento; não carregar outro fundo para o modal.",
+    "Textos, letras, números, fórmula, feedback e tentativas ficam no código, com Pixelify no tamanho físico.",
+    "Os três relés são sempre visíveis e interativos; cada etapa avalia apenas sua própria expressão.",
+    "O progresso superior não é navegação: não reabrir desafios concluídos.",
+    "Hover e foco usam o cursor atual e contorno âmbar; o estado ligado usa centro verde.",
+    "Os limites de desenho e entrada são compartilhados por world_relay_bounds e pelos limites públicos dos botões."
+  ]
+}

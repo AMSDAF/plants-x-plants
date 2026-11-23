@@ -108,6 +108,7 @@ void game_init(Game *game)
     trainer_select_assets_load(&game->trainer_select_assets);
     intro_assets_load(&game->intro_assets);
     battle_screen_assets_load(&game->battle_assets);
+    relay_ui_load(&game->relay_assets);
     world_init(&game->world);
     world_assets_load(&game->world_assets);
     trainer_select_screen_init(&game->trainer_select);
@@ -119,7 +120,7 @@ static void update_screens(Game *game)
 {
     if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT ||
         game->screen == GAME_NAME_ENTRY || game->screen == GAME_BATTLE ||
-        (game->screen == GAME_EXPLORATION && game->world.logic_quiz_open)) {
+        (game->screen == GAME_EXPLORATION && (game->world.logic_quiz_open || game->world.relay_panel_open))) {
         float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
         selection_ui_update_fonts(&game->trainer_select_assets.ui, scale);
     }
@@ -269,6 +270,8 @@ void game_draw(const Game *game)
             world_draw_npcs(&game->world, &game->world_assets, game->player.feet, camera, true);
             EndMode2D();
             world_draw_interface(ui, &game->world, game->player.feet);
+            if (game->world.relay_panel_open)
+                relay_ui_draw(ui,&game->trainer_select_assets.ui,&game->relay_assets,&game->world);
             if (game->world.logic_quiz_open)
                 logic_setup_draw(ui,&game->trainer_select_assets.ui,&game->intro_assets,
                     &game->logic_setup,&game->campaign.team,game->world.logic_move_mask);
@@ -286,5 +289,6 @@ void game_shutdown(Game *game)
     trainer_select_assets_unload(&game->trainer_select_assets);
     intro_assets_unload(&game->intro_assets);
     battle_screen_assets_unload(&game->battle_assets);
+    relay_ui_unload(&game->relay_assets);
     menu_screen_shutdown(&game->menu);
 }

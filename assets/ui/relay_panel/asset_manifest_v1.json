@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "status": "integrado_v0",
+  "alpha_threshold_for_measurement": 128,
+  "assets": {
+    "panel_frame_v1": {
+      "file": "assets/ui/relay_panel/panel_frame_v1.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "f028177a94258263fcf3cc3c637a4ed5569deff0c0a408e25860383f073cf6db",
+      "source_xywh_px": [
+        80,
+        97,
+        1376,
+        828
+      ],
+      "visible_alpha128_xywh_px": [
+        80,
+        97,
+        1376,
+        828
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "role": "skin",
+      "nine_slice_insets_px": {
+        "left": 72,
+        "top": 72,
+        "right": 72,
+        "bottom": 72
+      }
+    },
+    "button_frame_v1": {
+      "file": "assets/ui/relay_panel/button_frame_v1.png",
+      "size_px": [
+        2172,
+        724
+      ],
+      "mode": "RGBA",
+      "sha256": "28574ca83756a2e902a2ff7ac7d80975ba9e4823e8d321388d98013db741f4ba",
+      "source_xywh_px": [
+        186,
+        210,
+        1800,
+        303
+      ],
+      "visible_alpha128_xywh_px": [
+        186,
+        210,
+        1800,
+        303
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "role": "skin",
+      "nine_slice_insets_px": {
+        "left": 120,
+        "top": 70,
+        "right": 120,
+        "bottom": 70
+      }
+    },
+    "switch_on_v1": {
+      "file": "assets/ui/relay_panel/switch_on_v1.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "cac2e3512f6986fad068feffa2ee34e98091cfed7c99dfb0500ae3bc2f4c2181",
+      "source_xywh_px": [
+        542,
+        303,
+        429,
+        409
+      ],
+      "visible_alpha128_xywh_px": [
+        543,
+        304,
+        428,
+        408
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "role": "control",
+      "registration_pt": "Mesmo recorte e destino nos dois estados; não ajustar o enquadramento por estado."
+    },
+    "switch_off_v1": {
+      "file": "assets/ui/relay_panel/switch_off_v1.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "f147f14ec4219fc9483614ccd3d384e13ec6ef6ec3f3a54f0bd07a20efa599e3",
+      "source_xywh_px": [
+        542,
+        303,
+        429,
+        409
+      ],
+      "visible_alpha128_xywh_px": [
+        542,
+        303,
+        428,
+        409
+      ],
+      "alpha_range": [
+        0,
+        254
+      ],
+      "role": "control",
+      "registration_pt": "Mesmo recorte e destino nos dois estados; não ajustar o enquadramento por estado."
+    },
+    "approved_reference_v1": {
+      "file": "assets/ui/relay_panel/approved_reference_v1.png",
+      "size_px": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "sha256": "bb7ee46bbae3af2d61b89d8257ad9ec7557eeaed2cde2ea745958dd411ee7c94",
+      "source_xywh_px": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "visible_alpha128_xywh_px": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "alpha_range": [
+        255,
+        255
+      ],
+      "role": "reference"
+    }
+  },
+  "reuse": {
+    "font": "assets/fonts/pixelify_sans_regular.ttf",
+    "font_license": "assets/fonts/PIXELIFY_OFL.txt",
+    "cursor": "assets/ui/plant_selection/cursor_v1.png",
+    "background": "Cenário atual do viveiro, desenhado por WorldAssets."
+  },
+  "notes_pt": [
+    "Fontes PNG preservadas sem recorte, redimensionamento ou edição.",
+    "Há resíduos suaves de alfa baixo na área externa; usar os recortes explícitos para excluir as margens e POINT no desenho.",
+    "Não usar o alfa quase nulo para recalcular o enquadramento em tempo de execução.",
+    "Moldura de painel serve ao modal, objetivo e cards, com cantos preservados em nove partes.",
+    "Estados verde, âmbar e foco são camadas dinâmicas; colorir somente o centro, preservando o aço.",
+    "Interruptor e lâmpada estão juntos em cada sprite; não exigem seis texturas ou uma imagem por letra."
+  ]
+}

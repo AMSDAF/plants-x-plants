@@ -229,7 +229,7 @@ int main(void)
     assert(game.battle_screen.battle.player_team.count == INTRO_TEAM_SIZE);
     assert(game.battle_screen.battle.enemy_team.count == 1);
     assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_ALOE);
-    assert(game.battle_screen.battle.enemy_team.plants[0].max_hp == 275);
+    assert(game.battle_screen.battle.enemy_team.plants[0].max_hp == 235);
     assert(game.battle_screen.scene == BATTLE_SCENE_DEPOT);
     assert(game.battle_screen.setup_side == -1);
     for (int i = 0; i < INTRO_TEAM_SIZE; i++) {

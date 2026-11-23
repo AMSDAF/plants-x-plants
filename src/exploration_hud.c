@@ -1,4 +1,4 @@
-/* Desenha objetivo, pistas e interação centralizada, sem modificar o mundo. */
+/* Desenha objetivo e interação centralizada, sem modificar o mundo. */
 #include "exploration_hud.h"
 #include "game_view.h"
 #include <math.h>
@@ -88,7 +88,7 @@ static void draw_prompt(const UiTheme *ui, const HudInteraction *interaction, Ca
 }
 
 void exploration_hud_draw(const UiTheme *ui, const char *location, const char *objective,
-                          int clues, const HudInteraction *interaction, Camera2D camera)
+                          const HudInteraction *interaction, Camera2D camera)
 {
     Font font = ui_pixel_font(ui);
     float objective_width = ceilf(MeasureTextEx(font, objective, 28, 0).x);
@@ -99,11 +99,5 @@ void exploration_hud_draw(const UiTheme *ui, const char *location, const char *o
     DrawTextEx(font, location, (Vector2){56,31}, 20, 0, text_color);
     ui_text_wrap_font(font, objective, (Rectangle){56,60,width-72,height-56}, 28, text_color);
 
-    Rectangle counter = {GAME_SCREEN_WIDTH-224,18,204,72};
-    ui_botanical_panel(ui, counter);
-    DrawTextEx(font, "Pistas", (Vector2){counter.x+30,counter.y+21}, 22, 0, text_color);
-    const char *count = TextFormat("%d/2", clues);
-    float count_width = ceilf(MeasureTextEx(font, count, 28, 0).x);
-    DrawTextEx(font, count, (Vector2){counter.x+counter.width-32-count_width,counter.y+17}, 28, 0, text_color);
     draw_prompt(ui, interaction, camera);
 }

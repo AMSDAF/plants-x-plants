@@ -198,10 +198,9 @@ static const Color cream = {249, 240, 205, 255};
 static const Color stone = {220, 209, 165, 255};
 static const Color water_color = {58, 145, 164, 255};
 static const Color path_edge = {139, 123, 87, 255};
-static const Rectangle validate_relays = {82, 596, 350, 48};
-static const Rectangle previous_relay_rule = {449, 596, 248, 48};
-static const Rectangle close_relays = {714, 596, 218, 48};
-enum { CANAL_RELAY_RULE = 2, ALARM_RELAY_RULE = 7, ROOM_HEADER_HEIGHT = 69 };
+static const Rectangle validate_relays = {940, 631, 240, 44};
+static const Rectangle close_relays = {100, 631, 210, 44};
+enum { ROOM_HEADER_HEIGHT = 69 };
 enum { NORTH_PRESSURE = 3, SOUTH_PRESSURE = 5, DRAIN_PRESSURE = 2, BRIDGE_TARGET_PRESSURE = 3 };
 
 typedef struct {
@@ -421,82 +420,65 @@ static bool relay_on(unsigned int mask, int index)
     return (mask & (1u << index)) != 0;
 }
 
-static int active_relays(unsigned int mask)
+/* Cada etapa é independente: ligar, combinar E e combinar OU com NÃO. */
+static bool relay_stage_matches(unsigned int mask, int step)
 {
-    int count = 0;
-    for (int i = 0; i < WORLD_RELAY_COUNT; i++)
-        count += relay_on(mask, i);
-    return count;
-}
-
-static int first_failed_relay_rule(unsigned int mask, int last_rule)
-{
-    bool a = relay_on(mask, 0), b = relay_on(mask, 1);
-    bool c = relay_on(mask, 2), d = relay_on(mask, 3);
-    bool e = relay_on(mask, 4), f = relay_on(mask, 5);
-    bool g = relay_on(mask, 6), h = relay_on(mask, 7);
-
-    const bool matches[WORLD_RELAY_RULE_COUNT] = {
-        a != b, c == (a && d), e == (b != f),
-        g == (c || e), h == (d != g), !f || !h,
-        !a || h, !d || c, active_relays(mask) == 4
-    };
-    for (int i = 0; i <= last_rule; i++)
-        if (!matches[i]) return i;
-    return -1;
+    if (step < 0 || step >= WORLD_RELAY_RULE_COUNT || mask >= (1u << WORLD_RELAY_COUNT)) return false;
+    bool a = relay_on(mask,0), b = relay_on(mask,1), c = relay_on(mask,2);
+    if (step == 0) return a;
+    if (step == 1) return a && b;
+    return (a || b) && !c;
 }
 
 bool world_relays_match(unsigned int mask)
 {
-    return mask < (1u << WORLD_RELAY_COUNT) &&
-           first_failed_relay_rule(mask, WORLD_RELAY_RULE_COUNT - 1) < 0;
+    return relay_stage_matches(mask,WORLD_RELAY_RULE_COUNT-1);
 }
 
-static Rectangle relay_button(int index)
+/* Os mesmos limites servem à entrada e ao desenho industrial. */
+Rectangle world_relay_bounds(int index)
 {
-    return (Rectangle){82 + 142 * index, 193, 130, 87};
+    return (Rectangle){195+305*index,370,280,196};
 }
+
+Rectangle world_relay_close_bounds(void) { return close_relays; }
+Rectangle world_relay_validate_bounds(void) { return validate_relays; }
 
 static bool clicked(Rectangle bounds)
 {
     return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), bounds);
 }
 
-static bool relay_clue_available(const World *world)
-{
-    if (world->relay_step == CANAL_RELAY_RULE) return world->canal_note;
-    if (world->relay_step == ALARM_RELAY_RULE) return world->alarm_note;
-    return true;
-}
-
 void world_update_relay_panel(World *world, const char *player_name)
 {
-    if (!world->relay_panel_open) return;
+    if (!world->relay_panel_open || world->completed) return;
     if (IsKeyPressed(KEY_ESCAPE) || clicked(close_relays)) {
         world->relay_panel_open = false;
         return;
     }
-    if (world->relay_step > 0 &&
-        (IsKeyPressed(KEY_LEFT) || clicked(previous_relay_rule))) {
-        world->relay_step--;
-        world->relay_rejected = false;
-        return;
-    }
-
+    if (world->relay_step < 0 || world->relay_step >= WORLD_RELAY_RULE_COUNT) return;
+    int count = WORLD_RELAY_COUNT;
+    if (world->relay_cursor < 0 || world->relay_cursor >= count) world->relay_cursor = 0;
+    Vector2 motion = GetMouseDelta();
+    if (motion.x || motion.y)
+        for (int i = 0; i < count; i++)
+            if (CheckCollisionPointRec(GetMousePosition(),world_relay_bounds(i))) world->relay_cursor = i;
+    if (IsKeyPressed(KEY_RIGHT)) world->relay_cursor = (world->relay_cursor+1)%count;
+    if (IsKeyPressed(KEY_LEFT)) world->relay_cursor = (world->relay_cursor+count-1)%count;
     for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
-        if (IsKeyPressed(KEY_ONE + i) || clicked(relay_button(i))) {
+        if (IsKeyPressed(KEY_ONE + i) || clicked(world_relay_bounds(i)) ||
+            (IsKeyPressed(KEY_SPACE) && world->relay_cursor == i)) {
+            world->relay_cursor = i;
             world->relay_mask ^= 1u << i;
             world->relay_rejected = false;
         }
     }
 
-    if ((IsKeyPressed(KEY_ENTER) || clicked(validate_relays)) && relay_clue_available(world)) {
+    if (IsKeyPressed(KEY_ENTER) || clicked(validate_relays)) {
         world->relay_attempts++;
-        int failed = first_failed_relay_rule(world->relay_mask, world->relay_step);
-        world->relay_rejected = failed >= 0;
-        if (world->relay_rejected) {
-            world->relay_step = failed;
-        } else if (world->relay_step == WORLD_RELAY_RULE_COUNT - 1) {
+        world->relay_rejected = !relay_stage_matches(world->relay_mask,world->relay_step);
+        if (world->relay_rejected) return;
+        if (world->relay_step == WORLD_RELAY_RULE_COUNT - 1) {
             world->completed = true;
             world->relay_panel_open = false;
             const char *name = player_name && player_name[0] ? player_name : "visitante";
@@ -506,6 +488,8 @@ void world_update_relay_panel(World *world, const char *player_name)
                           "Com a central resolvida, podemos voltar a cuidar das plantas. Obrigada por ajudar a mim, à Lia e ao Bento!");
         } else {
             world->relay_step++;
+            world->relay_cursor = 0;
+            world->relay_mask = 0;
         }
     }
 }
@@ -776,11 +760,11 @@ static void talk_to_researcher(World *world, const char *player_name)
 {
     const char *hint;
     if (!world->alarm_note && !world->canal_note)
-        hint = "Para entender os relés, precisamos de duas pistas. Você procura a placa nos canais e o bilhete na casa de manutenção?";
+        hint = "A central tem três etapas simples, uma por vez. As pistas dos canais e da manutenção são dicas extras, se precisar.";
     else if (!world->alarm_note)
-        hint = "Já temos a pista dos canais! Falta o bilhete na casa de manutenção. Pode buscar? Quero comparar o que os dois dizem.";
+        hint = "A pista dos canais explica o OU. Você já pode resolver a central; o bilhete da manutenção tem outra dica opcional.";
     else if (!world->canal_note)
-        hint = "Esse bilhete foi um bom começo! Agora falta a placa nos canais, do lado de fora. Você dá uma olhada nela para mim?";
+        hint = "O bilhete explica o NÃO. A placa dos canais tem outra dica opcional, mas você já pode resolver a central.";
     else
         hint = "Você achou as duas pistas! Na central, vamos testar uma regra por vez. Ajuste os relés e use Enter para conferir.";
 
@@ -825,12 +809,12 @@ WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_na
         case CANAL_NOTE:
             world->canal_note = true;
             open_dialogue(world, "Placa dos canais",
-                          "Central de Relés — regra 3: E = (B XOR F).\nE fica ligado se B e F forem diferentes; caso contrário, fica desligado.", NULL);
+                          "Central de Relés — dica do OU: basta A ou B estar ligado. Também funciona com os dois ligados.", NULL);
             break;
         case ALARM_NOTE:
             world->alarm_note = true;
             open_dialogue(world, "Bilhete da manutenção",
-                          "Central de Relés — regra 8: SE D, ENTÃO C.\nD ligado exige C ligado. Com D desligado, C pode ter qualquer estado.", NULL);
+                          "Central de Relés — dica do NÃO: NÃO C é verdadeiro quando C está desligado.", NULL);
             break;
         case MAINTENANCE_DOOR: travel(world, feet, WORLD_MAINTENANCE, entrance); break;
         case DEPOT_DOOR: travel(world, feet, WORLD_DEPOT, entrance); break;
@@ -1412,80 +1396,6 @@ void world_draw_interior_foreground(const World *world, const WorldAssets *asset
                    destination, (Vector2){0}, 0, WHITE);
 }
 
-static void draw_relay_action(const UiTheme *ui, Rectangle bounds, const char *label, bool enabled)
-{
-    bool hovered = enabled && CheckCollisionPointRec(GetMousePosition(), bounds);
-    DrawRectangleRec(bounds, enabled ? (hovered ? GOLD : stone) : LIGHTGRAY);
-    DrawRectangleLinesEx(bounds, 2, frame);
-    centered_text(ui, label, (int)(bounds.x + bounds.width / 2), (int)bounds.y + 14, 20,
-                  enabled ? ink : DARKGRAY);
-}
-
-static void draw_relay_panel(const UiTheme *ui, const World *world)
-{
-    static const struct {
-        const char *formula;
-        const char *guide;
-    } clues[WORLD_RELAY_RULE_COUNT] = {
-        {"A XOR B", "No XOR, exatamente um dos dois relés deve estar ligado."},
-        {"C SE E SOMENTE SE (A E D)", "C deve ter o mesmo valor da expressão entre parênteses."},
-        {"E SE E SOMENTE SE (B XOR F)", "Avalie o XOR entre B e F e compare o resultado com o relé E."},
-        {"G SE E SOMENTE SE (C OU E)", "O OU é verdadeiro com um ou com os dois relés ligados."},
-        {"H SE E SOMENTE SE (D XOR G)", "Compare H com o resultado do XOR entre D e G."},
-        {"SE F, ENTÃO NÃO H", "A regra só falha se a primeira parte for V e a segunda for F."},
-        {"SE A, ENTÃO H", "Se a primeira parte for F, a implicação já está satisfeita."},
-        {"SE D, ENTÃO C", "Verifique a implicação junto com as equivalências que você já passou."},
-        {"Exatamente 4 relés ligados", "Confira o total. As oito regras anteriores ainda precisam valer."}
-    };
-    const int step = world->relay_step;
-    const bool available = relay_clue_available(world);
-    DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.88f));
-    DrawRectangle(62, 40, 1160, 640, cream);
-    DrawRectangleLinesEx((Rectangle){62, 40, 1160, 640}, 4, frame);
-    ui_text(ui, "Central de relés", 82, 64, 36, ink);
-    ui_text(ui, "Valide uma regra por vez. As regras anteriores continuam valendo.", 82, 117, 23, ink);
-    ui_text(ui, "Use 1 a 8 ou clique nos relés. Ligado = verdadeiro.", 82, 153, 20, ink);
-
-    for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
-        Rectangle bounds = relay_button(i);
-        bool on = relay_on(world->relay_mask, i);
-        int x = (int)bounds.x;
-        int y = (int)bounds.y;
-        DrawRectangleRec(bounds, on ? (Color){201, 225, 171, 255} : stone);
-        DrawRectangleLinesEx(bounds, 2, frame);
-        ui_text(ui, TextFormat("%d", i + 1), x + 9, y + 8, 15, ink);
-        centered_text(ui, TextFormat("%c", 'A' + i), x + 65, y + 13, 30, ink);
-        DrawCircle(x + 18, y + 65, 6, on ? DARKGREEN : MAROON);
-        ui_text(ui, on ? "Ligado" : "Desligado", x + 31, y + 56, 16, ink);
-    }
-
-    const Rectangle rule_panel = {82, 303, 1124, 266};
-    DrawRectangleRec(rule_panel, (Color){237, 228, 190, 255});
-    DrawRectangleLinesEx(rule_panel, world->relay_rejected ? 4 : 2, world->relay_rejected ? MAROON : frame);
-    ui_text(ui, TextFormat("Regra %02d de %02d", step + 1, WORLD_RELAY_RULE_COUNT), 104, 324, 23, ink);
-    if (available) {
-        ui_text(ui, clues[step].formula, 104, 378, 31, ink);
-        ui_text(ui, clues[step].guide, 104, 429, 20, ink);
-        if (world->relay_rejected)
-            ui_text(ui, "Esta regra falhou. Ajuste os relés e tente novamente.", 104, 505, 22, MAROON);
-        else if (step == WORLD_RELAY_RULE_COUNT - 1)
-            ui_text(ui, "Valide para abrir a saída.", 104, 505, 21, ink);
-        else
-            ui_text(ui, "Valide para revelar a próxima regra.", 104, 505, 21, ink);
-    } else {
-        ui_text(ui, "Pista necessária", 104, 378, 31, ink);
-        ui_text(ui, step == CANAL_RELAY_RULE ? "Registre a pista nos canais para revelar esta regra."
-                                        : "Leia o bilhete na casa de manutenção para revelar esta regra.",
-                 104, 429, 20, ink);
-    }
-
-    draw_relay_action(ui, validate_relays, "ENTER  Validar regra", available);
-    draw_relay_action(ui, previous_relay_rule, "ESQ  Regra anterior", step > 0);
-    draw_relay_action(ui, close_relays, "ESC  Fechar", true);
-    ui_text(ui, TextFormat("Relés ligados: %d", active_relays(world->relay_mask)), 950, 597, 18, ink);
-    ui_text(ui, TextFormat("Tentativas: %u", world->relay_attempts), 950, 625, 18, ink);
-}
-
 static void draw_condition(const UiTheme *ui, int x, int y, bool met, const char *label)
 {
     Color color = met ? (Color){45,100,61,255} : (Color){139,89,33,255};
@@ -1553,7 +1463,6 @@ static const char *current_objective(const World *world)
         ? "Atravesse a ponte e libere a água" : "Ajuste os controles da ponte";
     if (!world->gate_unlocked) return "Entre no viveiro";
     if (!world->guardian_defeated) return "Vença o Girassol guardião";
-    if (!world->canal_note || !world->alarm_note) return "Reúna as duas pistas dos relés";
     return "Resolva a Central de Relés";
 }
 
@@ -1658,16 +1567,13 @@ void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)
         draw_dialogue(ui, world);
         return;
     }
-    if (world->relay_panel_open) {
-        draw_relay_panel(ui, world);
-        return;
-    }
+    if (world->relay_panel_open) return;
     if (world->completed) {
         DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.83f));
         DrawRectangle(310, 260, 660, 190, cream);
         DrawRectangleLinesEx((Rectangle){310, 260, 660, 190}, 4, frame);
         centered_text(ui, "Estufa concluída!", 640, 291, 36, ink);
-        centered_text(ui, "Você venceu o guardião e validou os oito relés.", 640, 350, 22, ink);
+        centered_text(ui, "Você venceu o guardião e concluiu as três etapas.", 640, 350, 22, ink);
         centered_text(ui, "ENTER ou ESC  Voltar ao menu", 640, 401, 20, ink);
         return;
     }
@@ -1676,6 +1582,6 @@ void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)
     const char *area = sector ? sector->name : "Travessia";
     HudInteraction interaction = world_interaction_view(world, feet);
     draw_challenge(ui, world, nearby_object(world, feet), feet);
-    exploration_hud_draw(ui, area, current_objective(world), world->canal_note + world->alarm_note,
+    exploration_hud_draw(ui, area, current_objective(world),
                          &interaction, world_camera(world));
 }
