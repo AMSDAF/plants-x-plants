@@ -683,7 +683,7 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
     }
     if (damage > 0 && defender->id == SPECIES_CACTUS &&
         move->category == MOVE_CATEGORY_PHYSICAL) {
-        int reflected = (damage + 3) / 4;
+        int reflected = (damage * 3 + 9) / 10;
         int attacker_hp = attacker->current_hp;
         Plant_TakeDamage(attacker, reflected);
         char message[96];

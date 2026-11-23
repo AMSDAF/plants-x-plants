@@ -20,7 +20,7 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
     {
         SPECIES_CACTUS,
         "Cacto",
-        120,55,90,20,
+        120,60,105,20,
         {
             DAMAGE_MOVE("Espinho Afiado", MOVE_CATEGORY_RANGED, 55, 90, 30, 0),
             DAMAGE_MOVE("Investida", MOVE_CATEGORY_PHYSICAL, 45, 95, 50, 1),
