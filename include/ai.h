@@ -11,6 +11,7 @@ typedef enum {
 } AIActionType;
 
 AIActionType AI_GetPlannedAction(const BattleState *battle, int *action_index);
+AIActionType AI_GetActionForSide(const BattleState *battle, int side, int *action_index);
 int AI_PlayTurn(BattleState *battle);
 
 #endif

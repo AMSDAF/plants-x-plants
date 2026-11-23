@@ -140,10 +140,11 @@ Os marcadores acompanham as posições atualizadas dos controles, pistas e guard
 
 Os recursos opcionais `depot_interior.png`, `basement_interior.png`,
 `bridge_control_interior.png` e `nursery_interior.png` em `assets/maps/`, e
-`aloe_guard.png` e `sunflower_guard.png` em `assets/sprites/`, são referenciados
-pelo código de interiores, mas não acompanharam o commit remoto integrado.
-Enquanto estiverem ausentes, o jogo desenha as salas e os guardiões com as
-formas de reserva. A manutenção continua usando sua ilustração existente.
+`sunflower_guard.png` em `assets/sprites/`, são referenciados pelo código de
+interiores, mas não acompanharam o commit remoto integrado. A Babosa usa
+`assets/sprites/plants/aloe_v2.png`, a mesma arte da arena. Enquanto algum
+recurso estiver ausente, o jogo desenha a sala ou o guardião com a forma de
+reserva. A manutenção continua usando sua ilustração existente.
 
 A validação usa caminhos livres diante dos móveis sólidos e preserva os testes
 de bloqueio, acesso aos controles, vitória/derrota e progressão dos encontros.

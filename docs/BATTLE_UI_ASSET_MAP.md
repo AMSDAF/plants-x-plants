@@ -108,11 +108,11 @@ aprovada e não devem ser escolhidas por engano.
 | Babosa | `assets/sprites/plants/aloe_v2.png`, original do anexo `Angry Pixel Aloe Plant Monster.png` | Importado, RGBA, 1230 × 1278. |
 | Girassol | `assets/sprites/plants/sunflower_v2.png`, original do anexo `Angry Pixel Sunflower Sprite.png` | Importado, RGBA, 1223 × 1286. |
 
-Os bosses antigos `assets/sprites/aloe_guard.png` e
-`assets/sprites/sunflower_guard.png` já são carregados pelo mundo e usados no
-combate atual, mas têm desenho diferente das oito artes aprovadas. Não
-sobrescrever esses arquivos ao preparar o combate; importar os novos com nomes
-próprios e manter a exploração independente.
+A Babosa da exploração usa `assets/sprites/plants/aloe_v2.png`, a mesma arte
+aprovada da arena, recortada pela borda alfa. O Girassol do mapa ainda usa
+`assets/sprites/sunflower_guard.png`; o combate usa `sunflower_v2.png`. Os
+arquivos antigos `aloe_guard.png` e `sunflower_guard.png` permanecem no
+repositório, mas o primeiro não é mais referenciado pelo código.
 
 As reservas dos guardiões também podem usar as seis espécies iniciais.
 O desenho deve selecionar a arte pelo ID da espécie ativa, sem assumir que

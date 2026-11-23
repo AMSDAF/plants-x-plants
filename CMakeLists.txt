@@ -173,6 +173,14 @@ foreach(intro_target plants_x_plants selection_scene_check menu_screen_check
     endif()
 endforeach()
 
+# Áudio acompanha todos os alvos que usam o coordenador de telas.
+foreach(audio_target plants_x_plants selection_scene_check menu_screen_check
+        trainer_background_check name_entry_check exploration_hud_check)
+    if(TARGET ${audio_target})
+        target_sources(${audio_target} PRIVATE src/audio.c src/game_audio.c)
+    endif()
+endforeach()
+
 # A abertura usa os mesmos módulos do executável principal.
 get_target_property(INTRO_CHECK_SOURCES plants_x_plants SOURCES)
 list(REMOVE_ITEM INTRO_CHECK_SOURCES src/main.c)

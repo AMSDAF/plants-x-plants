@@ -216,6 +216,7 @@ Na tela **Escolha seu personagem**, use esquerda/direita ou A/D, ou clique no ca
 - **Shift na estufa:** correr enquanto se move.
 - **F8 na estufa:** comparar o mapa original e a versão completa com mais detalhe.
 - **F11:** alternar a tela cheia; o desenho agora usa a resolução física do viewport.
+- **F9:** silenciar ou reativar efeitos sonoros e música. Consulte [os sons do jogo](assets/sounds/README.md).
 - **E na estufa:** interagir com a válvula, o refletor, a chave, os canais ou a central ao se aproximar.
 - **ESC na seleção ou exploração:** voltar à tela inicial, sem fechar o jogo.
 - **ESC na tela inicial** ou **X** da janela: encerrar.

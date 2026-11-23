@@ -286,6 +286,25 @@ static Texture2D load_sprite_texture(const char *path)
     return texture;
 }
 
+/* Usa a mesma arte da arena e remove a margem transparente antes de desenhar. */
+static Texture2D load_cropped_sprite_texture(const char *path)
+{
+    if (!FileExists(path)) return (Texture2D){0};
+    Image image = LoadImage(path);
+    if (!image.data) return (Texture2D){0};
+
+    Rectangle source = GetImageAlphaBorder(image, 128.0f / 255.0f);
+    if (source.width <= 0 || source.height <= 0) {
+        UnloadImage(image);
+        return (Texture2D){0};
+    }
+    ImageCrop(&image, source);
+    Texture2D texture = LoadTextureFromImage(image);
+    UnloadImage(image);
+    if (texture.id) SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+    return texture;
+}
+
 void world_assets_load(WorldAssets *assets)
 {
     *assets = (WorldAssets){
@@ -317,7 +336,7 @@ void world_assets_load(WorldAssets *assets)
                 "assets/maps/interior_foregrounds/bridge_control_portal.png",
                 PORTAL_CROP_WIDTH, PORTAL_CROP_HEIGHT)
         },
-        .aloe_guard = load_sprite_texture("assets/sprites/aloe_guard.png"),
+        .aloe_guard = load_cropped_sprite_texture("assets/sprites/plants/aloe_v2.png"),
         .sunflower_guard = load_sprite_texture("assets/sprites/sunflower_guard.png")
     };
     if (assets->tree_canopy_foreground.id) {

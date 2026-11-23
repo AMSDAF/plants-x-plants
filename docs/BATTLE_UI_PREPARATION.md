@@ -77,8 +77,10 @@ como ativas e rivais nas capturas da arena.
 
 Não foram preparados sprites de costas ou atlas de ataque. A referência usa
 as poses frontais existentes. Animações ou efeitos futuros não estão incluídos.
-Os antigos `aloe_guard.png` e `sunflower_guard.png` continuam intactos para a
-exploração; o combate usa as artes `aloe_v2.png` e `sunflower_v2.png`.
+Os arquivos antigos `aloe_guard.png` e `sunflower_guard.png` continuam no
+repositório. A exploração usa `aloe_v2.png` para a Babosa e mantém
+`sunflower_guard.png` para o Girassol; o combate usa `aloe_v2.png` e
+`sunflower_v2.png`.
 
 ## Implementação e controles
 
@@ -102,6 +104,8 @@ não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
   anterior à estufa; o aviso não aparece no topo.
 - Na troca obrigatória, a equipe abre automaticamente e somente reservas vivas
   podem entrar. Ações humanas, da CPU e paralisia usam a espera não bloqueante de dois segundos.
+- No beat da mensagem, golpe físico avança e volta, golpe de status pula e golpe
+  à distância mantém a planta parada.
 - No resultado, ENTER ou o botão retorna à estufa. Ações de combate ficam bloqueadas.
 
 Na campanha, a placa perto do depósito abre o novo modal de abas por planta.

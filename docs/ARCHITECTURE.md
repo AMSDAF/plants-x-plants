@@ -28,6 +28,8 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |
+| `include/audio.h`, `src/audio.c` | Carregar e liberar efeitos (`assets/sounds/sfx/`) e músicas (`assets/sounds/music/`), tocar efeitos imediatos ou com pequeno atraso, fazer a transição suave entre faixas e silenciar por F9. Arquivos ausentes ou falta de dispositivo deixam o jogo em silêncio, sem erro. Não conhece telas nem regras. |
+| `include/game_audio.h`, `src/game_audio.c` | Capturar campos do estado antes de cada quadro e comparar com o estado depois de `game_update`, escolhendo efeitos de interface, exploração e combate e a música de cada tela. Somente lê o estado; dano, turnos e entrada continuam em `battle`, `battle_screen` e nas telas. |
 
 O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalhes das telas devem ficar nos respectivos módulos.
 
@@ -142,11 +144,11 @@ de veneno, queimadura ou captura, nem balanceamento final.
 | Arquivo | Responsabilidade |
 |---|---|
 | `include/battle.h` | Definir o estado da batalha, as ações disponíveis e as funções de combate. |
-| `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, controlar turnos e identificar o vencedor. |
+| `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, resolver as duas ações da rodada por velocidade e identificar o vencedor. |
 
 Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a interface já impede uma escolha inválida.
 
-Uma ação inválida não deve alterar a batalha nem consumir o turno.
+`Battle_PrepareRound` registra as ações dos dois lados e a ordem de velocidade; `Battle_ExecuteRoundStep` executa uma etapa por vez, e `Battle_FinishRound` aplica nocautes e substituições. `Battle_ExecuteRound` continua disponível como atalho para resolver a rodada inteira. A tela usa as etapas para exibir cada evento por dois segundos. Uma ação inválida não deve alterar a batalha nem consumir a rodada.
 
 A abertura oferece Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora, com três escolhas distintas obrigatórias. O catálogo definitivo contém oito espécies; Girassol e Babosa são os bosses e ficam fora da seleção inicial. Cada guardião luta sozinho; sua resistência é definida nos atributos de Babosa e Girassol em `plant_data.c`.
 Cada planta pode associar duas condições e um operador a um golpe de dano.
