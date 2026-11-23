@@ -186,3 +186,27 @@ estilo das placas: **Chave do alçapão**. Ele confirma a vitória, a obtenção
 Chave da Manutenção e sua utilização no alçapão da casa de manutenção. A chave é
 entregue imediatamente; fechar o aviso não altera a recompensa. O antigo texto
 fixo desenhado no chão do depósito foi removido.
+
+## Descoberta de interações
+
+Objetos interativos visíveis recebem um brilho dourado pixelado com pulso suave,
+mesmo à distância. Lia, Bento e Íris recebem um pequeno balão de conversa. Ao
+entrar no alcance, o objeto selecionado usa apenas a seta e a instrução atuais,
+sem duplicar o brilho. O alcance real de interação permanece igual.
+
+Portas e controles reutilizáveis continuam destacados. Pistas já lidas e a placa
+do jardim deixam de brilhar; ainda podem ser relidas de perto. Guardiões vencidos
+não recebem marcador. A placa lógica continua marcada por permitir editar os
+golpes. O brilho de um acesso bloqueado tem cor discreta, e a explicação do
+bloqueio continua disponível de perto. Os ícones são ocultados em diálogos,
+central, editor lógico e conclusão. Só aparecem na sala e no enquadramento atuais,
+com tamanho fixo em pixels e sem indicadores presos às bordas.
+
+Verificação: `cmake --build build --target discovery_markers_check` e
+`build/discovery_markers_check.exe`. Capturas em `build/discovery_preview/`.
+
+Os indicadores da Babosa e das alavancas ficam acima das artes, sem cobrir a planta
+ou os manípulos. A pressão da ponte usa um quadro no canto superior direito da
+tela; não fica mais sobre o manômetro. A placa lógica tem colisão no caminho,
+permitindo aproximar-se para interagir e contornar pelos lados. O aviso da
+escotilha bloqueada é apenas **Escotilha trancada**.

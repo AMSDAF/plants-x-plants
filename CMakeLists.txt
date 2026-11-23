@@ -240,3 +240,12 @@ target_link_libraries(battle_fx_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(battle_fx_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# Descoberta das interações sem carregar todos os recursos da campanha.
+add_executable(discovery_markers_check EXCLUDE_FROM_ALL tools/check_discovery_markers.c
+    src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c src/dialogue_ui.c)
+target_include_directories(discovery_markers_check PRIVATE include)
+target_link_libraries(discovery_markers_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(discovery_markers_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()

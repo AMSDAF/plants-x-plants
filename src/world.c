@@ -513,6 +513,11 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     Rectangle box = world->location == WORLD_EXTERIOR
         ? (Rectangle){feet.x - 8, feet.y - 4, 16, 8}
         : (Rectangle){feet.x - 12, feet.y - 7, 24, 14};
+    /* A placa lógica ocupa o caminho: impede atravessar a tábua e o suporte. */
+    if (world->location == WORLD_EXTERIOR) {
+        Vector2 sign = objects[LOGIC_SIGN].position;
+        if (CheckCollisionRecs(box,(Rectangle){sign.x-22,sign.y-38,44,38})) return previous;
+    }
     const Rectangle *furniture = NULL;
     size_t furniture_count = 0;
     switch (world->location) {
@@ -570,16 +575,24 @@ Vector2 world_constrain(const World *world, Vector2 previous, Vector2 feet)
     return feet;
 }
 
+/* Presença compartilhada pela seleção próxima e pelos indicadores à distância. */
+static bool object_present(const World *world, int index)
+{
+    bool exit_door = index == INTERIOR_DOOR &&
+        (world->location == WORLD_DEPOT || world->location == WORLD_NURSERY ||
+         world->location == WORLD_BRIDGE_CONTROL);
+    if (objects[index].location != world->location && !exit_door) return false;
+    if ((index == ALOE && world->maintenance_key) ||
+        (index == SUNFLOWER && world->guardian_defeated)) return false;
+    return true;
+}
+
 static Object nearby_object(const World *world, Vector2 feet)
 {
     Object nearest = OBJECT_COUNT;
     float best_distance = interaction_radius * interaction_radius;
     for (int i = 0; i < OBJECT_COUNT; i++) {
-        bool exit_door = i == INTERIOR_DOOR &&
-                         (world->location == WORLD_DEPOT || world->location == WORLD_NURSERY ||
-                          world->location == WORLD_BRIDGE_CONTROL);
-        if (objects[i].location != world->location && !exit_door) continue;
-        if ((i == ALOE && world->maintenance_key) || (i == SUNFLOWER && world->guardian_defeated)) continue;
+        if (!object_present(world,i)) continue;
         float dx;
         float dy;
         if (i == LOCKED_HATCH && world->location == WORLD_MAINTENANCE) {
@@ -850,6 +863,7 @@ WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_na
             world->logic_quiz_open = true;
             break;
         case ENTRANCE_SIGN:
+            world->entrance_sign_read = true;
             open_dialogue(world, "Placa do jardim",
                           "Depósito: acima e à esquerda do pátio. Manutenção: abaixo e à esquerda.\nPara começar, fale com Lia, no pátio central.", NULL);
             break;
@@ -1273,8 +1287,6 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
                                                               : (Color){88, 94, 83, 255});
                 DrawCircle(742, 378, 6, world->south_channel ? (Color){91, 190, 78, 255}
                                                               : (Color){88, 94, 83, 255});
-                centered_text(ui, TextFormat("%d / %d", world_bridge_pressure(world),
-                                         BRIDGE_TARGET_PRESSURE), 640, 320, 17, ink);
             } else {
                 DrawRectangle(450, 410, 380, 9, frame);
                 DrawRectangle(450, 410, 190, 9, world->north_channel ? water_color : frame);
@@ -1499,7 +1511,7 @@ static const char *interaction_hint(const World *world, Object object)
     if (object == DRAIN) return world->drain_open ? "Fechar dreno" : "Abrir dreno";
     if (object == POWER) return world->light ? "Desligar refletor" : "Ligar refletor";
     if (object == LOCKED_HATCH && !world->maintenance_key)
-        return "Escotilha trancada. A Babosa guarda a chave.";
+        return "Escotilha trancada";
     if (object == NURSERY_DOOR && !world_gate_open(world))
         return "Viveiro fechado. Confira as condições.";
     if (object == CANAL_NOTE && world->canal_note) return "Reler a pista dos canais";
@@ -1507,6 +1519,29 @@ static const char *interaction_hint(const World *world, Object object)
     if (object == RELAY_PANEL && !world->guardian_defeated)
         return "Central bloqueada até você vencer o Girassol.";
     return prompts[object];
+}
+
+static Vector2 interaction_anchor(const World *world, Object object)
+{
+    /* Centro superior visível, independente do ponto usado para alcance e colisão. */
+    static const Vector2 marker_anchors[OBJECT_COUNT] = {
+        [VALVE]={1168, 615}, [POWER]={640, 301}, [ALARM]={433, 250},
+        [NORTH_CHANNEL]={539, 274}, [SOUTH_CHANNEL]={742, 274}, [DRAIN]={733, 530},
+        [ALOE]={640, 222}, [SUNFLOWER]={640, 375}, [CANAL_NOTE]={1273, 360},
+        [ALARM_NOTE]={540, 273}, [MAINTENANCE_DOOR]={246, 574},
+        [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
+        [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},
+        [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
+        [RELAY_PANEL]={782, 296},
+        [ENTRANCE_SIGN]={483, 747},
+        [LOGIC_SIGN]={505, 406},
+        [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
+    };
+    Vector2 anchor = marker_anchors[object];
+    if (object == INTERIOR_DOOR && world->location != WORLD_MAINTENANCE) anchor.y = 539;
+    if (object >= GARDENER && object <= RESEARCHER)
+        anchor.y = objects[object].position.y - 53 / world_camera(world).zoom;
+    return anchor;
 }
 
 HudInteraction world_interaction_view(const World *world, Vector2 feet)
@@ -1525,24 +1560,7 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [ENTRANCE_SIGN]="Placa do jardim", [LOGIC_SIGN]="Placa dos golpes lógicos", [GARDENER]="Lia",
         [TECHNICIAN]="Bento", [RESEARCHER]="Íris"
     };
-    /* Centro superior visível, independente do ponto usado para alcance e colisão. */
-    static const Vector2 marker_anchors[OBJECT_COUNT] = {
-        [VALVE]={1168, 615}, [POWER]={640, 301}, [ALARM]={433, 250},
-        [NORTH_CHANNEL]={539, 331}, [SOUTH_CHANNEL]={742, 331}, [DRAIN]={733, 530},
-        [ALOE]={640, 375}, [SUNFLOWER]={640, 375}, [CANAL_NOTE]={1273, 360},
-        [ALARM_NOTE]={540, 273}, [MAINTENANCE_DOOR]={246, 574},
-        [DEPOT_DOOR]={278, 301}, [NURSERY_DOOR]={1396, 250},
-        [BRIDGE_CONTROL_DOOR]={810, 498}, [INTERIOR_DOOR]={640, 528},
-        [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
-        [RELAY_PANEL]={782, 296},
-        [ENTRANCE_SIGN]={483, 747},
-        [LOGIC_SIGN]={505, 406},
-        [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
-    };
-    Vector2 anchor = marker_anchors[object];
-    if (object == INTERIOR_DOOR && world->location != WORLD_MAINTENANCE) anchor.y = 539;
-    if (object >= GARDENER && object <= RESEARCHER)
-        anchor.y = objects[object].position.y - 53 / world_camera(world).zoom;
+    Vector2 anchor = interaction_anchor(world, object);
     /* Quando o jogador passa na frente, afasta a seta do chapéu sem deslocá-la de lado. */
     float zoom = world_camera(world).zoom;
     float horizontal = fabsf(feet.x-anchor.x) * zoom;
@@ -1554,6 +1572,30 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
     anchor.y -= fmaxf(anchor.y-player_top, 0)*clearance;
     return (HudInteraction){.state=interaction_state(world, object), .context=labels[object],
         .message=interaction_hint(world, object), .target=objects[object].position, .marker_anchor=anchor};
+}
+
+/* Consulta somente a sala atual, sem mudar alcance, colisões ou progresso. */
+int world_discovery_markers(const World *world, Vector2 feet, HudDiscoveryMarker *markers, int capacity)
+{
+    if (!markers || capacity <= 0 || world->dialogue_title || world->logic_quiz_open ||
+        world->relay_panel_open || world->completed) return 0;
+    Object selected = nearby_object(world,feet);
+    Camera2D camera = world_camera(world);
+    int count = 0;
+    for (int i = 0; i < OBJECT_COUNT && count < capacity; i++) {
+        if (!object_present(world,i) || i == (int)selected) continue;
+        if ((i == CANAL_NOTE && world->canal_note) || (i == ALARM_NOTE && world->alarm_note) ||
+            (i == ENTRANCE_SIGN && world->entrance_sign_read)) continue;
+        Vector2 position = GetWorldToScreen2D(interaction_anchor(world,(Object)i),camera);
+        /* Sem indicadores presos à borda para objetos fora do enquadramento. */
+        if (position.x < 24 || position.x > GAME_SCREEN_WIDTH-24 ||
+            position.y < 32 || position.y > GAME_SCREEN_HEIGHT-16) continue;
+        markers[count++] = (HudDiscoveryMarker){
+            .position = position, .conversation = i >= GARDENER && i <= RESEARCHER,
+            .blocked = interaction_state(world,(Object)i) == HUD_INTERACTION_BLOCKED
+        };
+    }
+    return count;
 }
 
 static void draw_dialogue(const UiTheme *ui, const World *world)
@@ -1577,6 +1619,18 @@ void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)
     const char *area = sector ? sector->name : "Travessia";
     HudInteraction interaction = world_interaction_view(world, feet);
     draw_challenge(ui, world, nearby_object(world, feet), feet);
+    HudDiscoveryMarker markers[OBJECT_COUNT];
+    int marker_count = world_discovery_markers(world,feet,markers,OBJECT_COUNT);
+    exploration_discovery_draw(markers,marker_count,ui ? ui->marker_time : 0);
     exploration_hud_draw(ui, area, current_objective(world),
                          &interaction, world_camera(world));
+    if (world->location == WORLD_BRIDGE_CONTROL) {
+        /* Leitura em tamanho fixo, fora do manômetro e dos controles da arte. */
+        Rectangle pressure_card = {1000,18,260,64};
+        ui_botanical_panel(ui,pressure_card);
+        Font font = ui_pixel_font(ui);
+        const char *pressure = TextFormat("Pressão: %d / %d",world_bridge_pressure(world),BRIDGE_TARGET_PRESSURE);
+        float width = MeasureTextEx(font,pressure,28,0).x;
+        DrawTextEx(font,pressure,(Vector2){pressure_card.x+(pressure_card.width-width)/2,36},28,0,ink);
+    }
 }

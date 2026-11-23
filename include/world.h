@@ -53,6 +53,7 @@ typedef struct {
     bool alarm;
     bool gate_unlocked;
     bool guardian_defeated;
+    bool entrance_sign_read;
     bool canal_note;
     bool alarm_note;
     bool north_channel;
@@ -104,6 +105,7 @@ void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets
 void world_draw_interior_foreground(const World *world, const WorldAssets *assets, Vector2 feet);
 void world_draw_npcs(const World *world, const WorldAssets *assets, Vector2 feet, Camera2D camera, bool foreground);
 void world_draw_tree_canopy(const World *world, const WorldAssets *assets, Vector2 feet);
+int world_discovery_markers(const World *world, Vector2 feet, HudDiscoveryMarker *markers, int capacity);
 HudInteraction world_interaction_view(const World *world, Vector2 feet);
 void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet);
 #endif
