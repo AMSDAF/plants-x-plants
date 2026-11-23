@@ -229,7 +229,7 @@ int main(void)
     assert(game.battle_screen.battle.player_team.count == INTRO_TEAM_SIZE);
     assert(game.battle_screen.battle.enemy_team.count == 1);
     assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_ALOE);
-    assert(game.battle_screen.battle.enemy_team.plants[0].max_hp == 275);
+    assert(game.battle_screen.battle.enemy_team.plants[0].max_hp == 235);
     assert(game.battle_screen.scene == BATTLE_SCENE_DEPOT);
     assert(game.battle_screen.setup_side == -1);
     for (int i = 0; i < INTRO_TEAM_SIZE; i++) {
@@ -323,7 +323,7 @@ int main(void)
     assert(game.screen == GAME_BATTLE && game.battle_screen.setup_side == -1);
     assert(game.battle_screen.battle.enemy_team.count == 1);
     assert(game.battle_screen.battle.enemy_team.plants[0].id == SPECIES_SUNFLOWER);
-    assert(game.battle_screen.battle.enemy_team.plants[0].max_hp == 225);
+    assert(game.battle_screen.battle.enemy_team.plants[0].max_hp == 220);
     assert(game.battle_screen.scene == BATTLE_SCENE_NURSERY);
     for (int i = 0; i < INTRO_TEAM_SIZE; i++) assert(game.battle_screen.battle.boosted_move_indices[0][i] == (i == 0 ? 1 : i == 1 ? 0 : 2));
     assert(game.battle_screen.battle.formulas[0][0].operator == LOGIC_XOR);

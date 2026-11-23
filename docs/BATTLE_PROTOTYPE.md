@@ -77,8 +77,12 @@ O jogador escolhe três plantas no prólogo entre Trevo, Hera Venenosa, Pimenta,
 Cacto, Orquídea e Planta Carnívora. Babosa e Girassol são os bosses do depósito e
 do viveiro e não aparecem entre as opções iniciais. O catálogo contém somente
 essas oito espécies. Os guardiões lutam sozinhos, sem reservas, contra as três plantas do jogador.
-Babosa tem 275 HP e 46 ATQ; Girassol tem 225 HP e 50 ATQ. Defesa, velocidade,
-golpes e habilidades foram preservados. A fórmula do guardião consulta as reservas
+Babosa tem 235 HP, 36 ATQ e 38 DEF; Girassol tem 220 HP, 36 ATQ e 38 DEF.
+Casca Grossa e Fotossíntese aumentam o atributo em 0,25x, até 1,5x do valor base.
+Babosa recupera 1/8 do dano recebido, arredondado para baixo; Girassol recupera
+8% do HP máximo a cada dois turnos próprios. Velocidades e tamanho da equipe
+continuam iguais. As chances de crítico e o poder dos ataques dos bosses foram
+reduzidos para evitar picos excessivos de dano. A fórmula do guardião consulta as reservas
 do jogador, pois o próprio boss não tem equipe de apoio. Cada espécie usa diretamente os atributos base do catálogo.
 Cada espécie tem três golpes, incluindo buffs/debuffs de atributo quando disponíveis.
 
@@ -131,8 +135,8 @@ atributo exibem o aumento ou redução correspondente e não causam dano direto.
 
 ## Habilidades das espécies
 
-- **Girassol (guardião):** recupera 30% da vida máxima a cada dois turnos próprios; seu terceiro golpe aumenta o ataque em 1x, até 3x do valor inicial.
-- **Babosa (guardião):** depois de receber dano de um golpe, recupera 25% do dano sofrido naquele golpe (arredondado para baixo).
+- **Girassol (guardião):** recupera 8% da vida máxima a cada dois turnos próprios; seu terceiro golpe aumenta o ataque em 0,25x, até 1,5x do valor inicial.
+- **Babosa (guardião):** depois de receber dano de um golpe, recupera 12,5% do dano sofrido naquele golpe (arredondado para baixo).
 - **Trevo:** dobra a chance crítica dos próprios golpes, limitada a 100%; seu terceiro golpe aumenta a velocidade em 0,5x, até 2x do valor inicial.
 - **Hera Venenosa:** ao receber um golpe físico, tem 30% de chance de envenenar quem atacou; seu terceiro golpe aumenta a defesa em 0,5x, até 2,5x do valor inicial.
 - **Pimenta:** gera um fruto a cada dois turnos próprios em campo. O terceiro golpe consome um fruto e tem 30% de chance de causar Queimadura; seu segundo golpe aumenta o ataque em 0,5x, até 2x do valor inicial. O contador aparece enquanto ela está ativa.
@@ -205,3 +209,6 @@ trocas, derrota, substituição pela IA, vitória e restauração. `name_entry_c
 percorre a campanha com guardiões e progresso. `menu_screen_check` confere a
 entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerramento.
 O modo de batalha independente e seus recursos exclusivos foram removidos.
+
+O balanceamento dos guardiões é conferido por `boss_balance_check`; metodologia
+e comparação em [BOSS_BALANCE.md](BOSS_BALANCE.md).

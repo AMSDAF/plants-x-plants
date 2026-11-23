@@ -6,7 +6,7 @@
 #include "exploration_hud.h"
 
 enum {
-    WORLD_RELAY_COUNT = 8, WORLD_RELAY_RULE_COUNT = 9,
+    WORLD_RELAY_COUNT = 3, WORLD_RELAY_RULE_COUNT = 3,
     WORLD_NPC_COUNT = 3, WORLD_DIALOGUE_PAGE_COUNT = 3
 };
 
@@ -74,6 +74,7 @@ typedef struct {
     unsigned int relay_mask;
     unsigned int relay_attempts;
     int relay_step;
+    int relay_cursor;
     bool relay_rejected;
     bool completed;
 } World;
@@ -94,6 +95,9 @@ void world_return_to_courtyard(World *world, Vector2 *feet);
 void world_follow_camera(World *world, Vector2 feet, float dt);
 void world_snap_camera(World *world, Vector2 feet);
 Camera2D world_camera(const World *world);
+Rectangle world_relay_bounds(int index);
+Rectangle world_relay_close_bounds(void);
+Rectangle world_relay_validate_bounds(void);
 void world_update_relay_panel(World *world, const char *player_name);
 void world_update_dialogue(World *world, float dt);
 void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets);

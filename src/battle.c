@@ -175,7 +175,7 @@ static void apply_turn_statuses(BattleState *battle, int side, int plant_index)
     if (plant->ability_turn_count != 0) return;
 
     if (plant->id == SPECIES_SUNFLOWER) {
-        int healed = heal_plant(plant, 30);
+        int healed = heal_plant(plant, 8);
         if (healed > 0) {
             char message[96];
             snprintf(message, sizeof(message), "Girassol recuperou %d de vida.", healed);
@@ -553,7 +553,7 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
 
     if (damage > 0 && defender->id == SPECIES_ALOE && Plant_IsAlive(defender)) {
         int healed = 0;
-        int healing = damage / 4;
+        int healing = damage / 8;
         if (healing > 0) {
             int previous_hp = defender->current_hp;
             defender->current_hp += healing;

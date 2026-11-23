@@ -34,22 +34,22 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
     {
         SPECIES_SUNFLOWER,
         "Girassol",
-        225,
-        50,
-        45,
+        220,
+        36,
+        38,
         38,
         {
-            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 50, 90, 20, 0),
-            DAMAGE_MOVE("Folha Navalha", MOVE_CATEGORY_RANGED, 40, 100, 10, 0),
+            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 42, 90, 10, 0),
+            DAMAGE_MOVE("Folha Navalha", MOVE_CATEGORY_RANGED, 35, 100, 5, 0),
             ATTRIBUTE_MOVE("Fotossíntese", MOVE_TARGET_SELF, MOVE_STAT_ATTACK,
-                           1.0f, 3.0f, MOVE_STAT_CHANGE_ADD_TO_CAP)
+                           0.25f, 1.5f, MOVE_STAT_CHANGE_ADD_TO_CAP)
         }
     },
-    {SPECIES_ALOE, "Babosa", 275, 46, 53, 30,
-        {DAMAGE_MOVE("Espinho Curto", MOVE_CATEGORY_RANGED, 39, 100, 8, 0),
-         DAMAGE_MOVE("Corte de Aloe", MOVE_CATEGORY_PHYSICAL, 51, 85, 16, 0),
+    {SPECIES_ALOE, "Babosa", 235, 36, 38, 30,
+        {DAMAGE_MOVE("Espinho Curto", MOVE_CATEGORY_RANGED, 34, 100, 5, 0),
+         DAMAGE_MOVE("Corte de Aloe", MOVE_CATEGORY_PHYSICAL, 40, 90, 8, 0),
          ATTRIBUTE_MOVE("Casca Grossa", MOVE_TARGET_SELF, MOVE_STAT_DEFENSE,
-                        1.0f, 3.0f, MOVE_STAT_CHANGE_ADD_TO_CAP)}},
+                        0.25f, 1.5f, MOVE_STAT_CHANGE_ADD_TO_CAP)}},
     {SPECIES_POISON_IVY, "Hera Venenosa", 97, 47, 45, 60,
         {DAMAGE_MOVE("Cipó Ágil", MOVE_CATEGORY_PHYSICAL, 40, 100, 10, 1),
          DAMAGE_MOVE("Cipó Feroz", MOVE_CATEGORY_PHYSICAL, 52, 85, 18, 0),

@@ -78,7 +78,7 @@ static void check_marker_filter(UiTheme *ui)
             ui->marker_time = frame * 1.4f / 42;
             BeginTextureMode(target);
             ClearBackground(BLACK);
-            exploration_hud_draw(ui, "Local", "Objetivo", 0, &interaction, (Camera2D){.zoom=1});
+            exploration_hud_draw(ui, "Local", "Objetivo", &interaction, (Camera2D){.zoom=1});
             EndTextureMode();
             Image image = LoadImageFromTexture(target.texture);
             ImageFlipVertical(&image);
@@ -130,7 +130,7 @@ static void check_states(Game *game)
     HudInteraction recorded = world_interaction_view(world, (Vector2){537, 281});
     assert(recorded.state == HUD_INTERACTION_AVAILABLE && strstr(recorded.message, "Reler"));
     check_prompt(&game->ui, recorded);
-    HudInteraction none = world_interaction_view(world, (Vector2){780, 450});
+    HudInteraction none = world_interaction_view(world, (Vector2){300, 600});
     assert(none.state == HUD_INTERACTION_NONE);
     check_prompt(&game->ui, none);
 
