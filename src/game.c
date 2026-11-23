@@ -306,7 +306,7 @@ static void update_screens(Game *game)
             break;
         case GAME_BATTLE: {
             if (game->battle_screen.setup_side < 0 &&
-                game->battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN) {
+                game->battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN && !game->battle_screen.fx.active) {
                 result_screen_begin(&game->result);
                 change_screen(game, GAME_DEFEAT);
                 break;

@@ -31,6 +31,7 @@ GameAudioSnapshot game_audio_capture(const Game *game)
     GameAudioSnapshot shot = {
         .screen = game->screen,
         .result_cursor = game->result.cursor,
+        .feedback_sequence = screen->battle.feedback.sequence,
         .trainer_selected = game->trainer_select.selected,
         .name_count = game->name_entry.count,
         .name_focus = game->name_entry.focus,
@@ -178,59 +179,37 @@ static void react_exploration(GameAudio *audio, const GameAudioSnapshot *before,
     if (world->completed && !before->completed) audio_play_delayed(audio, SFX_JINGLE_VICTORY, 0.3f);
 }
 
-static SoundId attack_sound(const Plant *attacker)
+static SoundId effect_sound(BattleFxKind kind)
 {
-    switch (attacker->id) {
-        case SPECIES_SUNFLOWER:
-        case SPECIES_ORCHID:
-        case SPECIES_CLOVER:
-            return SFX_HIT_LIGHT;
-        default:
-            return SFX_HIT_THORN;
+    switch (kind) {
+        case BATTLE_FX_LEAF: case BATTLE_FX_PETAL: return SFX_ATTACK_LEAF;
+        case BATTLE_FX_THORN: return SFX_HIT_THORN;
+        case BATTLE_FX_BITE: return SFX_ATTACK_BITE;
+        case BATTLE_FX_WHIP: return SFX_ATTACK_WHIP;
+        case BATTLE_FX_FIRE: return SFX_ATTACK_FIRE;
+        case BATTLE_FX_SOLAR: return SFX_ATTACK_SOLAR;
+        case BATTLE_FX_SPARK: return SFX_ATTACK_SPARK;
+        case BATTLE_FX_BUFF: return SFX_BUFF;
+        case BATTLE_FX_DEBUFF: return SFX_DEBUFF;
+        default: return SFX_ATTACK_BODY;
     }
 }
 
-/* Fluxo de ação única: paralisia e golpes tocam quando a mensagem entra em espera. */
-static void react_queued_action(GameAudio *audio, const BattleScreen *screen)
+/* Visual e som usam o mesmo resultado válido e o mesmo instante de impacto. */
+static bool react_move_effect(GameAudio *audio, const GameAudioSnapshot *before, const BattleScreen *screen)
 {
-    if (screen->pending_action == BATTLE_PENDING_PARALYSIS) {
-        audio_play(audio, SFX_PARALYSIS);
-        return;
-    }
-    const BattleState *battle = &screen->battle;
-    int side = battle->current_turn;
-    const Team *team = side_team(battle, side);
-    if (team->active_index < 0 || team->active_index >= team->count) return;
-    int move = -1;
-    if (screen->pending_action == BATTLE_PENDING_MOVE) move = screen->pending_move_index;
-    if (screen->pending_action == BATTLE_PENDING_CPU && screen->pending_cpu_action == AI_ACTION_MOVE)
-        move = screen->pending_cpu_index;
-    if (move < 0) return;
-    audio_play(audio, attack_sound(&team->plants[team->active_index]));
-    if (move == battle->boosted_move_indices[side][team->active_index])
-        audio_play_delayed(audio, SFX_BOOSTED, 0.12f);
-}
-
-/* Rodada por velocidade: o golpe toca quando a etapa é executada e a planta avança. */
-static bool react_round_step(GameAudio *audio, const GameAudioSnapshot *before, const BattleScreen *screen)
-{
-    bool executed = (before->pending_action == BATTLE_PENDING_ROUND ||
-                     before->pending_action == BATTLE_PENDING_PARALYSIS) &&
-                    screen->pending_action == BATTLE_PENDING_ROUND_RESULT && screen->round_active &&
-                    before->round_step >= 0 && before->round_step < 2;
-    if (!executed) return false;
-    const BattleRound *round = &screen->round;
-    int side = round->sides[before->round_step];
-    if (side < 0 || side > 1) return false;
-    BattleAction action = round->actions[side];
-    const Team *team = side_team(&screen->battle, side);
-    int index = round->acted_indices[side];
-    if (action.type != BATTLE_ACTION_MOVE || index < 0 || index >= team->count) return false;
-    /* Etapa cancelada: a planta que agiria já foi derrotada. */
-    if (!Plant_IsAlive(&team->plants[index])) return false;
-    audio_play(audio, attack_sound(&team->plants[index]));
-    if (action.index == screen->battle.boosted_move_indices[side][index])
-        audio_play_delayed(audio, SFX_BOOSTED, 0.12f);
+    const BattleMoveFeedback *event = &screen->battle.feedback;
+    if (before->feedback_sequence == event->sequence) return false;
+    const Team *team = side_team(&screen->battle,event->side);
+    if (event->plant_index < 0 || event->plant_index >= team->count) return false;
+    const Plant *plant = &team->plants[event->plant_index];
+    const Move *move = &plant->moves[event->move_index];
+    BattleFxKind kind = battle_fx_kind(plant->id,event->move_index,move);
+    audio_play(audio,effect_sound(kind));
+    if (event->boosted) audio_play(audio,SFX_BOOSTED);
+    if (!event->hit) audio_play_delayed(audio,SFX_MISS,BATTLE_FX_IMPACT_TIME);
+    else if (event->damage > 0)
+        audio_play_delayed(audio,event->critical ? SFX_CRITICAL : SFX_HIT_IMPACT,BATTLE_FX_IMPACT_TIME);
     return true;
 }
 
@@ -238,13 +217,15 @@ static bool react_round_step(GameAudio *audio, const GameAudioSnapshot *before, 
 static void react_battle_result(GameAudio *audio, const GameAudioSnapshot *before,
                                 const BattleState *battle, bool attack_now)
 {
-    float impact_delay = attack_now ? 0.45f : 0.0f;
+    float impact_delay = attack_now ? BATTLE_FX_IMPACT_TIME : 0.0f;
     bool damaged = false;
     bool fainted = false;
+    bool healed = false;
     for (int side = 0; side < 2; side++) {
         const Team *team = side_team(battle, side);
         for (int i = 0; i < team->count && i < MAX_TEAM_SIZE; i++) {
             int hp = team->plants[i].current_hp;
+            if (hp > before->hp[side][i]) healed = true;
             if (hp >= before->hp[side][i]) continue;
             damaged = true;
             if (hp <= 0) fainted = true;
@@ -257,10 +238,9 @@ static void react_battle_result(GameAudio *audio, const GameAudioSnapshot *befor
             audio_play_delayed(audio, SFX_SWITCH_IN, old_alive ? 0.4f : 0.1f);
         }
     }
-    if (damaged) {
-        if (impact_delay > 0) audio_play_delayed(audio, SFX_HIT_IMPACT, impact_delay);
-        else audio_play(audio, SFX_HIT_IMPACT);
-    }
+    if (damaged && (!attack_now || !battle->feedback.hit || battle->feedback.damage == 0))
+        audio_play_delayed(audio,SFX_STATUS_TICK,impact_delay);
+    if (healed) audio_play_delayed(audio,SFX_HEAL,impact_delay);
     if (fainted) audio_play_delayed(audio, SFX_FAINT, impact_delay + 0.35f);
 
     const Team *player = &battle->player_team;
@@ -295,8 +275,8 @@ static void react_battle(GameAudio *audio, const GameAudioSnapshot *before, cons
     }
 
     if (before->pending_action == BATTLE_PENDING_NONE && screen->pending_action != BATTLE_PENDING_NONE)
-        react_queued_action(audio, screen);
-    bool attack_now = react_round_step(audio, before, screen);
+        if (screen->pending_action == BATTLE_PENDING_PARALYSIS) audio_play(audio,SFX_PARALYSIS);
+    bool attack_now = react_move_effect(audio,before,screen);
     react_battle_result(audio, before, &screen->battle, attack_now);
 
     /* A resolução da ação também volta o menu à raiz; isso não é navegação. */
@@ -345,6 +325,7 @@ void game_audio_react(Game *game, const GameAudioSnapshot *before)
         if (game->screen == GAME_BATTLE) react_battle(audio, before, &game->battle_screen);
     }
 
+    audio->effects_paused = game->exit_confirm_open;
     audio_set_music(audio, screen_music(game));
     audio_update(audio, GetFrameTime());
 }

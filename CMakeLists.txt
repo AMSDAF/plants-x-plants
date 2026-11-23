@@ -37,6 +37,7 @@ set(BATTLE_SOURCES
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/battle_fx.c
     src/relay_ui.c
     src/result_screen.c
     src/logic_setup_screen.c
@@ -230,4 +231,12 @@ target_include_directories(result_screen_check PRIVATE include)
 target_link_libraries(result_screen_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(result_screen_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Efeitos e áudio dos golpes, usando o motor real e capturas OpenGL.
+add_executable(battle_fx_check EXCLUDE_FROM_ALL tools/check_battle_fx.c ${INTRO_CHECK_SOURCES})
+target_include_directories(battle_fx_check PRIVATE include)
+target_link_libraries(battle_fx_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(battle_fx_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()

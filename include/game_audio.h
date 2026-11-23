@@ -13,6 +13,7 @@
 typedef struct {
     GameScreen screen;
     int result_cursor;
+    unsigned int feedback_sequence;
     Trainer trainer_selected;
     int name_count;
     int name_focus;

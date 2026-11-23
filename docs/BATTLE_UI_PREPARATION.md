@@ -161,3 +161,32 @@ paralisia, consulta de status, fila sem ação duplicada, desenho imutável e li
 
 Os três ataques ocupam y=522–680, dentro da área creme do painel. O botão Voltar
 fica no alto da coluna esquerda, em `(390,520,120,28)`, junto ao atalho de efeitos.
+
+## Efeitos de ataque v0
+
+Os golpes possuem famílias visuais: folhas, pétalas, espinhos, cipós/raízes, fogo,
+raio solar, eletricidade, mordida, avanço físico, buff e debuff. São formas e
+partículas desenhadas no raylib, sem novas imagens. As partículas usam grade de
+três pixels; o recuo e o movimento da planta ficam alinhados à mesma grade.
+
+Cada golpe válido inicia um efeito de 0,95 s, com impacto em 0,38 s. O HP mostrado
+fica no valor anterior até o impacto e converge ao valor já calculado pelo motor
+nos 0,45 s seguintes. O número exibido acompanha a barra. Apenas a apresentação é
+interpolada: HP real, dano, turnos, precisão e críticos continuam no motor.
+
+Acertos têm recuo e piscada; críticos têm mais partículas douradas e uma tremida
+curta na planta atingida. Erros terminam com partículas de passagem sem reação de
+acerto nem som de impacto. Golpes fortalecidos só recebem brilho e som extras
+quando o motor confirmou o bônus. Buffs/debuffs mostram setas verdes/roxas, e
+recuperação líquida de HP recebe partículas verdes. Dano passivo recebe partículas
+roxas. Um último impacto conclui a animação antes da tela de derrota.
+
+Som e imagem compartilham o mesmo resultado de golpe e instante de impacto.
+Os novos sons são sintetizados no carregamento, com recursos liberados no
+encerramento. Nenhum efeito visual ou variação sonora usa o RNG do combate.
+O modal de saída pausa o relógio visual e a fila de efeitos sonoros pendentes.
+
+Verificação: `cmake --build build --target battle_fx_check` e
+`build/battle_fx_check.exe`. Exercita 24 golpes nos dois lados, erro, crítico,
+fortalecimento, HP exibido, eventos inválidos, último impacto, carregamento de
+áudio e desenho imutável. Capturas em `build/battle_fx_preview/`.

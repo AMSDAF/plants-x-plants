@@ -23,8 +23,6 @@ static const Rectangle setup_left = {64, 242, 400, 58};
 static const Rectangle setup_operator = {480, 242, 200, 58};
 static const Rectangle setup_right = {696, 242, 520, 58};
 static const float pending_action_seconds = 2.0f;
-static const float animation_lunge_pixels = 54.0f;
-static const float animation_hop_pixels = 36.0f;
 static const Rectangle setup_plant_buttons[MAX_TEAM_SIZE] = {
     {64,142,276,38}, {354,142,276,38}, {644,142,276,38}, {934,142,282,38}
 };
@@ -335,6 +333,7 @@ static void show_next_round_message(BattleScreen *screen)
 
 static void resolve_pending_action(BattleScreen *screen)
 {
+    BattleState before = screen->battle;
     BattlePendingAction action = screen->pending_action;
     AIActionType cpu_action = screen->pending_cpu_action;
     int cpu_index = screen->pending_cpu_index;
@@ -358,11 +357,15 @@ static void resolve_pending_action(BattleScreen *screen)
         screen->action_timer = pending_action_seconds;
     }
     else if (action == BATTLE_PENDING_ROUND_RESULT) show_next_round_message(screen);
+    battle_fx_begin(&screen->fx,&before,&screen->battle);
 }
 
 BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 {
+    dt = fminf(0.1f,fmaxf(0,dt));
+    battle_fx_update(&screen->fx,dt);
     BattleState *battle = &screen->battle;
+    if (battle_over(battle) && screen->fx.active) return BATTLE_SCREEN_NONE;
     bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
     if (IsKeyPressed(KEY_ESCAPE)) {
         if (screen->setup_side < 0 && screen->menu != BATTLE_MENU_ROOT && !forced && !battle_over(battle)) {
@@ -554,11 +557,11 @@ static Texture2D plant_art(const BattleView *view, int id, Rectangle *source)
     return (Texture2D){0};
 }
 
-static void plant_sprite(const BattleView *view, const Plant *plant, Rectangle bounds, bool mirrored)
+static void plant_sprite(const BattleView *view, const Plant *plant, Rectangle bounds, bool mirrored, Color effect_tint)
 {
     Rectangle source;
     Texture2D texture = plant_art(view, plant->id, &source);
-    Color tint = Plant_IsAlive(plant) ? WHITE : (Color){135,135,135,130};
+    Color tint = effect_tint;
     if (texture.id && source.width > 0 && source.height > 0) {
         float scale = fminf(bounds.width/source.width,bounds.height/source.height);
         Rectangle dest = {roundf(bounds.x+(bounds.width-source.width*scale)/2),
@@ -574,37 +577,9 @@ static void plant_sprite(const BattleView *view, const Plant *plant, Rectangle b
     }
 }
 
-/* O primeiro beat da mensagem usa o próprio timer para mover a planta e voltar. */
-static float action_animation_progress(const BattleScreen *screen)
+static void hp_bar(Rectangle bounds, const Plant *plant, float shown_hp)
 {
-    if (screen->animation_side < 0 || screen->animation_side > 1) return -1.0f;
-    if (screen->pending_action != BATTLE_PENDING_ROUND_RESULT ||
-        screen->round_message_index != 0) return -1.0f;
-    float elapsed = pending_action_seconds - screen->action_timer;
-    if (elapsed <= 0.0f) return 0.0f;
-    if (elapsed >= pending_action_seconds) return 1.0f;
-    return elapsed / pending_action_seconds;
-}
-
-static Rectangle animated_plant_bounds(const BattleScreen *screen, int side, Rectangle bounds)
-{
-    float progress = action_animation_progress(screen);
-    if (progress < 0.0f || screen->animation_side != side) return bounds;
-    const Team *team = side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
-    if (screen->animation_plant_index < 0 || screen->animation_plant_index >= team->count ||
-        team->active_index != screen->animation_plant_index) return bounds;
-    float wave = sinf(progress * 3.14159265f);
-    if (screen->animation_status) {
-        bounds.y -= wave * animation_hop_pixels;
-    } else {
-        bounds.x += (side == 0 ? wave : -wave) * animation_lunge_pixels;
-    }
-    return bounds;
-}
-
-static void hp_bar(Rectangle bounds, const Plant *plant)
-{
-    float fraction = plant->max_hp > 0 ? (float)plant->current_hp/plant->max_hp : 0;
+    float fraction = plant->max_hp > 0 ? shown_hp/plant->max_hp : 0;
     fraction = fminf(1,fmaxf(0,fraction));
     selection_ui_panel(bounds,3,ink);
     Rectangle fill = {bounds.x+2,bounds.y+2,bounds.width-4,bounds.height-4};
@@ -628,8 +603,9 @@ static void status(const BattleView *view, const BattleScreen *screen, int side,
                         : "Sua vez";
     text(view,active->id == SPECIES_PEPPER ? TextFormat("%s · Frutos %d",label,active->fruit_count) : label,
          bounds.x+28,bounds.y+49,22,ink);
-    hp_bar((Rectangle){bounds.x+24,bounds.y+84,bounds.width-132,14},active);
-    const char *hp = TextFormat("%d/%d",active->current_hp,active->max_hp);
+    float shown_hp = battle_fx_hp(&screen->fx,side,team->active_index,active->current_hp);
+    hp_bar((Rectangle){bounds.x+24,bounds.y+84,bounds.width-132,14},active,shown_hp);
+    const char *hp = TextFormat("%d/%d",(int)roundf(shown_hp),active->max_hp);
     text(view,hp,bounds.x+bounds.width-18-selection_ui_measure(view->ui,view->fonts,hp,22),
           bounds.y+78,22,ink);
 }
@@ -643,9 +619,14 @@ static void arena(const BattleView *view, const BattleScreen *screen)
     battle_screen_draw_art(view->ui,view->assets,BATTLE_ART_GROUND,(Rectangle){736,254,302,74});
     const Team *player = &screen->battle.player_team, *enemy = &screen->battle.enemy_team;
     plant_sprite(view,&player->plants[player->active_index],
-        animated_plant_bounds(screen,0,(Rectangle){329,185,250,267}),false);
+        battle_fx_plant_bounds(&screen->fx,0,(Rectangle){329,185,250,267}),false,
+        battle_fx_tint(&screen->fx,0,Plant_IsAlive(&player->plants[player->active_index]) || screen->fx.active
+            ? WHITE : (Color){135,135,135,130}));
     plant_sprite(view,&enemy->plants[enemy->active_index],
-        animated_plant_bounds(screen,1,(Rectangle){783,91,210,211}),true);
+        battle_fx_plant_bounds(&screen->fx,1,(Rectangle){783,91,210,211}),true,
+        battle_fx_tint(&screen->fx,1,Plant_IsAlive(&enemy->plants[enemy->active_index]) || screen->fx.active
+            ? WHITE : (Color){135,135,135,130}));
+    battle_fx_draw(&screen->fx,&screen->battle);
     status(view,screen,1,(Rectangle){70,64,354,114});
     status(view,screen,0,(Rectangle){815,343,376,114});
     battle_screen_draw_art(view->ui,view->assets,BATTLE_ART_LOCATION,(Rectangle){518,2,244,54});
@@ -732,7 +713,7 @@ static void menu_team(const BattleView *view, const BattleScreen *screen, bool f
         Color color = available ? ink : (Color){112,114,99,255};
         if (i >= team->count) { text_box(view,"Vaga livre",box,22,color); continue; }
         const Plant *plant = &team->plants[i];
-        plant_sprite(view,plant,(Rectangle){box.x+9,box.y+7,38,46},false);
+        plant_sprite(view,plant,(Rectangle){box.x+9,box.y+7,38,46},false,Plant_IsAlive(plant) ? WHITE : GRAY);
         const char *name = TextFormat("%s · %s",switch_labels[i],plant->name_pt);
         text_box(view,name,(Rectangle){box.x+52,box.y+5,box.width-62,26},22,color);
         const char *state = i == team->active_index ? (Plant_IsAlive(plant) ? " · ativa" : " · derrotada")
@@ -771,7 +752,7 @@ static void setup_view(const BattleView *view, const BattleScreen *screen)
             cell(box,true,screen->roster_cursor == i);
             Plant plant = {0};
             plant.id = data->id; plant.current_hp = 1;
-            plant_sprite(view,&plant,(Rectangle){box.x+10,box.y+10,55,74},false);
+            plant_sprite(view,&plant,(Rectangle){box.x+10,box.y+10,55,74},false,WHITE);
             text_box(view,data->name_pt,(Rectangle){box.x+70,box.y+14,box.width-82,33},22,ink);
             text(view,TextFormat("Vida %d · ATQ %d",data->base_hp,data->base_attack),box.x+72,box.y+57,20,ink);
         }

@@ -33,6 +33,15 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 
 O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalhes das telas devem ficar nos respectivos módulos.
 
+### Efeitos de combate
+
+`include/battle_fx.h` e `src/battle_fx.c` mantêm o relógio visual, o HP exibido,
+recuo, piscada, partículas e trajetórias das famílias de golpe. O desenho é somente
+de leitura e os efeitos usam fórmulas determinísticas, sem consumir `rand()`.
+O motor publica `BattleMoveFeedback` apenas para golpes válidos: sequência, lado,
+planta, golpe, alvo, acerto, crítico, fortalecimento e dano. A interface e o áudio
+observam esse resultado; ele não modifica balanceamento ou regras.
+
 ### Tela inicial e exploração
 
 | Arquivos | Responsabilidade |

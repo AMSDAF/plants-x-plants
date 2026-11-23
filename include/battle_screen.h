@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include "battle.h"
+#include "battle_fx.h"
 #include "ai.h"
 #include "raylib.h"
 #include "plant_data.h"
@@ -45,6 +46,7 @@ typedef enum {
 
 typedef struct {
     BattleState battle;
+    BattleFx fx;
     BattlePendingAction pending_action;
     float action_timer;
     int pending_move_index;

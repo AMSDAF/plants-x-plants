@@ -575,12 +575,20 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
     const Move *move = &attacker->moves[move_index];
     const int acting_side = battle->current_turn;
     const int acting_plant_index = attacker_team->active_index;
+    BattleMoveFeedback feedback = {
+        .sequence = battle->feedback.sequence + 1, .side = acting_side,
+        .plant_index = acting_plant_index, .move_index = move_index,
+        .target_side = move->effect == MOVE_EFFECT_ATTRIBUTE && move->target == MOVE_TARGET_SELF
+            ? acting_side : 1-acting_side
+    };
     Move effective_move = *move;
     effective_move.power = Battle_GetMovePower(battle, battle->current_turn, move_index);
     if (move->effect != MOVE_EFFECT_DAMAGE) {
         int old_value = 0;
         int new_value = 0;
         if (!apply_stat_move(attacker, defender, move, &old_value, &new_value)) return 0;
+        feedback.hit = 1;
+        battle->feedback = feedback;
         const char *stat_name = move->stat == MOVE_STAT_ATTACK ? "ataque"
                               : move->stat == MOVE_STAT_DEFENSE ? "defesa" : "velocidade";
         Plant *target = move->target == MOVE_TARGET_SELF ? attacker : defender;
@@ -591,8 +599,10 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
         finish_action(battle, acting_side, acting_plant_index, attacker_team, defender_team);
         return 1;
     }
+    feedback.boosted = effective_move.power > move->power;
     if (attacker->id == SPECIES_PEPPER && move_index == 2) attacker->fruit_count--;
     if (move->accuracy < 100 && rand() % 100 >= move->accuracy) {
+        battle->feedback = feedback;
         snprintf(battle->last_message, sizeof(battle->last_message),
                  "%s errou %s!", attacker->name_pt, move->name);
         finish_action(battle, acting_side, acting_plant_index, attacker_team, defender_team);
@@ -605,6 +615,10 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
     int previous_hp = defender->current_hp;
     Plant_TakeDamage(defender, raw_damage);
     int damage = previous_hp - defender->current_hp;
+    feedback.hit = 1;
+    feedback.critical = critical;
+    feedback.damage = damage;
+    battle->feedback = feedback;
     int knocked_out = !Plant_IsAlive(defender);
     if (effective_move.power > move->power) {
         snprintf(battle->last_message, sizeof(battle->last_message),
