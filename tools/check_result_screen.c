@@ -155,6 +155,24 @@ int main(void)
     event(7,820,440); event(6,0,0); tick(&game);
     event(5,0,0); tick(&game); tick(&game);
     assert(!game.exit_confirm_open && game.screen == GAME_MENU);
+    /* Vitória da Babosa entrega a chave e abre o aviso no estilo das placas. */
+    game.screen = GAME_BATTLE; game.input_blocked = false;
+    game.encounter = WORLD_ENCOUNTER_ALOE;
+    game.battle_screen.setup_side = -1;
+    game.battle_screen.battle.state = BATTLE_STATE_PLAYER_WIN;
+    game.battle_screen.fx.active = false;
+    world_init(&game.world); game.world.location = WORLD_DEPOT;
+    key(&game,KEY_ENTER);
+    assert(game.screen == GAME_EXPLORATION && game.world.maintenance_key);
+    assert(game.world.dialogue_title && strcmp(game.world.dialogue_title,"Chave do alçapão") == 0);
+    assert(strstr(game.world.dialogue_pages[0],"derrotou a Babosa"));
+    assert(strstr(game.world.dialogue_pages[0],"Chave da Manutenção"));
+    assert(strstr(game.world.dialogue_pages[0],"casa de manutenção"));
+    assert(!game.world.dialogue_pages[1]);
+    key(&game,KEY_ESCAPE);
+    assert(!game.world.dialogue_title && !game.exit_confirm_open && game.world.maintenance_key);
+    world_finish_encounter(&game.world,WORLD_ENCOUNTER_ALOE);
+    assert(!game.world.dialogue_title); /* Recompensa não se repete. */
     intro_assets_unload(&game.intro_assets);
     trainer_background_unload(&game.trainer_select_assets.background);
     selection_ui_assets_unload(&game.trainer_select_assets.ui);

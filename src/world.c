@@ -863,7 +863,11 @@ WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_na
 
 void world_finish_encounter(World *world, WorldEncounter encounter)
 {
-    if (encounter == WORLD_ENCOUNTER_ALOE) world->maintenance_key = true;
+    if (encounter == WORLD_ENCOUNTER_ALOE && !world->maintenance_key) {
+        world->maintenance_key = true;
+        open_dialogue(world,"Chave do alçapão",
+            "Você derrotou a Babosa e recebeu a Chave da Manutenção! Com ela, já pode abrir o alçapão na casa de manutenção.",NULL);
+    }
     if (encounter == WORLD_ENCOUNTER_SUNFLOWER) world->guardian_defeated = true;
 }
 
@@ -1231,7 +1235,6 @@ static void draw_interior(const UiTheme *ui, const World *world, const WorldAsse
                 else
                     draw_guard(ui, ALOE, "Babosa guardiã", (Color){73, 162, 120, 255});
             }
-            else centered_text(ui, "Chave da manutenção obtida", 640, 480, 22, ink);
             break;
         case WORLD_BASEMENT:
             if (assets->basement_interior.id) {

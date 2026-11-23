@@ -180,3 +180,9 @@ ENTER confirma o foco, clique escolhe a ação e ESC cancela. **Sair para o menu
 retorna à tela inicial, sem salvar. A exploração e os temporizadores do combate
 não avançam com o modal aberto. Diálogos, central e submenus conservam o ESC de
 fechamento; ele só pede confirmação quando a ação abandonaria a partida.
+
+Ao vencer a Babosa e retornar da batalha, a recompensa abre um aviso no mesmo
+estilo das placas: **Chave do alçapão**. Ele confirma a vitória, a obtenção da
+Chave da Manutenção e sua utilização no alçapão da casa de manutenção. A chave é
+entregue imediatamente; fechar o aviso não altera a recompensa. O antigo texto
+fixo desenhado no chão do depósito foi removido.
