@@ -53,3 +53,19 @@ Todas as faixas estão em domínio público (CC0) no OpenGameArt; o crédito nã
 | `basement.ogg` | Crystal Cave (song18) | cynicmusic | https://opengameart.org/content/crystal-cave-song18 |
 | `battle.ogg` | Trouble in the Garden | HaelDB | https://opengameart.org/content/trouble-in-the-garden |
 | `ending.ogg` | Post-Adventure Tea Party | Zane Little Music | https://opengameart.org/content/post-adventure-tea-party |
+
+## Efeitos de ataque v0 sintetizados em memória
+
+Os WAV originais são preservados. `audio.c` também sintetiza, uma única vez ao
+carregar, sons curtos para folhas/pétalas, chicote, fogo, raio solar, mordida,
+eletricidade, avanço físico, buff, debuff, erro, crítico, cura e dano passivo.
+Esses sons não exigem novos arquivos. Seus recursos seguem o mesmo descarte dos
+sons carregados por arquivo.
+
+O som do golpe é escolhido por família e índice do ataque. O impacto toca em
+0,38 s, junto à reação visual; erro não toca impacto e buff não usa som de espinho.
+O brilho lógico sonoro só toca se o motor confirmou aumento de poder. Sons de
+efeito recebem uma variação de tom de até 3%, por contador local independente do
+RNG do combate. Impactos reduzem temporariamente o volume da música a 65% do
+volume configurado por 0,28 s. A fila de efeitos pendentes pausa com a confirmação
+de saída; música e controles do modal continuam funcionando.

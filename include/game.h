@@ -18,13 +18,14 @@
 #include "logic_setup_screen.h"
 #include "relay_ui.h"
 #include "audio.h"
+#include "result_screen.h"
 
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
 
 typedef enum {
     GAME_MENU, GAME_TRAINER_SELECT, GAME_NAME_ENTRY,
-    GAME_EXPLORATION, GAME_BATTLE, GAME_INTRO
+    GAME_EXPLORATION, GAME_BATTLE, GAME_INTRO, GAME_ENDING, GAME_DEFEAT
 } GameScreen;
 
 /* Sessão de campanha somente em memória; o rascunho permanece na tela de nome. */
@@ -45,6 +46,8 @@ typedef struct {
     MenuScreen menu;
     GameScreen screen;
     bool input_blocked;
+    bool exit_confirm_open;
+    int exit_confirm_cursor;
     PlayerAssets player_assets;
     TrainerSelectAssets trainer_select_assets;
     TrainerSelectScreen trainer_select;
@@ -61,6 +64,7 @@ typedef struct {
     WorldAssets world_assets;
     RelayUiAssets relay_assets;
     GameAudio audio;
+    ResultScreen result;
 } Game;
 
 void game_init(Game *game);

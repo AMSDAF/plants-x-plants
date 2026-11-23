@@ -24,7 +24,7 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `src/main.c` | Abrir a janela, executar o loop principal e encerrar o programa. |
 | `include/game_canvas.h`, `src/game_canvas.c` | Gerenciar o alvo na resolução física do viewport, mantendo coordenadas lógicas de 1280 × 720, enquadramento, mouse e recortes de interface. O alvo é recriado somente ao mudar de tamanho. |
 | `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify dos diálogos e do HUD, as molduras de interação e diálogo e os três retratos, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus ou botânicas compartilhadas. `Game` possui os recursos e os passa explicitamente às telas. |
-| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar objetivo e aviso botânico inferior com indicação textual de E e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
+| `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar brilhos e balões de descoberta a partir de posições fornecidas por `world`, objetivo e aviso botânico inferior com indicação textual de E e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
 | `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
 | `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
 | `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |
@@ -32,6 +32,15 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `include/game_audio.h`, `src/game_audio.c` | Capturar campos do estado antes de cada quadro e comparar com o estado depois de `game_update`, escolhendo efeitos de interface, exploração e combate e a música de cada tela. Somente lê o estado; dano, turnos e entrada continuam em `battle`, `battle_screen` e nas telas. |
 
 O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalhes das telas devem ficar nos respectivos módulos.
+
+### Efeitos de combate
+
+`include/battle_fx.h` e `src/battle_fx.c` mantêm o relógio visual, o HP exibido,
+recuo, piscada, partículas e trajetórias das famílias de golpe. O desenho é somente
+de leitura e os efeitos usam fórmulas determinísticas, sem consumir `rand()`.
+O motor publica `BattleMoveFeedback` apenas para golpes válidos: sequência, lado,
+planta, golpe, alvo, acerto, crítico, fortalecimento e dano. A interface e o áudio
+observam esse resultado; ele não modifica balanceamento ou regras.
 
 ### Tela inicial e exploração
 
@@ -41,6 +50,7 @@ O `main.c` deve permanecer pequeno. Regras de combate, dados de plantas e detalh
 | `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões botânicos de madeira e controles Pixelify sobre `TrainerBackgroundAssets`, retratos de repouso com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa metadados dos atlas de repouso para igualar altura e pés. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
 | `include/intro_screen.h`, `src/intro_screen.c` | Pedido de Lia, aceite, seleção de três entre seis plantas, viagem e montagem validada da equipe inicial. Reutiliza o fundo e a interface; `IntroAssets`, pertencente a `Game`, carrega as seis sprites `*_v2.png`, calcula os limites de alfa e usa filtro pontual. Também carrega as seis artes de `assets/ui/plant_selection/`, com recortes fixos, foco independente da seleção e botões em nove partes. A seleção mantém seis atlas Pixelify nos tamanhos físicos do viewport, atualizados fora do desenho quando a resolução muda. O desenho preserva a proporção, alinha as raízes e oferece reserva se faltar uma textura. A entrada usa as mesmas áreas dos novos cartões e botões. Não resolve combate. |
 | `include/name_entry_screen.h`, `src/name_entry_screen.c` | Rascunho UTF-8 de até 12 codepoints, foco, edição e transição reversível de 0,6 s; reutiliza o cartão/retrato e os relógios da seleção. |
+| `include/result_screen.h`, `src/result_screen.c` | Telas de derrota e conclusão: reutilizam fundo, molduras, sprites e fontes da abertura, sem recursos próprios. Mantêm foco/tempo e retornam ações; `game` coordena revanche, retorno à vila, reinício e menu. Desenho somente de leitura. |
 | `include/relay_ui.h`, `src/relay_ui.c` | Recursos industriais da central, pertencentes a `Game`: quatro texturas, recortes fixos e molduras em nove partes. Compõe progresso, objetivo, cards, interruptores e rodapé com Pixelify emprestada. Reutiliza limites de clique de `world` e oferece fallback geométrico; desenho somente de leitura. |
 | `include/logic_setup_screen.h`, `src/logic_setup_screen.c` | Modal da placa: abas por planta, perguntas, editor de ataque/fórmula, listas e confirmação individual. Recebe equipe e recursos emprestados; preserva rascunhos e não calcula dano. `world` mantém a interação e os acertos; `game` coordena abertura e configurações confirmadas. |
 | `include/selection_ui.h`, `src/selection_ui.c` | Interface compartilhada de personagem e nome: `SelectionUiAssets`, pertencente a `TrainerSelectAssets`, possui três molduras novas, botão/seta reutilizados e sete atlas Pixelify rasterizados na resolução física, atualizados por `game_update`. Desenha cabeçalho, textos, molduras com recorte comum e botões em nove partes, com reserva geométrica. Também preserva paleta, formas e descarte de entrada das transições. |
@@ -148,7 +158,7 @@ de veneno, queimadura ou captura, nem balanceamento final.
 
 Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a interface já impede uma escolha inválida.
 
-`Battle_PrepareRound` registra as ações dos dois lados e a ordem de velocidade; `Battle_ExecuteRoundStep` executa uma etapa por vez, e `Battle_FinishRound` aplica nocautes e substituições. `Battle_ExecuteRound` continua disponível como atalho para resolver a rodada inteira. A tela usa as etapas para exibir cada evento por dois segundos. Uma ação inválida não deve alterar a batalha nem consumir a rodada.
+`Battle_PrepareRound` registra as ações dos dois lados e a ordem de velocidade; `Battle_ExecuteRoundStep` executa uma etapa por vez, e `Battle_FinishRound` aplica nocautes e substituições. `Battle_ExecuteRound` continua disponível como atalho para resolver a rodada inteira. A tela usa as etapas para exibir cada evento por 1,5 s depois da animação, permitindo adiantar por confirmação. Uma ação inválida não deve alterar a batalha nem consumir a rodada.
 
 A abertura oferece Trevo, Hera Venenosa, Pimenta, Cacto, Orquídea e Planta Carnívora, com três escolhas distintas obrigatórias. O catálogo definitivo contém oito espécies; Girassol e Babosa são os bosses e ficam fora da seleção inicial. Cada guardião luta sozinho; sua resistência é definida nos atributos de Babosa e Girassol em `plant_data.c`.
 Cada planta pode associar duas condições e um operador a um golpe de dano.

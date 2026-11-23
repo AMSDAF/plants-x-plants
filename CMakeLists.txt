@@ -37,7 +37,9 @@ set(BATTLE_SOURCES
     src/battle.c
     src/ai.c
     src/battle_screen.c
+    src/battle_fx.c
     src/relay_ui.c
+    src/result_screen.c
     src/logic_setup_screen.c
     src/battle_screen_assets.c
 )
@@ -221,4 +223,45 @@ add_executable(boss_balance_check EXCLUDE_FROM_ALL tools/check_boss_balance.c
 target_include_directories(boss_balance_check PRIVATE include)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(boss_balance_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Resultados da campanha: navegação, revanche e capturas reais.
+add_executable(result_screen_check EXCLUDE_FROM_ALL tools/check_result_screen.c ${INTRO_CHECK_SOURCES})
+target_include_directories(result_screen_check PRIVATE include)
+target_link_libraries(result_screen_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(result_screen_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Efeitos e áudio dos golpes, usando o motor real e capturas OpenGL.
+add_executable(battle_fx_check EXCLUDE_FROM_ALL tools/check_battle_fx.c ${INTRO_CHECK_SOURCES})
+target_include_directories(battle_fx_check PRIVATE include)
+target_link_libraries(battle_fx_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(battle_fx_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Descoberta das interações sem carregar todos os recursos da campanha.
+add_executable(discovery_markers_check EXCLUDE_FROM_ALL tools/check_discovery_markers.c
+    src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c src/dialogue_ui.c)
+target_include_directories(discovery_markers_check PRIVATE include)
+target_link_libraries(discovery_markers_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(discovery_markers_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Fluxo manual das mensagens e proteção contra confirmação acidental.
+add_executable(battle_flow_check EXCLUDE_FROM_ALL tools/check_battle_flow.c ${INTRO_CHECK_SOURCES})
+target_include_directories(battle_flow_check PRIVATE include)
+target_link_libraries(battle_flow_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(battle_flow_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# UI do desafio lógico com entrada real, rolagem e capturas nas resoluções da campanha.
+add_executable(logic_setup_ui_check EXCLUDE_FROM_ALL tools/check_logic_setup_ui.c ${INTRO_CHECK_SOURCES})
+target_include_directories(logic_setup_ui_check PRIVATE include)
+target_link_libraries(logic_setup_ui_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(logic_setup_ui_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()

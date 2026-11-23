@@ -18,7 +18,9 @@ entre pergunta e editor. Não há progresso linear ou fórmula atribuída pelo j
 
 A composição usa coordenadas lógicas de 1280 × 720, com modal em
 `(56,38,1168,654)`, abas em y=151, card em `(100,232,255,365)` e rodapé em y=632.
-As listas de condição têm sete opções de 32 pixels; encerram acima do rodapé.
+As listas de condição têm sete opções em um painel único, com cinco linhas visíveis
+de 40 pixels e rolagem. Encerram acima do rodapé; teclado mantém o foco visível
+e a roda funciona sobre a lista. A lista de ataques exibe as três opções.
 
 ## Estados e confirmação
 
@@ -29,7 +31,7 @@ pendentes por planta. Trocar de aba ou fechar não descarta esses dados.
 configurações; o desenho não modifica o combate nem a vida das plantas.
 
 O ataque deve ser de dano. As duas condições devem ser diferentes. As opções
-inválidas ficam cinza e não podem ser escolhidas. A marca verde indica a opção
+inválidas ficam cinza e não podem ser escolhidas; a navegação por teclado as pula. A marca verde indica a opção
 atual; a borda dourada/seta indica o foco. ESC cancela uma lista antes de fechar
 o modal; clicar fora fecha a lista sem ativar o controle atrás dela.
 
@@ -48,3 +50,30 @@ cmake --build build --target plants_x_plants intro_check battle_check battle_scr
 .\build\battle_screen_check.exe
 .\build\name_entry_check.exe
 ```
+
+## Acabamento visual
+
+As molduras internas usam seis camadas com recortes concêntricos: o preenchimento
+não invade as quinas e o foco segue o mesmo contorno. Sombra curta e brilho superior
+dão relevo. A seleção é verde; foco tem contorno dourado e seta; abas configuradas
+têm check. Os botões botânicos preservam sua arte e recebem uma seta de foco,
+sem uma borda retangular por cima das folhas.
+
+Perguntas destacam a expressão e agrupam os valores P/Q; perguntas unárias
+centralizam P e não reservam um campo vazio para Q. Respostas incorretas mostram
+uma faixa com ícone e texto que avisa sobre a nova pergunta, acompanhando a regra
+atual de trocar a pergunta após errar. Acerto tem transição breve de 0,2 s e um
+realce discreto de confirmação; os relógios pertencem à tela e o desenho é somente
+de leitura. Os 13 enunciados, a escolha aleatória e os efeitos sonoros da equipe
+são preservados.
+
+Campos usam texto alinhado à esquerda, centralizado verticalmente, em tamanhos
+rasterizados de 22/24/28 px. Listas distinguem opção atual, foco e indisponibilidade,
+com uma moldura externa e separadores internos. Confirmar mantém o alinhamento
+à direita dos campos e o rascunho só passa à campanha após a confirmação.
+
+Verificação focada: `cmake --build build --target logic_setup_ui_check` e
+`build/logic_setup_ui_check.exe`. Cobre erro/acerto, transição, troca de abas,
+rascunhos, confirmação, roda/teclado, opções inválidas, fechamento sem clique
+através, nomes longos, 720p/1080p/4:3 e desenho sem mutação ou consumo de RNG.
+Capturas em `build/logic_ui_preview/`.

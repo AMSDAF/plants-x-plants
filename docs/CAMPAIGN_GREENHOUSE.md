@@ -148,3 +148,72 @@ reserva. A manutenção continua usando sua ilustração existente.
 
 A validação usa caminhos livres diante dos móveis sólidos e preserva os testes
 de bloqueio, acesso aos controles, vitória/derrota e progressão dos encontros.
+
+## Telas de resultado
+
+Após concluir a central, o agradecimento de Íris permanece até o jogador encerrar
+as páginas. Em seguida, a tela final apresenta as três companheiras, o nome do
+jogador e as opções **Jogar novamente** (retorna à criação de personagem) e
+**Menu principal**. A trilha `ending.ogg` continua nessa tela.
+
+A derrota contra qualquer guardião abre uma tela dedicada com **Tentar novamente**
+e **Voltar à vila**. A revanche repete o mesmo encontro com a equipe recuperada,
+as fórmulas e os golpes lógicos confirmados. Voltar à vila mantém os objetivos,
+as chaves e as etapas resolvidas; perder não derrota o guardião nem conclui a estufa.
+A vinheta de derrota já existente toca sem música de fundo na tela de derrota.
+
+Ambas reutilizam o fundo escurecido, a moldura botânica, os botões e as sprites da
+abertura. A Pixelify usa os tamanhos já rasterizados para cada resolução. Setas,
+A/D e TAB mudam o foco; ENTER/Espaço e clique confirmam; ESC escolhe a segunda ação.
+Entradas mantidas na transição aguardam soltura para evitar confirmação acidental.
+
+Verificação: `cmake --build build --target result_screen_check` e
+`build/result_screen_check.exe`. O teste cobre revanche nos dois encontros,
+equipe/fórmulas/progresso, espera pelo diálogo final, menu/reinício, teclado/mouse,
+resoluções, recursos ausentes e desenho imutável. Capturas em `build/result_preview/`.
+
+## Confirmação ao sair
+
+ESC na exploração livre ou na raiz do combate abre **Sair da partida?**, com o
+aviso **O progresso não será salvo**. **Continuar jogando** é a opção inicial;
+ENTER confirma o foco, clique escolhe a ação e ESC cancela. **Sair para o menu**
+retorna à tela inicial, sem salvar. A exploração e os temporizadores do combate
+não avançam com o modal aberto. Diálogos, central e submenus conservam o ESC de
+fechamento; ele só pede confirmação quando a ação abandonaria a partida.
+
+Ao vencer a Babosa e retornar da batalha, a recompensa abre um aviso no mesmo
+estilo das placas: **Chave do alçapão**. Ele confirma a vitória, a obtenção da
+Chave da Manutenção e sua utilização no alçapão da casa de manutenção. A chave é
+entregue imediatamente; fechar o aviso não altera a recompensa. O antigo texto
+fixo desenhado no chão do depósito foi removido.
+
+## Descoberta de interações
+
+Objetos interativos visíveis recebem um brilho dourado pixelado com pulso suave,
+mesmo à distância. Lia, Bento e Íris recebem um pequeno balão de conversa. Ao
+entrar no alcance, o objeto selecionado usa apenas a seta e a instrução atuais,
+sem duplicar o brilho. O alcance real de interação permanece igual.
+
+Portas e controles reutilizáveis continuam destacados. Pistas já lidas e a placa
+do jardim deixam de brilhar; ainda podem ser relidas de perto. Guardiões vencidos
+não recebem marcador. A placa lógica continua marcada por permitir editar os
+golpes. O brilho de um acesso bloqueado tem cor discreta, e a explicação do
+bloqueio continua disponível de perto. Os ícones são ocultados em diálogos,
+central, editor lógico e conclusão. Só aparecem na sala e no enquadramento atuais,
+com tamanho fixo em pixels e sem indicadores presos às bordas.
+
+Verificação: `cmake --build build --target discovery_markers_check` e
+`build/discovery_markers_check.exe`. Capturas em `build/discovery_preview/`.
+
+Os indicadores da Babosa e das alavancas ficam acima das artes, sem cobrir a planta
+ou os manípulos. A pressão da ponte usa um quadro no canto superior direito da
+tela; não fica mais sobre o manômetro. A placa lógica tem colisão no caminho,
+permitindo aproximar-se para interagir e contornar pelos lados. O aviso da
+escotilha bloqueada é apenas **Escotilha trancada**.
+
+Os dois guardiões usam as sprites `*_v2.png` da arena na exploração, recortadas
+pelo alfa e com filtro pontual. O Girassol tem 174 pixels de altura no mundo e a
+Babosa mantém 190. Ambos repousam na mesma arte de terra da batalha, ajustada
+à escala da sala, sem nomes desenhados no chão. A identificação fica no aviso de proximidade. O marcador do Girassol acompanha
+sua nova altura. `WorldAssets` carrega e libera a textura de terra junto aos bosses;
+a ausência da arte usa uma elipse de terra como reserva.

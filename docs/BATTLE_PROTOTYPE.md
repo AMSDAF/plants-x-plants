@@ -185,17 +185,18 @@ maior produto de poder por precisão. Para repor uma planta derrotada, escolhe
 a primeira reserva válida na ordem da equipe. A CPU só troca quando a
 substituição é obrigatória.
 
-Cada coisa que acontece na rodada ganha dois segundos de tela. Primeiro aparece
-o anúncio da ação que vai resolver, como “Planta Carnívora vai usar Morder...”.
-Depois o motor executa apenas aquela etapa, e cada frase gerada aparece
-separadamente: dano, cura da Babosa, veneno, fruto, paralisia ou troca. Só então
-vem o anúncio da próxima ação, na ordem de velocidade. No beat da mensagem da
-ação, a planta que agiu avança e volta se usou golpe físico, pula se usou golpe
-de status e fica parada se usou golpe à distância. A animação usa o próprio
-timer do beat, sem novas regras de combate. Uma barra mostra o tempo
-restante, e a janela continua responsiva durante a espera. Se a batalha terminar,
-a fila é descartada na hora: a mensagem final fica visível e ENTER retorna sem
-esperar o restante do intervalo.
+As animações da rodada acontecem automaticamente; as mensagens avançam sozinhas após
+1,5 s de leitura. ENTER, Espaço ou clique permitem adiantar. O uso do golpe, dano e efeitos extras aparecem
+em páginas curtas, sem barra de contagem regressiva. A
+ordem real das duas plantas aparece ao lado. A execução tem apenas uma transição
+curta de 0,15 s antes do próximo efeito, sem exigir leitura nesse intervalo.
+
+O intervalo de leitura começa após a animação. Uma mensagem só aceita confirmação
+manual após sua animação terminar e a entrada anterior
+ser solta. A janela continua responsiva e TAB abre os efeitos sem avançar a leitura.
+O último golpe também conserva suas páginas: vitória, derrota e substituições só
+prosseguem depois da leitura ou confirmação. As regras, os cálculos e a ordem por velocidade
+permanecem no motor de combate.
 A interface envia as duas ações à mesma API de combate usada pela CPU. O motor
 valida as ações e modifica o estado; a tela apenas divide as mensagens e controla
 o intervalo. O desenho não modifica o estado, e `game.c` coordena entrada e saída

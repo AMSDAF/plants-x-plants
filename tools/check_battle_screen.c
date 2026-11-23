@@ -51,12 +51,16 @@ static void reset(Game *game)
     game->battle_screen.battle.player_team.plants[0].moves[0].accuracy = 100;
 }
 
-/* Avança o relógio simulado sem esperar dois segundos reais. */
+/* Confirma cada página após a animação, preservando a leitura manual. */
 static void resolve_action(Game *game)
 {
     assert(game->battle_screen.pending_action != BATTLE_PENDING_NONE);
-    for (int i = 0; i < 600 && game->battle_screen.pending_action != BATTLE_PENDING_NONE; i++)
+    if (game->battle_screen.show_statuses) key(game,KEY_TAB);
+    for (int i = 0; i < 600 && game->battle_screen.pending_action != BATTLE_PENDING_NONE; i++) {
         battle_screen_update(&game->battle_screen,.1f);
+        if (game->battle_screen.pending_action == BATTLE_PENDING_ROUND_RESULT &&
+            !game->battle_screen.fx.active && game->battle_screen.message_armed) key(game,KEY_ENTER);
+    }
     assert(game->battle_screen.pending_action == BATTLE_PENDING_NONE);
 }
 
@@ -168,7 +172,7 @@ int main(void)
     assert(game.battle_screen.animation_side == 0);
     assert(game.battle_screen.animation_plant_index == 0);
     assert(!game.battle_screen.animation_status);
-    for (int i = 0; i < 10; i++) battle_screen_update(&game.battle_screen,.1f);
+    for (int i = 0; i < 3; i++) battle_screen_update(&game.battle_screen,.1f);
     capture(&game,1280,720,"physical_lunge");
     resolve_action(&game);
 
@@ -177,7 +181,7 @@ int main(void)
     advance_to_result(&game);
     assert(game.battle_screen.animation_side == 0);
     assert(game.battle_screen.animation_status);
-    for (int i = 0; i < 10; i++) battle_screen_update(&game.battle_screen,.1f);
+    for (int i = 0; i < 3; i++) battle_screen_update(&game.battle_screen,.1f);
     capture(&game,1280,720,"status_hop");
     resolve_action(&game);
 
@@ -282,7 +286,7 @@ int main(void)
     BeginDrawing(); game_draw(&game); EndDrawing();
     assert(memcmp(&copy,&game,sizeof(game)) == 0);
     game.trainer_select_assets.ui = fonts;
-    /* Nocaute encerra a fila de dois segundos sem atrasar o retorno. */
+    /* Nocaute mantém o resultado até o jogador confirmar as páginas finais. */
     reset(&game);
     battle = &game.battle_screen.battle;
     battle->boosted_move_indices[0][0] = -1;
@@ -302,6 +306,8 @@ int main(void)
     }
     assert(battle->state == BATTLE_STATE_PLAYER_WIN);
     assert(frames_after_end >= 0 && frames_after_end <= 2);
+    assert(game.battle_screen.pending_action == BATTLE_PENDING_ROUND_RESULT);
+    resolve_action(&game);
     assert(game.battle_screen.pending_action == BATTLE_PENDING_NONE);
     assert(!game.battle_screen.round_active);
     assert(key(&game,KEY_ENTER) == BATTLE_SCREEN_RETURN);
