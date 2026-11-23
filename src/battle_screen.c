@@ -22,7 +22,8 @@ static const Rectangle back_button = {390, 520, 120, 28};
 static const Rectangle setup_left = {64, 242, 400, 58};
 static const Rectangle setup_operator = {480, 242, 200, 58};
 static const Rectangle setup_right = {696, 242, 520, 58};
-static const float pending_action_seconds = 2.0f;
+static const float action_prepare_seconds = 0.15f;
+static const float message_read_seconds = 1.5f;
 static const Rectangle setup_plant_buttons[MAX_TEAM_SIZE] = {
     {64,142,276,38}, {354,142,276,38}, {644,142,276,38}, {934,142,282,38}
 };
@@ -241,7 +242,7 @@ static void queue_action(BattleScreen *screen, BattlePendingAction action, int v
     clear_pending(screen);
     clear_round(screen);
     screen->pending_action = action;
-    screen->action_timer = pending_action_seconds;
+    screen->action_timer = action_prepare_seconds;
     screen->pending_move_index = action == BATTLE_PENDING_MOVE ? value : -1;
     screen->pending_plant_index = action == BATTLE_PENDING_SWITCH ? value : -1;
 }
@@ -278,7 +279,7 @@ static void queue_round(BattleScreen *screen, BattleAction player_action, Battle
     screen->pending_player_action = player_action;
     screen->pending_enemy_action = enemy_action;
     screen->pending_action = BATTLE_PENDING_ROUND;
-    screen->action_timer = pending_action_seconds;
+    screen->action_timer = action_prepare_seconds;
 }
 
 static BattleAction plan_enemy_action(const BattleState *battle)
@@ -291,40 +292,85 @@ static BattleAction plan_enemy_action(const BattleState *battle)
     return action;
 }
 
-/* Separa o texto da ação em frases para que cada efeito tenha seu próprio intervalo. */
-static void capture_round_messages(BattleScreen *screen, const char *fallback)
+static void append_round_message(BattleScreen *screen, const char *message)
 {
-    const char *source = screen->battle.last_message;
-    if (!source[0] && fallback) source = fallback;
-    snprintf(screen->round_result_message, sizeof(screen->round_result_message), "%s", source);
-
-    int count = 0;
-    char *text = screen->round_result_message;
-    size_t length = strlen(text);
-    screen->round_message_offsets[count++] = 0;
-    for (size_t i = 0; i + 1 < length && count < BATTLE_ROUND_MESSAGES; i++) {
-        if ((text[i] == '.' || text[i] == '!') && text[i + 1] == ' ') {
-            text[i + 1] = '\0';
-            size_t start = i + 2;
-            while (start < length && text[start] == ' ') start++;
-            if (start < length) screen->round_message_offsets[count++] = (int)start;
-        }
+    if (!message || !message[0] || screen->round_message_count >= BATTLE_ROUND_MESSAGES) return;
+    int offset = 0;
+    if (screen->round_message_count > 0) {
+        int last = screen->round_message_offsets[screen->round_message_count-1];
+        offset = last+(int)strlen(screen->round_result_message+last)+1;
     }
-    screen->round_message_count = count;
+    if ((size_t)offset+strlen(message)+1 > sizeof(screen->round_result_message)) return;
+    screen->round_message_offsets[screen->round_message_count++] = offset;
+    snprintf(screen->round_result_message+offset,sizeof(screen->round_result_message)-(size_t)offset,"%s",message);
+}
+
+static int stat_value(const Plant *plant, MoveStat stat)
+{
+    return stat == MOVE_STAT_ATTACK ? plant->attack : stat == MOVE_STAT_DEFENSE ? plant->defense : plant->speed;
+}
+
+/* Ataque e resultado são páginas curtas; os efeitos extras preservam a ordem do motor. */
+static void capture_round_messages(BattleScreen *screen, const BattleState *before, const char *fallback)
+{
+    screen->round_result_message[0] = '\0';
+    screen->round_message_count = 0;
     screen->round_message_index = 0;
+    screen->message_armed = false;
+    screen->message_elapsed = 0;
+    const BattleMoveFeedback *event = &screen->battle.feedback;
+    bool move_event = event->sequence != before->feedback.sequence;
+    if (move_event) {
+        const Team *acting = event->side == 0 ? &before->player_team : &before->enemy_team;
+        const Team *old_target = event->target_side == 0 ? &before->player_team : &before->enemy_team;
+        const Team *new_target = event->target_side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
+        const Plant *plant = &acting->plants[event->plant_index];
+        const Move *move = &plant->moves[event->move_index];
+        const Plant *target = &old_target->plants[old_target->active_index];
+        char page[192];
+        snprintf(page,sizeof(page),"%s usou %s%s.",plant->name_pt,move->name,event->boosted ? " fortalecido" : "");
+        append_round_message(screen,page);
+        if (move->effect == MOVE_EFFECT_ATTRIBUTE) {
+            const char *stat = move->stat == MOVE_STAT_ATTACK ? "Ataque" : move->stat == MOVE_STAT_DEFENSE ? "Defesa" : "Velocidade";
+            snprintf(page,sizeof(page),"%s de %s: %d para %d.",stat,target->name_pt,
+                stat_value(target,move->stat),stat_value(&new_target->plants[old_target->active_index],move->stat));
+        } else if (event->hit) {
+            snprintf(page,sizeof(page),"%s recebeu %d de dano.%s",target->name_pt,event->damage,
+                event->critical ? " Acerto crítico!" : "");
+        } else snprintf(page,sizeof(page),"O golpe não acertou %s.",target->name_pt);
+        append_round_message(screen,page);
+    }
+    char extra[192];
+    snprintf(extra,sizeof(extra),"%s",fallback ? fallback : screen->battle.last_message);
+    int start = 0, sentence = 0;
+    size_t length = strlen(extra);
+    for (size_t i = 0; i <= length; i++) {
+        if (extra[i] != '\0' && !((extra[i] == '.' || extra[i] == '!') && extra[i+1] == ' ')) continue;
+        bool last = extra[i] == '\0';
+        if (!last) extra[i+1] = '\0';
+        if (!move_event || sentence > 0) append_round_message(screen,extra+start);
+        sentence++;
+        if (last) break;
+        start = (int)i+2;
+        while (extra[start] == ' ') start++;
+        i = (size_t)start-1;
+    }
+    if (!screen->round_message_count) append_round_message(screen,"A ação terminou.");
 }
 
 static void show_next_round_message(BattleScreen *screen)
 {
+    screen->message_elapsed = 0;
     screen->round_message_index++;
     if (screen->round_message_index < screen->round_message_count) {
         screen->pending_action = BATTLE_PENDING_ROUND_RESULT;
-        screen->action_timer = pending_action_seconds;
+        screen->action_timer = 0;
+        screen->message_armed = false;
         return;
     }
-    if (screen->round_active && screen->round.step < 2) {
+    if (screen->round_active && screen->round.step < 2 && !battle_over(&screen->battle)) {
         screen->pending_action = BATTLE_PENDING_ROUND;
-        screen->action_timer = pending_action_seconds;
+        screen->action_timer = action_prepare_seconds;
         return;
     }
     if (screen->round_active) Battle_FinishRound(&screen->battle, &screen->round);
@@ -350,13 +396,18 @@ static void resolve_pending_action(BattleScreen *screen)
     else if (action == BATTLE_PENDING_ROUND || action == BATTLE_PENDING_PARALYSIS) {
         int step = screen->round.step;
         int executed = Battle_ExecuteRoundStep(&screen->battle, &screen->round);
-        capture_round_messages(screen, executed == 1 ? NULL : "A ação seguinte foi cancelada.");
+        capture_round_messages(screen,&before,executed == 1 ? NULL : "A ação seguinte foi cancelada.");
         if (executed == 1) set_action_animation(screen, step);
         else set_action_animation(screen, -1);
         screen->pending_action = BATTLE_PENDING_ROUND_RESULT;
-        screen->action_timer = pending_action_seconds;
+        screen->action_timer = 0;
     }
     else if (action == BATTLE_PENDING_ROUND_RESULT) show_next_round_message(screen);
+    if (action == BATTLE_PENDING_CPU || action == BATTLE_PENDING_MOVE || action == BATTLE_PENDING_SWITCH) {
+        capture_round_messages(screen,&before,NULL);
+        screen->pending_action = BATTLE_PENDING_ROUND_RESULT;
+        screen->action_timer = 0;
+    }
     battle_fx_begin(&screen->fx,&before,&screen->battle);
 }
 
@@ -368,6 +419,8 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     if (battle_over(battle) && screen->fx.active) return BATTLE_SCREEN_NONE;
     bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
     if (IsKeyPressed(KEY_ESCAPE)) {
+        if (screen->show_statuses) { screen->show_statuses = false; return BATTLE_SCREEN_NONE; }
+        if (screen->pending_action != BATTLE_PENDING_NONE) return BATTLE_SCREEN_NONE;
         if (screen->setup_side < 0 && screen->menu != BATTLE_MENU_ROOT && !forced && !battle_over(battle)) {
             screen->menu = BATTLE_MENU_ROOT;
             screen->menu_cursor = 0;
@@ -387,26 +440,37 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     if (IsKeyPressed(KEY_TAB)) screen->show_statuses = !screen->show_statuses;
 
-    /* Fim de batalha interrompe o ritmo: resultado e retorno ficam imediatos. */
-    if (battle_over(battle)) {
-        if (screen->round_active) Battle_FinishRound(battle, &screen->round);
-        clear_pending(screen);
-        clear_round(screen);
-        screen->menu = BATTLE_MENU_ROOT;
-        screen->menu_cursor = 0;
-        if (activate(return_button, KEY_ENTER)) return BATTLE_SCREEN_RETURN;
+    if (screen->pending_action != BATTLE_PENDING_NONE) {
+        if (screen->pending_action == BATTLE_PENDING_ROUND_RESULT) {
+            bool held = IsKeyDown(KEY_ENTER) || IsKeyDown(KEY_SPACE) || IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+            if (screen->fx.active || screen->show_statuses) { screen->message_armed = false; return BATTLE_SCREEN_NONE; }
+            screen->message_elapsed += dt;
+            if (screen->message_elapsed >= message_read_seconds) {
+                resolve_pending_action(screen);
+                return BATTLE_SCREEN_NONE;
+            }
+            if (!screen->message_armed) {
+                if (!held) screen->message_armed = true;
+                return BATTLE_SCREEN_NONE;
+            }
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                resolve_pending_action(screen);
+        } else {
+            screen->action_timer -= dt;
+            if (screen->action_timer <= 0) {
+                resolve_pending_action(screen);
+                screen->menu = BATTLE_MENU_ROOT;
+                screen->menu_cursor = 0;
+            }
+        }
         return BATTLE_SCREEN_NONE;
     }
 
-    if (dt < 0) dt = 0;
-    if (dt > 0.1f) dt = 0.1f;
-    if (screen->pending_action != BATTLE_PENDING_NONE) {
-        screen->action_timer -= dt;
-        if (screen->action_timer <= 0) {
-            resolve_pending_action(screen);
-            screen->menu = BATTLE_MENU_ROOT;
-            screen->menu_cursor = 0;
-        }
+    if (battle_over(battle)) {
+        if (screen->round_active) Battle_FinishRound(battle,&screen->round);
+        clear_pending(screen); clear_round(screen);
+        screen->menu = BATTLE_MENU_ROOT; screen->menu_cursor = 0;
+        if (activate(return_button,KEY_ENTER)) return BATTLE_SCREEN_RETURN;
         return BATTLE_SCREEN_NONE;
     }
 
@@ -600,7 +664,7 @@ static void status(const BattleView *view, const BattleScreen *screen, int side,
     battle_screen_draw_art(view->ui,view->assets,BATTLE_ART_STATUS,bounds);
     text(view,active->name_pt,bounds.x+28,bounds.y+22,28,ink);
     const char *label = side == 1 ? "Guardião" : battle_over(&screen->battle) ? "Sua equipe"
-                        : "Sua vez";
+                        : screen->pending_action != BATTLE_PENDING_NONE ? "Em combate" : "Sua vez";
     text(view,active->id == SPECIES_PEPPER ? TextFormat("%s · Frutos %d",label,active->fruit_count) : label,
          bounds.x+28,bounds.y+49,22,ink);
     float shown_hp = battle_fx_hp(&screen->fx,side,team->active_index,active->current_hp);
@@ -899,17 +963,32 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
     bool pending = screen->pending_action != BATTLE_PENDING_NONE;
     bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
     const Plant *active = &battle->player_team.plants[battle->player_team.active_index];
-    const char *question = ended ? (battle->state == BATTLE_STATE_PLAYER_WIN ? "Você venceu!" : "Sua equipe foi derrotada.")
-        : pending ? pending_message(screen) : cpu ? "O guardião está escolhendo..." : forced ? "Escolha uma reserva para continuar."
+    const char *question = pending ? "Rodada em andamento" : ended ? (battle->state == BATTLE_STATE_PLAYER_WIN ? "Você venceu!" : "Sua equipe foi derrotada.")
+        : cpu ? "O guardião está escolhendo..." : forced ? "Escolha uma reserva para continuar."
         : screen->menu == BATTLE_MENU_TEAM ? "Qual planta vai entrar em campo?"
         : screen->menu == BATTLE_MENU_MOVES ? "Escolha seu golpe."
         : TextFormat("O que %s\nvai fazer?",active->name_pt);
     text_wrap(&view,question,(Rectangle){72,544,445,72},28,ink);
     text(&view,"TAB · efeitos",76,525,20,ink);
-    const char *log = screen->pending_action == BATTLE_PENDING_ROUND_RESULT
-        ? "" : battle->last_message;
+    char order[160] = {0};
+    if (screen->round_active) {
+        int first = screen->round.sides[0], second = screen->round.sides[1];
+        const Team *a = first == 0 ? &battle->player_team : &battle->enemy_team;
+        const Team *b = second == 0 ? &battle->player_team : &battle->enemy_team;
+        int ai = screen->round.acted_indices[first], bi = screen->round.acted_indices[second];
+        if (ai >= 0 && ai < a->count && bi >= 0 && bi < b->count)
+            snprintf(order,sizeof(order),"Ordem desta rodada:\n1º: %s / 2º: %s",a->plants[ai].name_pt,b->plants[bi].name_pt);
+    }
+    const char *log = pending ? order : battle->last_message;
     text_wrap(&view,log,(Rectangle){72,612,445,74},20,ink);
-    if (ended) {
+    if (pending) {
+        cell((Rectangle){568,518,647,108},true,false);
+        text_wrap(&view,pending_message(screen),(Rectangle){594,532,595,82},28,ink);
+        bool reading = screen->pending_action == BATTLE_PENDING_ROUND_RESULT && !screen->fx.active;
+        Rectangle next = {568,638,647,36};
+        cell(next,reading,reading);
+        text_box(&view,reading ? "Avança sozinho · ENTER / clique: adiantar" : "Aguarde a animação...",next,24,ink);
+    } else if (ended) {
         cell(return_button,true,true);
         text_box(&view,"ENTER · Voltar à estufa",return_button,30,ink);
     } else if (cpu || pending) {
@@ -919,10 +998,5 @@ void battle_screen_draw(const UiTheme *ui, const BattleScreen *screen,
     } else if (screen->menu == BATTLE_MENU_MOVES) {
         menu_moves(&view,screen);
     } else menu_root(&view,screen,true);
-    if (pending) {
-        float elapsed = fminf(1,fmaxf(0,1-screen->action_timer/pending_action_seconds));
-        DrawRectangle(76,606,430,4,(Color){191,181,133,255});
-        DrawRectangle(76,606,(int)(430*elapsed),4,ORANGE);
-    }
     if (screen->show_statuses) status_overlay(&view,battle);
 }

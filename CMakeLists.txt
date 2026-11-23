@@ -249,3 +249,11 @@ target_link_libraries(discovery_markers_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(discovery_markers_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# Fluxo manual das mensagens e proteção contra confirmação acidental.
+add_executable(battle_flow_check EXCLUDE_FROM_ALL tools/check_battle_flow.c ${INTRO_CHECK_SOURCES})
+target_include_directories(battle_flow_check PRIVATE include)
+target_link_libraries(battle_flow_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(battle_flow_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()

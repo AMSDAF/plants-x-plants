@@ -41,7 +41,7 @@ typedef enum {
     BATTLE_PENDING_ROUND_RESULT
 } BattlePendingAction;
 
-/* Cada mensagem da rodada aparece por dois segundos, na ordem em que ocorreu. */
+/* Mensagens avançam após 1,5 s de leitura ou confirmação, depois da animação. */
 #define BATTLE_ROUND_MESSAGES 12
 
 typedef struct {
@@ -57,7 +57,9 @@ typedef struct {
     BattleAction pending_enemy_action;
     BattleRound round;
     bool round_active;
-    char round_result_message[160];
+    char round_result_message[2048];
+    bool message_armed;
+    float message_elapsed;
     int round_message_offsets[BATTLE_ROUND_MESSAGES];
     int round_message_count;
     int round_message_index;

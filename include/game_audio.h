@@ -50,6 +50,7 @@ typedef struct {
     LogicFormula setup_draft;
     BattleStateEnum battle_state;
     int round_step;
+    int round_message_index;
     int team_count[2];
     int active_index[2];
     int hp[2][MAX_TEAM_SIZE];

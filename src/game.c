@@ -130,6 +130,7 @@ static bool escape_leaves_session(const Game *game)
     if (game->screen == GAME_BATTLE) {
         const BattleScreen *screen = &game->battle_screen;
         const BattleState *battle = &screen->battle;
+        if (screen->show_statuses) return false;
         bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
         bool ended = battle->state == BATTLE_STATE_PLAYER_WIN || battle->state == BATTLE_STATE_ENEMY_WIN;
         return !ended && (screen->setup_side >= 0 || screen->menu == BATTLE_MENU_ROOT || forced);
@@ -306,7 +307,8 @@ static void update_screens(Game *game)
             break;
         case GAME_BATTLE: {
             if (game->battle_screen.setup_side < 0 &&
-                game->battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN && !game->battle_screen.fx.active) {
+                game->battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN && !game->battle_screen.fx.active &&
+                game->battle_screen.pending_action == BATTLE_PENDING_NONE) {
                 result_screen_begin(&game->result);
                 change_screen(game, GAME_DEFEAT);
                 break;

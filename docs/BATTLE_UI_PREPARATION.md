@@ -103,7 +103,7 @@ não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
 - Na raiz, na montagem ou na substituição obrigatória, **ESC** preserva o retorno
   anterior à estufa; o aviso não aparece no topo.
 - Na troca obrigatória, a equipe abre automaticamente e somente reservas vivas
-  podem entrar. Ações humanas, da CPU e paralisia usam a espera não bloqueante de dois segundos.
+  podem entrar. Ações humanas, da CPU e paralisia exibem mensagens com avanço automático em 1,5 s após a animação, com opção de adiantar.
 - No beat da mensagem, golpe físico avança e volta, golpe de status pula e golpe
   à distância mantém a planta parada.
 - No resultado, ENTER ou o botão retorna à estufa. Ações de combate ficam bloqueadas.
@@ -190,3 +190,19 @@ Verificação: `cmake --build build --target battle_fx_check` e
 `build/battle_fx_check.exe`. Exercita 24 golpes nos dois lados, erro, crítico,
 fortalecimento, HP exibido, eventos inválidos, último impacto, carregamento de
 áudio e desenho imutável. Capturas em `build/battle_fx_preview/`.
+
+## Leitura da rodada v0
+
+A barrinha de dois segundos foi removida. Durante a resolução, os comandos são
+substituídos por um cartão com a mensagem atual e a indicação **Avança sozinho · ENTER / clique: adiantar**. A esquerda mostra **Rodada em andamento** e a ordem real das
+plantas. Durante o efeito, a indicação passa a **Aguarde a animação...**.
+
+Cada confirmação adianta uma única página: uso do golpe, dano ou atributo e efeitos
+extras, sem repetir a animação. Segurar a entrada que escolheu o golpe ou confirmar
+durante a animação não pula mensagens. TAB consulta os efeitos sem avançar páginas;
+ESC fecha essa consulta. Cada página avança sozinha após 1,5 s, contados depois da animação. A consulta de
+efeitos e o modal de saída pausam esse intervalo. O fim da batalha aguarda a leitura
+do último resultado.
+
+Verificação: `cmake --build build --target battle_flow_check` e
+`build/battle_flow_check.exe`; capturas em `build/battle_flow_preview/`.

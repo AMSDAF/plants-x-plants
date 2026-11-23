@@ -68,6 +68,7 @@ GameAudioSnapshot game_audio_capture(const Game *game)
         .setup_draft = screen->draft,
         .battle_state = screen->battle.state,
         .round_step = screen->round.step,
+        .round_message_index = screen->round_message_index,
     };
     for (int side = 0; side < 2; side++) {
         const Team *team = side_team(&screen->battle, side);
@@ -276,6 +277,9 @@ static void react_battle(GameAudio *audio, const GameAudioSnapshot *before, cons
 
     if (before->pending_action == BATTLE_PENDING_NONE && screen->pending_action != BATTLE_PENDING_NONE)
         if (screen->pending_action == BATTLE_PENDING_PARALYSIS) audio_play(audio,SFX_PARALYSIS);
+    if (before->pending_action == BATTLE_PENDING_ROUND_RESULT &&
+        (screen->pending_action != BATTLE_PENDING_ROUND_RESULT ||
+         screen->round_message_index != before->round_message_index)) audio_play(audio,SFX_UI_CONFIRM);
     bool attack_now = react_move_effect(audio,before,screen);
     react_battle_result(audio, before, &screen->battle, attack_now);
 
