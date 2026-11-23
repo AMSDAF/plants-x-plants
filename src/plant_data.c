@@ -31,10 +31,10 @@ static const SpeciesData SPECIES_CATALOG[SPECIES_COUNT] = {
     {
         SPECIES_SUNFLOWER,
         "Girassol",
-        240,65,40,34,
+        240,65,50,34,
         {
-            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 40, 30, 20, 0),
-            DAMAGE_MOVE("Folha Navalha", MOVE_CATEGORY_RANGED, 40, 100, 10, 0),
+            DAMAGE_MOVE("Raio Solar", MOVE_CATEGORY_RANGED, 40, 30, 30, 0),
+            DAMAGE_MOVE("Folha Navalha", MOVE_CATEGORY_RANGED, 40, 100, 20, 0),
             ATTRIBUTE_MOVE("Fotossíntese", MOVE_TARGET_SELF, MOVE_STAT_ATTACK,
                            0.25f, 1.5f, MOVE_STAT_CHANGE_ADD_TO_CAP)
         }
