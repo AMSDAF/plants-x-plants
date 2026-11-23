@@ -12,6 +12,7 @@
 /* Cópia dos campos observados antes da atualização de um quadro. */
 typedef struct {
     GameScreen screen;
+    int result_cursor;
     Trainer trainer_selected;
     int name_count;
     int name_focus;

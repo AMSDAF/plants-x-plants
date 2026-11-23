@@ -148,3 +148,35 @@ reserva. A manutenção continua usando sua ilustração existente.
 
 A validação usa caminhos livres diante dos móveis sólidos e preserva os testes
 de bloqueio, acesso aos controles, vitória/derrota e progressão dos encontros.
+
+## Telas de resultado
+
+Após concluir a central, o agradecimento de Íris permanece até o jogador encerrar
+as páginas. Em seguida, a tela final apresenta as três companheiras, o nome do
+jogador e as opções **Jogar novamente** (retorna à criação de personagem) e
+**Menu principal**. A trilha `ending.ogg` continua nessa tela.
+
+A derrota contra qualquer guardião abre uma tela dedicada com **Tentar novamente**
+e **Voltar à vila**. A revanche repete o mesmo encontro com a equipe recuperada,
+as fórmulas e os golpes lógicos confirmados. Voltar à vila mantém os objetivos,
+as chaves e as etapas resolvidas; perder não derrota o guardião nem conclui a estufa.
+A vinheta de derrota já existente toca sem música de fundo na tela de derrota.
+
+Ambas reutilizam o fundo escurecido, a moldura botânica, os botões e as sprites da
+abertura. A Pixelify usa os tamanhos já rasterizados para cada resolução. Setas,
+A/D e TAB mudam o foco; ENTER/Espaço e clique confirmam; ESC escolhe a segunda ação.
+Entradas mantidas na transição aguardam soltura para evitar confirmação acidental.
+
+Verificação: `cmake --build build --target result_screen_check` e
+`build/result_screen_check.exe`. O teste cobre revanche nos dois encontros,
+equipe/fórmulas/progresso, espera pelo diálogo final, menu/reinício, teclado/mouse,
+resoluções, recursos ausentes e desenho imutável. Capturas em `build/result_preview/`.
+
+## Confirmação ao sair
+
+ESC na exploração livre ou na raiz do combate abre **Sair da partida?**, com o
+aviso **O progresso não será salvo**. **Continuar jogando** é a opção inicial;
+ENTER confirma o foco, clique escolhe a ação e ESC cancela. **Sair para o menu**
+retorna à tela inicial, sem salvar. A exploração e os temporizadores do combate
+não avançam com o modal aberto. Diálogos, central e submenus conservam o ESC de
+fechamento; ele só pede confirmação quando a ação abandonaria a partida.

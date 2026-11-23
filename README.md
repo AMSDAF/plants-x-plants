@@ -6,7 +6,7 @@ Monte sua equipe, evolua suas plantas e escolha seu caminho por diferentes bioma
 
 ## Status
 
-A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pressionar **ENTER**. Depois do nome, um prólogo apresenta o pedido de ajuda de Lia, o aceite, a escolha de três entre seis plantas e a viagem até a vila. A chegada abre a Estufa Lógica, com exploração e batalhas contra guardiões. A progressão posterior de campanha é planejada.
+A tela inicial abre diretamente a seleção de Explorador ou Exploradora ao pressionar **ENTER**. Depois do nome, um prólogo apresenta o pedido de ajuda de Lia, o aceite, a escolha de três entre seis plantas e a viagem até a vila. A chegada abre a Estufa Lógica, com exploração e batalhas contra guardiões. A progressão posterior de campanha é planejada. Ao concluir a estufa e o diálogo final, uma tela celebra a equipe e permite jogar novamente ou voltar ao menu. Derrotas abrem uma tela própria para tentar o mesmo guardião outra vez ou voltar à vila, com equipe recuperada e progresso preservado.
 
 ## Modos de jogo
 

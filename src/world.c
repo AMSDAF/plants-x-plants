@@ -1568,16 +1568,8 @@ void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)
         return;
     }
     if (world->relay_panel_open) return;
-    if (world->completed) {
-        DrawRectangle(0, 0, GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, Fade(ink, 0.83f));
-        DrawRectangle(310, 260, 660, 190, cream);
-        DrawRectangleLinesEx((Rectangle){310, 260, 660, 190}, 4, frame);
-        centered_text(ui, "Estufa concluída!", 640, 291, 36, ink);
-        centered_text(ui, "Você venceu o guardião e concluiu as três etapas.", 640, 350, 22, ink);
-        centered_text(ui, "ENTER ou ESC  Voltar ao menu", 640, 401, 20, ink);
-        return;
-    }
-
+    /* A conclusão é apresentada pela tela final coordenada por game.c. */
+    if (world->completed) return;
     const Sector *sector = world->location == WORLD_EXTERIOR ? sector_at(feet) : &rooms[world->location];
     const char *area = sector ? sector->name : "Travessia";
     HudInteraction interaction = world_interaction_view(world, feet);

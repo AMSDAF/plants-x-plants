@@ -30,6 +30,7 @@ GameAudioSnapshot game_audio_capture(const Game *game)
     const BattleScreen *screen = &game->battle_screen;
     GameAudioSnapshot shot = {
         .screen = game->screen,
+        .result_cursor = game->result.cursor,
         .trainer_selected = game->trainer_select.selected,
         .name_count = game->name_entry.count,
         .name_focus = game->name_entry.focus,
@@ -88,6 +89,7 @@ static void react_screen_change(GameAudio *audio, GameScreen from, GameScreen to
                     (from == GAME_INTRO && to == GAME_NAME_ENTRY) ||
                     (from == GAME_EXPLORATION && to == GAME_MENU);
     if (to == GAME_BATTLE) audio_play(audio, SFX_BATTLE_START);
+    else if (from == GAME_ENDING || from == GAME_DEFEAT) audio_play(audio, SFX_UI_CONFIRM);
     else if (forward) audio_play(audio, SFX_UI_CONFIRM);
     else if (backward) audio_play(audio, SFX_UI_BACK);
     audio->step_distance = step_length;
@@ -313,6 +315,8 @@ static MusicId screen_music(const Game *game)
         case GAME_NAME_ENTRY:
         case GAME_INTRO:
             return MUSIC_MENU;
+        case GAME_ENDING: return MUSIC_ENDING;
+        case GAME_DEFEAT: return MUSIC_NONE;
         case GAME_EXPLORATION:
             if (game->world.completed) return MUSIC_ENDING;
             return game->world.location == WORLD_BASEMENT ? MUSIC_BASEMENT : MUSIC_EXPLORATION;
@@ -335,6 +339,8 @@ void game_audio_react(Game *game, const GameAudioSnapshot *before)
         react_screen_change(audio, before->screen, game->screen);
     } else {
         react_menus(audio, before, game);
+        if ((game->screen == GAME_ENDING || game->screen == GAME_DEFEAT) &&
+            game->result.cursor != before->result_cursor) audio_play(audio,SFX_UI_MOVE);
         if (game->screen == GAME_EXPLORATION) react_exploration(audio, before, game);
         if (game->screen == GAME_BATTLE) react_battle(audio, before, &game->battle_screen);
     }

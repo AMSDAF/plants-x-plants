@@ -71,7 +71,7 @@ static void start_encounter(Game *game, WorldEncounter encounter)
     change_screen(game, GAME_BATTLE);
 }
 
-static void leave_encounter(Game *game)
+static void remember_battle_team(Game *game)
 {
     const BattleScreen *screen = &game->battle_screen;
     if (screen->setup_side < 0) {
@@ -86,7 +86,12 @@ static void leave_encounter(Game *game)
         for (int i = 0; i < screen->battle.player_team.count; i++)
             if (game->campaign.boosted_move_indices[i] >= 0) game->campaign.has_formula = true;
     }
-    if (screen->battle.state == BATTLE_STATE_PLAYER_WIN) {
+}
+
+static void leave_encounter(Game *game)
+{
+    remember_battle_team(game);
+    if (game->battle_screen.battle.state == BATTLE_STATE_PLAYER_WIN) {
         world_finish_encounter(&game->world, game->encounter);
     } else {
         player_init(&game->player, game->campaign.trainer, world_spawn());
@@ -116,10 +121,83 @@ void game_init(Game *game)
     player_init(&game->player, TRAINER_MALE, world_spawn());
 }
 
+/* Só intercepta saídas da partida; ESC ainda fecha diálogos e submenus primeiro. */
+static bool escape_leaves_session(const Game *game)
+{
+    if (game->screen == GAME_EXPLORATION)
+        return !game->world.dialogue_title && !game->world.logic_quiz_open &&
+               !game->world.relay_panel_open && !game->world.completed;
+    if (game->screen == GAME_BATTLE) {
+        const BattleScreen *screen = &game->battle_screen;
+        const BattleState *battle = &screen->battle;
+        bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
+        bool ended = battle->state == BATTLE_STATE_PLAYER_WIN || battle->state == BATTLE_STATE_ENEMY_WIN;
+        return !ended && (screen->setup_side >= 0 || screen->menu == BATTLE_MENU_ROOT || forced);
+    }
+    return false;
+}
+
+static Rectangle exit_confirm_button(int index)
+{
+    return (Rectangle){index == 0 ? 245 : 655,410,380,64};
+}
+
+/* O mundo e os temporizadores de combate ficam pausados enquanto o modal está aberto. */
+static void update_exit_confirm(Game *game)
+{
+    float scale = fminf(GetRenderWidth()/1280.0f,GetRenderHeight()/720.0f);
+    selection_ui_update_fonts(&game->trainer_select_assets.ui,scale);
+    if (game->input_blocked) {
+        if (!transition_input_down()) game->input_blocked = false;
+        return;
+    }
+    int previous = game->exit_confirm_cursor;
+    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_A) ||
+        IsKeyPressed(KEY_D) || IsKeyPressed(KEY_TAB)) game->exit_confirm_cursor = 1-previous;
+    Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
+    int action = -1;
+    for (int i = 0; i < 2; i++) {
+        if (!CheckCollisionPointRec(mouse,exit_confirm_button(i))) continue;
+        if (motion.x != 0 || motion.y != 0) game->exit_confirm_cursor = i;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) action = i;
+    }
+    if (IsKeyPressed(KEY_ESCAPE)) action = 0;
+    else if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) action = game->exit_confirm_cursor;
+    if (previous != game->exit_confirm_cursor) audio_play(&game->audio,SFX_UI_MOVE);
+    if (action < 0) return;
+    game->exit_confirm_open = false;
+    if (action == 1) {
+        audio_play(&game->audio,SFX_UI_CONFIRM);
+        change_screen(game,GAME_MENU);
+    } else {
+        audio_play(&game->audio,SFX_UI_BACK);
+        game->input_blocked = true;
+    }
+}
+
+static void draw_exit_confirm(const Game *game)
+{
+    const SelectionUiAssets *fonts = &game->trainer_select_assets.ui;
+    const UiTheme *ui = &game->ui;
+    DrawRectangle(0,0,1280,720,Fade((Color){12,25,17,255},0.80f));
+    ui_botanical_panel(ui,(Rectangle){185,210,910,300});
+    selection_ui_pixel_box(ui,fonts,"Sair da partida?",(Rectangle){225,242,830,52},36,SELECTION_INK);
+    selection_ui_pixel_box(ui,fonts,"Você voltará ao menu principal.",
+        (Rectangle){225,312,830,30},28,SELECTION_INK);
+    selection_ui_pixel_box(ui,fonts,"O progresso não será salvo.",
+        (Rectangle){225,354,830,30},28,(Color){143,66,42,255});
+    for (int i = 0; i < 2; i++)
+        selection_ui_button(ui,fonts,exit_confirm_button(i),
+            i == 0 ? "Continuar jogando" : "Sair para o menu",game->exit_confirm_cursor == i,false,1);
+    selection_ui_pixel_box(ui,fonts,"Setas: escolher · ENTER: confirmar · ESC: continuar",
+        (Rectangle){190,535,900,30},24,SELECTION_CREAM);
+}
+
 static void update_screens(Game *game)
 {
     if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT ||
         game->screen == GAME_NAME_ENTRY || game->screen == GAME_BATTLE ||
+        game->screen == GAME_ENDING || game->screen == GAME_DEFEAT ||
         (game->screen == GAME_EXPLORATION && (game->world.logic_quiz_open || game->world.relay_panel_open))) {
         float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
         selection_ui_update_fonts(&game->trainer_select_assets.ui, scale);
@@ -168,6 +246,13 @@ static void update_screens(Game *game)
         if (!transition_input_down()) game->input_blocked = false;
         return;
     }
+    if (IsKeyPressed(KEY_ESCAPE) && escape_leaves_session(game)) {
+        game->exit_confirm_open = true;
+        game->exit_confirm_cursor = 0;
+        game->input_blocked = true;
+        audio_play(&game->audio,SFX_UI_CONFIRM);
+        return;
+    }
     switch (game->screen) {
         case GAME_MENU: {
             MenuAction action = menu_screen_update(&game->menu, true);
@@ -199,7 +284,10 @@ static void update_screens(Game *game)
                     if (game->campaign.boosted_move_indices[i] >= 0) game->campaign.has_formula = true;
             } else if (game->world.relay_panel_open) {
                 world_update_relay_panel(&game->world, game->campaign.player_name);
-            } else if (IsKeyPressed(KEY_ESCAPE) || (game->world.completed && IsKeyPressed(KEY_ENTER))) {
+            } else if (game->world.completed) {
+                result_screen_begin(&game->result);
+                change_screen(game, GAME_ENDING);
+            } else if (IsKeyPressed(KEY_ESCAPE)) {
                 change_screen(game, GAME_MENU);
             } else if (!game->world.completed) {
                 float dt = GetFrameTime();
@@ -217,12 +305,33 @@ static void update_screens(Game *game)
             }
             break;
         case GAME_BATTLE: {
+            if (game->battle_screen.setup_side < 0 &&
+                game->battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN) {
+                result_screen_begin(&game->result);
+                change_screen(game, GAME_DEFEAT);
+                break;
+            }
             BattleScreenAction action = battle_screen_update(&game->battle_screen, GetFrameTime());
             if (action == BATTLE_SCREEN_TEAM_READY) {
                 game->battle_screen.setup_side = -1;
                 game->battle_screen.battle.enemy_team = guardian_team(game->encounter);
             }
             if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
+            break;
+        }
+        case GAME_ENDING:
+        case GAME_DEFEAT: {
+            ResultAction action = result_screen_update(&game->result,true,GetFrameTime());
+            if (game->screen == GAME_DEFEAT) {
+                if (action == RESULT_PRIMARY) {
+                    WorldEncounter encounter = game->encounter;
+                    remember_battle_team(game);
+                    start_encounter(game,encounter);
+                } else if (action == RESULT_SECONDARY) leave_encounter(game);
+            } else if (action == RESULT_PRIMARY) {
+                trainer_select_screen_init(&game->trainer_select);
+                change_screen(game,GAME_TRAINER_SELECT);
+            } else if (action == RESULT_SECONDARY) change_screen(game,GAME_MENU);
             break;
         }
         case GAME_INTRO:
@@ -234,7 +343,11 @@ static void update_screens(Game *game)
 void game_update(Game *game)
 {
     GameAudioSnapshot before = game_audio_capture(game);
-    update_screens(game);
+    /* O bloqueio de transição também protege os botões das telas de resultado. */
+    if (game->input_blocked && (game->screen == GAME_ENDING || game->screen == GAME_DEFEAT))
+        result_screen_update(&game->result,false,GetFrameTime());
+    if (game->exit_confirm_open) update_exit_confirm(game);
+    else update_screens(game);
     game_audio_react(game, &before);
 }
 
@@ -242,6 +355,14 @@ void game_draw(const Game *game)
 {
     const UiTheme *ui = &game->ui;
     switch (game->screen) {
+        case GAME_ENDING:
+        case GAME_DEFEAT:
+            result_screen_draw(ui,&game->trainer_select_assets.ui,&game->trainer_select_assets.background,
+                &game->intro_assets,&game->result,
+                game->screen == GAME_DEFEAT ? &game->battle_screen.battle.player_team : &game->campaign.team,
+                game->campaign.player_name,game->screen == GAME_DEFEAT,
+                game->encounter == WORLD_ENCOUNTER_ALOE ? "Depósito" : "Viveiro");
+            break;
         case GAME_MENU: menu_screen_draw(ui, &game->menu, &game->trainer_select_assets.ui); break;
         case GAME_BATTLE:
             battle_screen_draw(ui, &game->battle_screen, &game->battle_assets, &game->trainer_select_assets.ui,
@@ -278,6 +399,7 @@ void game_draw(const Game *game)
             break;
         }
     }
+    if (game->exit_confirm_open) draw_exit_confirm(game);
 }
 
 void game_shutdown(Game *game)
