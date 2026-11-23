@@ -448,7 +448,7 @@ void Battle_Init(BattleState *battle, Team player_team, Team enemy_team)
         for (int i = 0; i < MAX_TEAM_SIZE; i++) {
             battle->formulas[side][i] =
                 (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_RESERVE, LOGIC_AND};
-            battle->boosted_move_indices[side][i] = 0;
+            battle->boosted_move_indices[side][i] = -1;
         }
     }
     for (int side = 0; side < 2; side++) {

@@ -40,6 +40,7 @@ typedef enum {
     BASEMENT_HATCH,
     RELAY_PANEL,
     ENTRANCE_SIGN,
+    LOGIC_SIGN,
     GARDENER,
     TECHNICIAN,
     RESEARCHER,
@@ -71,6 +72,7 @@ static const MapObject objects[OBJECT_COUNT] = {
     [BASEMENT_HATCH] = {{640, 565}, WORLD_BASEMENT},
     [RELAY_PANEL] = {{782, 315}, WORLD_NURSERY},
     [ENTRANCE_SIGN] = {{487, 787}, WORLD_EXTERIOR},
+    [LOGIC_SIGN] = {{505, 448}, WORLD_EXTERIOR},
     [GARDENER] = {{630, 507}, WORLD_EXTERIOR},
     [TECHNICIAN] = {{868, 600}, WORLD_EXTERIOR},
     [RESEARCHER] = {{790, 485}, WORLD_NURSERY}
@@ -787,7 +789,7 @@ static HudInteractionState interaction_state(const World *world, Object object)
 
 WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_name)
 {
-    if (world->completed || world->relay_panel_open || world->dialogue_title) return WORLD_ENCOUNTER_NONE;
+    if (world->completed || world->logic_quiz_open || world->relay_panel_open || world->dialogue_title) return WORLD_ENCOUNTER_NONE;
     Object object = nearby_object(world, *feet);
     const Vector2 entrance = {640, 533};
     if (object != OBJECT_COUNT && interaction_state(world, object) != HUD_INTERACTION_AVAILABLE)
@@ -841,6 +843,9 @@ WorldEncounter world_interact(World *world, Vector2 *feet, const char *player_na
                              objects[LOCKED_HATCH].position.y + 54});
             break;
         case RELAY_PANEL: world->relay_panel_open = world->guardian_defeated; break;
+        case LOGIC_SIGN:
+            world->logic_quiz_open = true;
+            break;
         case ENTRANCE_SIGN:
             open_dialogue(world, "Placa do jardim",
                           "Depósito: acima e à esquerda do pátio. Manutenção: abaixo e à esquerda.\nPara começar, fale com Lia, no pátio central.", NULL);
@@ -1346,7 +1351,10 @@ void world_draw(const UiTheme *ui, const World *world, const WorldAssets *assets
 {
     if (world->location == WORLD_EXTERIOR) {
         draw_exterior(ui, world, assets);
-        if (!assets->courtyard.id) draw_sign(assets->tiles, ENTRANCE_SIGN);
+        if (!assets->courtyard.id) {
+            draw_sign(assets->tiles,ENTRANCE_SIGN);
+            draw_sign(assets->tiles,LOGIC_SIGN);
+        }
     } else {
         draw_interior(ui, world, assets);
     }
@@ -1552,6 +1560,7 @@ static const char *interaction_hint(const World *world, Object object)
         [BASEMENT_HATCH] = "Subir pela escotilha",
         [RELAY_PANEL] = "Abrir central de relés",
         [ENTRANCE_SIGN] = "Ler placa do jardim",
+        [LOGIC_SIGN] = "Resolver desafio de golpe lógico",
         [GARDENER] = "Falar com Lia",
         [TECHNICIAN] = "Falar com Bento",
         [RESEARCHER] = "Falar com Íris"
@@ -1571,7 +1580,7 @@ static const char *interaction_hint(const World *world, Object object)
 
 HudInteraction world_interaction_view(const World *world, Vector2 feet)
 {
-    if (world->dialogue_title || world->relay_panel_open || world->completed) return (HudInteraction){0};
+    if (world->dialogue_title || world->logic_quiz_open || world->relay_panel_open || world->completed) return (HudInteraction){0};
     Object object = nearby_object(world, feet);
     if (object == OBJECT_COUNT) return (HudInteraction){0};
     static const char *const labels[OBJECT_COUNT] = {
@@ -1582,7 +1591,7 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [DEPOT_DOOR]="Depósito", [NURSERY_DOOR]="Viveiro", [BRIDGE_CONTROL_DOOR]="Controle da ponte",
         [INTERIOR_DOOR]="Saída", [LOCKED_HATCH]="Escotilha de manutenção", [BASEMENT_HATCH]="Escotilha",
         [RELAY_PANEL]="Central de relés",
-        [ENTRANCE_SIGN]="Placa do jardim", [GARDENER]="Lia",
+        [ENTRANCE_SIGN]="Placa do jardim", [LOGIC_SIGN]="Placa dos golpes lógicos", [GARDENER]="Lia",
         [TECHNICIAN]="Bento", [RESEARCHER]="Íris"
     };
     /* Centro superior visível, independente do ponto usado para alcance e colisão. */
@@ -1596,6 +1605,7 @@ HudInteraction world_interaction_view(const World *world, Vector2 feet)
         [LOCKED_HATCH]={846, 375}, [BASEMENT_HATCH]={640, 539},
         [RELAY_PANEL]={782, 296},
         [ENTRANCE_SIGN]={483, 747},
+        [LOGIC_SIGN]={505, 406},
         [GARDENER]={630, 454}, [TECHNICIAN]={868, 547}, [RESEARCHER]={790, 432}
     };
     Vector2 anchor = marker_anchors[object];
@@ -1624,6 +1634,7 @@ static void draw_dialogue(const UiTheme *ui, const World *world)
 
 void world_draw_interface(const UiTheme *ui, const World *world, Vector2 feet)
 {
+    if (world->logic_quiz_open) return;
     if (world->dialogue_title) {
         draw_dialogue(ui, world);
         return;

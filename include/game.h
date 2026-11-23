@@ -15,6 +15,7 @@
 #include "game_view.h"
 #include "ui_theme.h"
 #include "intro_screen.h"
+#include "logic_setup_screen.h"
 
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
@@ -49,8 +50,10 @@ typedef struct {
     IntroScreen intro;
     IntroAssets intro_assets;
     CampaignSession campaign;
+    LogicSetupScreen logic_setup;
     WorldEncounter encounter;
     BattleScreen battle_screen;
+    BattleScreenAssets battle_assets;
     Player player;
     World world;
     WorldAssets world_assets;

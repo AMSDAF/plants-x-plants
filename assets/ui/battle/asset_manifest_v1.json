@@ -1,0 +1,424 @@
+{
+  "version": 1,
+  "status": "integrado_no_combate",
+  "alpha_threshold": 128,
+  "notes_pt": [
+    "PNG originais preservados, sem edição, redimensionamento ou espelhamento gravado.",
+    "Recortes medidos com alfa >= 128; ignoram margens vazias e resíduos quase transparentes.",
+    "Insets de nove partes protegem as folhas e os cantos; conferir montagem no render futuro.",
+    "Reaproveitar metadados existentes para os três recursos compartilhados."
+  ],
+  "assets": {
+    "status_frame": {
+      "file": "assets/ui/battle/status_frame_v2.png",
+      "role": "skin",
+      "size_px": [
+        2172,
+        724
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        96,
+        76,
+        1961,
+        510
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "bbe5cec97c9989068206e7a1a49035de9f38bf328eda2b7510f8813c03ac339d",
+      "nine_slice_insets_px": {
+        "left": 220,
+        "top": 175,
+        "right": 220,
+        "bottom": 80
+      },
+      "center_alpha": 254
+    },
+    "command_panel": {
+      "file": "assets/ui/battle/command_panel_v2.png",
+      "role": "skin",
+      "size_px": [
+        2161,
+        728
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        35,
+        150,
+        2090,
+        388
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "7e7667a00df61414f26234bcb3ec7928fd0154bab23ceb75d4ef609a1fa2c1bd",
+      "nine_slice_insets_px": {
+        "left": 150,
+        "top": 110,
+        "right": 150,
+        "bottom": 110
+      },
+      "center_alpha": 254
+    },
+    "location_plaque": {
+      "file": "assets/ui/battle/location_plaque_v1.png",
+      "role": "skin",
+      "size_px": [
+        2172,
+        724
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        314,
+        218,
+        1528,
+        289
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "e03a178b1ec35795c6b90c59d88e9b29992048499f2a5f43563bfd494b81d0d9",
+      "nine_slice_insets_px": {
+        "left": 190,
+        "top": 65,
+        "right": 190,
+        "bottom": 65
+      },
+      "center_alpha": 254
+    },
+    "ground": {
+      "file": "assets/ui/battle/ground_v1.png",
+      "role": "ground",
+      "size_px": [
+        2171,
+        724
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        176,
+        185,
+        1825,
+        400
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "2c6754e4c57e43b64887958bd67f9a2038349d5adc974cb067d9c793e7ab8d25"
+    },
+    "depot": {
+      "file": "assets/maps/battle/depot_v1.png",
+      "role": "background",
+      "size_px": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "source_xywh_px": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "alpha_range": [
+        255,
+        255
+      ],
+      "sha256": "46e97029b90312914f550f397a39d3e0c3be0876a7b03166ba995556fea03c22"
+    },
+    "nursery": {
+      "file": "assets/maps/battle/nursery_v1.png",
+      "role": "background",
+      "size_px": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "source_xywh_px": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "alpha_range": [
+        255,
+        255
+      ],
+      "sha256": "674aab8007922103d15617e69a5285a79d57828a5e28305c89b3f1c2093d53ea"
+    },
+    "reference": {
+      "file": "assets/ui/battle/approved_reference_v1.png",
+      "role": "reference",
+      "size_px": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "source_xywh_px": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "alpha_range": [
+        255,
+        255
+      ],
+      "sha256": "40f729cddbfdc910a757b718a568960f48d17c5173c94dd5c20fa29937ff93c8"
+    },
+    "cursor": {
+      "file": "assets/ui/plant_selection/cursor_v1.png",
+      "role": "reuse",
+      "size_px": [
+        1112,
+        1415
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        410,
+        552,
+        293,
+        401
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "7866a0d93a7bdc3e869d639b717d32f5466312e5be0bfd24c82cfdb39188f343"
+    },
+    "confirm_button": {
+      "file": "assets/ui/plant_selection/footer_button_v1.png",
+      "role": "reuse",
+      "size_px": [
+        2172,
+        724
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        152,
+        158,
+        1868,
+        387
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "b92deb756b78e2d1801e71ba9e31a7ebe5068f2d2c18a1cd1e31e3d6b7ed056f",
+      "nine_slice_insets_px": {
+        "left": 260,
+        "top": 88,
+        "right": 260,
+        "bottom": 88
+      }
+    },
+    "formula_panel": {
+      "file": "assets/ui/interaction_frame.png",
+      "role": "reuse",
+      "size_px": [
+        2172,
+        724
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        156,
+        226,
+        1860,
+        271
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "ec2ed96a9f487dc83fe8200a7982742d97cf71afe1fc8c22dcd2d99a00d8a753",
+      "renderer": "ui_botanical_panel"
+    },
+    "SPECIES_CLOVER": {
+      "file": "assets/sprites/plants/clover_v2.png",
+      "role": "plant",
+      "size_px": [
+        1230,
+        1278
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        62,
+        13,
+        1079,
+        1259
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "81dbb95a14d6477a8fa342de98124cab31e91ed80abb0b307b3aada331afd545",
+      "species": "SPECIES_CLOVER",
+      "mirror_in_file": false
+    },
+    "SPECIES_POISON_IVY": {
+      "file": "assets/sprites/plants/poison_ivy_v2.png",
+      "role": "plant",
+      "size_px": [
+        1199,
+        1312
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        122,
+        15,
+        1000,
+        1287
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "6430440639a7c7bde3d9a37648af0f954d4e7265f7db2856848c9c1fd8cebe3e",
+      "species": "SPECIES_POISON_IVY",
+      "mirror_in_file": false
+    },
+    "SPECIES_PEPPER": {
+      "file": "assets/sprites/plants/pepper_v2.png",
+      "role": "plant",
+      "size_px": [
+        1231,
+        1277
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        146,
+        52,
+        938,
+        1184
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "9a6c755a43dcf8b3eb85acc4ae5b0400857a4387898210ccf544fa8727edefc8",
+      "species": "SPECIES_PEPPER",
+      "mirror_in_file": false
+    },
+    "SPECIES_CACTUS": {
+      "file": "assets/sprites/plants/cactus_v2.png",
+      "role": "plant",
+      "size_px": [
+        1193,
+        1319
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        40,
+        11,
+        1107,
+        1292
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "13f0fb5b58e1fe71db30c01d256b7b864064cbb284dda313025db67db9d6b2d2",
+      "species": "SPECIES_CACTUS",
+      "mirror_in_file": false
+    },
+    "SPECIES_ORCHID": {
+      "file": "assets/sprites/plants/orchid_v2.png",
+      "role": "plant",
+      "size_px": [
+        1225,
+        1284
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        126,
+        10,
+        987,
+        1255
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "e12624c1718af675ace3ee33dd539bccbb25bd6d0e62a4b886bb4453c13eeb2f",
+      "species": "SPECIES_ORCHID",
+      "mirror_in_file": false
+    },
+    "SPECIES_CARNIVOROUS_PLANT": {
+      "file": "assets/sprites/plants/venus_flytrap_v2.png",
+      "role": "plant",
+      "size_px": [
+        1199,
+        1312
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        75,
+        9,
+        1045,
+        1298
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "e39ecba9d75d809c1f761b08b83805e17d94aa3105c41ec8ff2e01146eeba790",
+      "species": "SPECIES_CARNIVOROUS_PLANT",
+      "mirror_in_file": false
+    },
+    "SPECIES_ALOE": {
+      "file": "assets/sprites/plants/aloe_v2.png",
+      "role": "plant",
+      "size_px": [
+        1230,
+        1278
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        29,
+        11,
+        1170,
+        1259
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "8e7d48af9dca7b2a45410c69a17835203cd2dd6d52701798596f36c28c1a24a7",
+      "species": "SPECIES_ALOE",
+      "mirror_in_file": false,
+      "enemy_mirror_x": true
+    },
+    "SPECIES_SUNFLOWER": {
+      "file": "assets/sprites/plants/sunflower_v2.png",
+      "role": "plant",
+      "size_px": [
+        1223,
+        1286
+      ],
+      "mode": "RGBA",
+      "source_xywh_px": [
+        191,
+        13,
+        822,
+        1249
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "ae3df84894ade57d210eba3e8adb9022c496c8096f47a356fda8e573b1ac75ad",
+      "species": "SPECIES_SUNFLOWER",
+      "mirror_in_file": false
+    }
+  },
+  "font": {
+    "file": "assets/fonts/pixelify_sans_regular.ttf",
+    "sha256": "5436d485d1713afa376e1744911cbbcc0849eae1eb55ec9bc34c0753993ffef9",
+    "license": "assets/fonts/PIXELIFY_OFL.txt",
+    "rasterization_pt": "Atlas no tamanho físico de cada papel; não gravar texto nos PNGs."
+  }
+}

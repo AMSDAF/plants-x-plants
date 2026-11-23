@@ -1,0 +1,334 @@
+{
+  "version": 1,
+  "status": "integrado_no_combate",
+  "viewport": [
+    1280,
+    720
+  ],
+  "reference": "assets/ui/battle/approved_reference_v1.png",
+  "direction_pt": "Arena diagonal e menu raiz estilo Pokémon; seguir a referência aprovada, sem a faixa de reservas da primeira proposta.",
+  "palette": {
+    "ink": "#18341E",
+    "cream": "#FFF5D8",
+    "border": "#12351B",
+    "selected": "#D6E5AA",
+    "disabled_fill": "#D4D0C3",
+    "disabled_ink": "#7C7F70",
+    "disabled_badge": "#92927D",
+    "hp_track": "#274919",
+    "hp_fill": "#7FE50D",
+    "cursor": "#F58B13"
+  },
+  "font": {
+    "file": "assets/fonts/pixelify_sans_regular.ttf",
+    "roles": {
+      "location": 28,
+      "plant_name": 28,
+      "subtitle": 22,
+      "hp": 22,
+      "question": 36,
+      "menu": 36,
+      "hint": 20,
+      "badge": 20
+    },
+    "render_pt": "Usar fonte real, sem texto gravado nos PNGs nem negrito ou itálico artificiais. Rasterizar cada tamanho necessário na resolução física do viewport e alinhar posições a pixels físicos."
+  },
+  "arena": {
+    "background_bounds": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "background_fit": "cover com proporção preservada",
+    "locations": [
+      {
+        "encounter": "WORLD_ENCOUNTER_ALOE",
+        "label": "Depósito",
+        "background": "assets/maps/battle/depot_v1.png"
+      },
+      {
+        "encounter": "WORLD_ENCOUNTER_SUNFLOWER",
+        "label": "Viveiro",
+        "background": "assets/maps/battle/nursery_v1.png"
+      }
+    ],
+    "location_plaque": [
+      518,
+      2,
+      244,
+      54
+    ],
+    "no_escape_label": true,
+    "player": {
+      "ground_bounds": [
+        252,
+        386,
+        424,
+        98
+      ],
+      "sprite_area": [
+        329,
+        185,
+        250,
+        267
+      ],
+      "feet_center": [
+        454,
+        452
+      ],
+      "status_bounds": [
+        815,
+        343,
+        376,
+        114
+      ],
+      "mirror_x": false
+    },
+    "enemy": {
+      "ground_bounds": [
+        736,
+        254,
+        302,
+        74
+      ],
+      "sprite_area": [
+        783,
+        91,
+        210,
+        211
+      ],
+      "feet_center": [
+        888,
+        302
+      ],
+      "status_bounds": [
+        70,
+        64,
+        354,
+        114
+      ],
+      "mirror_by_species": {
+        "SPECIES_ALOE": true
+      },
+      "mirror_note_pt": "As sprites rivais são espelhadas na horizontal durante o desenho; originais, cenário, plataformas e HUD preservados.",
+      "mirror_x": true
+    },
+    "status": {
+      "source": "status_frame",
+      "shared_between_sides": true,
+      "name_relative": [
+        28,
+        22
+      ],
+      "subtitle_relative": [
+        28,
+        49
+      ],
+      "hp_track_relative": [
+        24,
+        84,
+        210,
+        14
+      ],
+      "hp_value_right_relative": [
+        -18,
+        82
+      ],
+      "note_pt": "Offsets relativos à caixa; HP numérico alinhado pela direita. Vida, nomes e turno vêm do combate. Adequar a largura da barra ao status do jogador sem deformar as letras."
+    }
+  },
+  "footer": {
+    "panel_bounds": [
+      12,
+      480,
+      1256,
+      226
+    ],
+    "skin": "command_panel",
+    "dialogue_bounds": [
+      72,
+      526,
+      445,
+      92
+    ],
+    "dialogue_text": "O que {plant_name}\nvai fazer?",
+    "divider_source_x_px": 912,
+    "divider_target_x_approx": 539,
+    "root_buttons": [
+      {
+        "id": "attack",
+        "label": "Atacar",
+        "bounds": [
+          568,
+          518,
+          319,
+          60
+        ],
+        "enabled": true,
+        "target": "moves"
+      },
+      {
+        "id": "switch",
+        "label": "Trocar",
+        "bounds": [
+          896,
+          518,
+          319,
+          60
+        ],
+        "enabled": true,
+        "target": "team"
+      },
+      {
+        "id": "bag",
+        "label": "Mochila",
+        "bounds": [
+          568,
+          587,
+          319,
+          60
+        ],
+        "enabled": false,
+        "badge": "Em breve"
+      },
+      {
+        "id": "flee",
+        "label": "Fugir",
+        "bounds": [
+          896,
+          587,
+          319,
+          60
+        ],
+        "enabled": false,
+        "badge": "Em breve"
+      }
+    ],
+    "disabled_hint": {
+      "text": "Vamos implementar em breve",
+      "bounds": [
+        600,
+        652,
+        600,
+        24
+      ]
+    },
+    "pointer_asset": "assets/ui/plant_selection/cursor_v1.png",
+    "pointer_relative": [
+      18,
+      17,
+      18,
+      26
+    ],
+    "button_shape_pt": "Desenhar creme com contorno verde em degraus; usar verde-claro na escolha, cinza em indisponível. Não reutilizar os botões de madeira grossa da proposta rejeitada. Os quatro botões não estão gravados no painel.",
+    "last_message_bounds": [
+      72,
+      612,
+      445,
+      74
+    ],
+    "effects_hint": {
+      "text": "TAB · efeitos",
+      "position": [
+        76,
+        525
+      ]
+    }
+  },
+  "submenus": {
+    "moves": {
+      "items": 3,
+      "content_pt": "Três golpes, dano/atributo, poder, precisão, crítico e prioridade; a avaliação da fórmula e bônus/bloqueio ficam na linha do ataque lógico.",
+      "back_pt": "Retornar ao menu sem consumir turno.",
+      "bounds": [
+        [
+          568,
+          522,
+          647,
+          50
+        ],
+        [
+          568,
+          576,
+          647,
+          50
+        ],
+        [
+          568,
+          630,
+          647,
+          50
+        ]
+      ]
+    },
+    "team": {
+      "items_max": 4,
+      "content_pt": "Quatro posições na área do menu com miniaturas das sprites existentes, nome e HP; identificar ativa, derrotada e vaga livre; manter escolha de reserva pelo motor.",
+      "forced_replacement_pt": "Mostrar somente as escolhas legais; não permitir ataque antes da substituição.",
+      "bounds": [
+        [
+          568,
+          518,
+          319,
+          60
+        ],
+        [
+          896,
+          518,
+          319,
+          60
+        ],
+        [
+          568,
+          587,
+          319,
+          60
+        ],
+        [
+          896,
+          587,
+          319,
+          60
+        ]
+      ]
+    },
+    "pending_pt": "Submenus conferidos em capturas OpenGL, incluindo quatro posições e substituição obrigatória.",
+    "back_bounds": [
+      390,
+      520,
+      120,
+      28
+    ]
+  },
+  "other_screens": {
+    "formula_panel": "assets/ui/interaction_frame.png",
+    "confirm_button": "assets/ui/plant_selection/footer_button_v1.png",
+    "result_pt": "Reutilizar painel e botões existentes, com mensagem dinâmica de vitória/derrota. Sem imagens novas.",
+    "team_setup_pt": "Alternativa interna existente: usar as seis iniciais e formas reutilizadas; não criar uma segunda seleção de campanha.",
+    "formula_panel_renderer": "ui_botanical_panel"
+  },
+  "state_rules_pt": [
+    "Atacar abre os três golpes existentes; Trocar abre a equipe.",
+    "Mochila e Fugir são placeholders desabilitados; não executam ação nem consomem turno.",
+    "A CPU, a substituição obrigatória, os golpes e trocas inválidos e o fim de batalha continuam regidos por battle/ai.",
+    "Não associar o cenário à planta ativa rival: reservas não mudam o local do encontro.",
+    "O pedido de remover ESC · Estufa é visual; o tratamento da tecla deve preservar o fluxo existente ao integrar.",
+    "Os atalhos e o retorno dos submenus devem ser definidos na implementação sem alterar regras.",
+    "Ações aguardam dois segundos sem bloquear a janela; entradas adicionais não substituem a ação pendente.",
+    "TAB consulta HP, atributos, frutos e status das duas equipes.",
+    "Cada planta preserva fórmula e golpe fortalecido; fórmula falsa bloqueia esse golpe."
+  ],
+  "composition_pt": [
+    "Desenhar cenário, plataformas, sprites, status, plaque do local e painel inferior nessa ordem coerente com as sobreposições da referência.",
+    "Reutilizar as mesmas sprites nas miniaturas e nos dois lados, sem arquivos de costas ou flips gravados.",
+    "Usar recortes do manifesto, filtro pontual e nove partes com cantos protegidos nas molduras.",
+    "Layout inicial aproximado da referência; calibrar durante o render real em 720p/1080p e com letterbox."
+  ],
+  "scope_exclusions": [
+    "Sem novos golpes, atributos ou alterações de dano.",
+    "Sem inventário, fuga ou novas animações.",
+    "Sem substituir os bosses antigos na exploração.",
+    "Sem texto ou HP gravados em imagens."
+  ]
+}

@@ -20,6 +20,7 @@ typedef struct {
 void selection_ui_assets_load(SelectionUiAssets *assets);
 void selection_ui_assets_unload(SelectionUiAssets *assets);
 void selection_ui_update_fonts(SelectionUiAssets *assets, float scale);
+Font selection_ui_font(const UiTheme *ui, const SelectionUiAssets *assets, int size, float *draw_size);
 float selection_ui_measure(const UiTheme *ui, const SelectionUiAssets *assets, const char *text, int size);
 void selection_ui_pixel_text(const UiTheme *ui, const SelectionUiAssets *assets, const char *text,
                              float x, float y, int size, Color color);

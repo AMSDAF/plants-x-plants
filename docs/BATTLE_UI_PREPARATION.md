@@ -1,0 +1,159 @@
+# Combate — interface botânica
+
+Estado: **interface integrada ao combate da campanha**.
+
+A referência aprovada é `assets/ui/battle/approved_reference_v1.png`, cópia da
+versão visual v4. A arena mantém as plantas em diagonal e o menu principal
+com Atacar, Trocar, Mochila e Fugir. O topo mostra somente o nome do interior.
+
+## Arquivos prontos
+
+| Recurso | Arquivo | Origem |
+|---|---|---|
+| Cenário do depósito | `assets/maps/battle/depot_v1.png` | Reaproveitado sem edição. |
+| Cenário do viveiro | `assets/maps/battle/nursery_v1.png` | Reaproveitado sem edição. |
+| Base de terra | `assets/ui/battle/ground_v1.png` | Reaproveitada; duas instâncias na arena. |
+| Card de status simples | `assets/ui/battle/status_frame_v2.png` | Nova geração, sem HP ou texto gravado. |
+| Painel inferior | `assets/ui/battle/command_panel_v2.png` | Nova geração, com divisor vertical e regiões vazias. |
+| Plaquinha do interior | `assets/ui/battle/location_plaque_v1.png` | Nova geração vazia, serve a Depósito e Viveiro. |
+| Babosa definitiva | `assets/sprites/plants/aloe_v2.png` | Original fornecido pelo usuário, importado sem edição. |
+| Girassol definitivo | `assets/sprites/plants/sunflower_v2.png` | Original fornecido pelo usuário, importado sem edição. |
+
+As seis iniciais continuam nos arquivos `clover_v2.png`, `poison_ivy_v2.png`,
+`pepper_v2.png`, `cactus_v2.png`, `orchid_v2.png` e `venus_flytrap_v2.png`
+de `assets/sprites/plants/`. O manifesto aponta para esses arquivos existentes;
+não há cópias extras nem sprites espelhadas gravadas.
+
+Também são reutilizados o cursor e o botão de rodapé da seleção, o painel
+botânico de `UiTheme` e a Pixelify Sans com sua licença. As molduras antigas
+mais ornamentadas em `output/imagegen/` não são as escolhidas para a versão final.
+O jogo consome `assets/`, sem depender de `output/` ou Downloads.
+
+## Metadados do pacote
+
+Todos ficam em `assets/ui/battle/`:
+
+- `asset_manifest_v1.json`: 18 imagens referenciadas e uma fonte, com hashes,
+  dimensões, modos, recortes e insets de nove partes.
+- `layout_spec_v1.json`: composição inicial em 1280 × 720, posições, cores,
+  tipografia, menus e regras de apresentação a preservar.
+- `generation_prompts_v1.json`: prompts completos das três peças novas,
+  geradas pelo ImageGen integrado.
+- `validation_v1.json`: resultados das conferências de arquivos e limitações.
+
+Os PNGs foram preservados como recebidos ou gerados, sem recorte destrutivo,
+redimensionamento ou limpeza de alfa. Os recortes de desenho medidos com alfa
+>= 128 excluem margens vazias e resíduos quase transparentes. Usar filtro pontual.
+Os insets protegem folhas e cantos; o encaixe final deve ser calibrado no render.
+
+## Texto e estados ficam no código
+
+Os nomes, textos, números de vida e barras de HP não fazem parte das texturas.
+Usar a **fonte real Pixelify Sans**, rasterizada no tamanho físico necessário,
+sem negrito/itálico artificiais e com posições alinhadas a pixels físicos.
+
+As quatro células simples do menu são desenhadas pela interface, sobre o
+lado direito vazio do painel. Não exigem quatro PNGs nem imagens para cada
+estado. Creme/verde claro indica disponível ou selecionado; cinza indica
+indisponível. O texto “Em breve” e o aviso “Vamos implementar em breve” são
+dinâmicos. Mochila e Fugir ficam bloqueados, sem consumir turno.
+
+Atacar abre os três golpes do catálogo atualizado. Trocar abre as posições da equipe,
+com as miniaturas das mesmas sprites e HP/estado dinâmicos. A disposição
+interna desses submenus foi montada e conferida nas capturas reais: golpes
+em três linhas e equipe em uma grade de quatro posições, com ativa, derrotada
+e vaga livre identificadas. Não foram necessários novos PNGs.
+
+Fórmula, montagem interna de equipe, substituição obrigatória, espera da CPU e
+resultado reutilizam painéis e botões do pacote. Não inventar ações, golpes,
+inventário ou fuga para preencher a interface.
+
+## Orientação das plantas
+
+As sprites rivais, incluindo a Babosa, são espelhadas **somente na horizontal
+durante o desenho**, mantendo o pivô das raízes. Os arquivos originais, cenário,
+plataformas, letras e HUD não são invertidos. As oito espécies foram conferidas
+como ativas e rivais nas capturas da arena.
+
+Não foram preparados sprites de costas ou atlas de ataque. A referência usa
+as poses frontais existentes. Animações ou efeitos futuros não estão incluídos.
+Os antigos `aloe_guard.png` e `sunflower_guard.png` continuam intactos para a
+exploração; o combate usa as artes `aloe_v2.png` e `sunflower_v2.png`.
+
+## Implementação e controles
+
+`Game.battle_assets` possui os dois cenários, terra, status, painel, plaquinha
+e os dois bosses definitivos. `battle_screen_assets.c` carrega, verifica dimensões
+e descarrega esses recursos, com filtro pontual e recortes do manifesto.
+As seis iniciais são emprestadas de `IntroAssets`; as fontes e a seta são
+emprestadas de `SelectionUiAssets`. Não há cópia ou liberação dupla dos recursos.
+Os atlas são atualizados no tamanho físico do viewport também durante a batalha.
+
+`BattleScreen.scene` é definido pelo encontro e permanece igual ao trocar
+plantas; `BattleMenu` guarda apenas o submenu e o foco da interface. O desenho
+não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
+`Battle_SwitchPlant` e `Battle_SkipParalyzedTurn`, com planejamento por `AI_GetPlannedAction`, sem calcular dano ou alterar HP na tela.
+
+- Setas e ENTER/Espaço navegam e confirmam; clique também funciona.
+- Atacar abre os golpes; **1/2/3** continuam disponíveis como atalhos diretos.
+- Trocar abre a equipe; **Q/W/E/R** continuam escolhendo as posições.
+- **ESC**, Backspace ou Voltar fecham um submenu voluntário sem consumir turno.
+- Na raiz, na montagem ou na substituição obrigatória, **ESC** preserva o retorno
+  anterior à estufa; o aviso não aparece no topo.
+- Na troca obrigatória, a equipe abre automaticamente e somente reservas vivas
+  podem entrar. Ações humanas, da CPU e paralisia usam a espera não bloqueante de dois segundos.
+- No resultado, ENTER ou o botão retorna à estufa. Ações de combate ficam bloqueadas.
+
+Na campanha, a placa perto do depósito abre o novo modal de abas por planta.
+A pergunta resolvida libera a edição; ataque, condições e operador são escolhidos
+pelo jogador e só entram em combate após a confirmação daquela planta.
+As plantas sem configuração confirmada mantêm os golpes normais.
+Consulte [o modal de golpes lógicos](LOGIC_SETUP_UI.md).
+
+Como ferramenta interna, fórmula e montagem de equipe usam fonte Pixelify, painel botânico e o
+cenário do encontro escurecido. Na fórmula, setas esquerda/direita ou os cartões
+alternam a planta; cada uma preserva sua fórmula e seu golpe de dano escolhido.
+Golpes de atributo não recebem bônus de poder. Uma fórmula falsa bloqueia o
+golpe escolhido; limites de atributo e frutos também são validados pelo motor.
+O menu indica indisponibilidade sem enfileirar ações inválidas. A avaliação V/F e
+o bônus ou bloqueio aparecem no próprio ataque lógico, sem ocupar o rodapé.
+O atalho TAB fica dentro do painel à esquerda; a mensagem da última ação tem
+espaço para três linhas acima da moldura inferior.
+**TAB** alterna a consulta de HP, atributos, frutos e status das duas equipes.
+Durante uma ação pendente, o painel mostra a ação e o progresso da espera,
+impedindo nova entrada de combate até sua resolução.
+
+## Validação executada
+
+Com o ambiente opcional de ferramentas já utilizado no projeto:
+
+```powershell
+.\build\trainer_tools\Scripts\python tools/validate_battle_ui_assets.py
+```
+
+O validador verifica hashes, existência dos recursos e licença, dimensões,
+RGBA/alfa das peças transparentes, centros opacos das molduras, recortes,
+insets válidos, oito espécies, associação aos dois cenários e os estados
+de disponibilidade descritos no JSON. Não executa a lógica do jogo.
+As três peças novas foram inspecionadas visualmente e o divisor do painel
+foi medido nas colunas 910–914 da imagem original.
+
+Verificação da implementação com o motor real e OpenGL:
+
+```powershell
+cmake --build build --target plants_x_plants battle_check battle_screen_check intro_check name_entry_check
+.\build\battle_check.exe
+.\build\battle_screen_check.exe
+.\build\intro_check.exe
+.\build\name_entry_check.exe
+```
+
+As capturas ficam em `build/battle_ui_preview/`: depósito/viveiro, todas as
+espécies, submenus, quatro posições, espera da CPU, troca obrigatória, fórmula,
+montagem interna, resultado e ausência de imagens. Incluem 720p, 1080p e viewport
+1024 × 576 em janela 4:3. Os testes verificam também bloqueio dos placeholders,
+trocas inválidas, fórmula por planta, terceiro golpe com e sem fruto, bloqueio lógico,
+paralisia, consulta de status, fila sem ação duplicada, desenho imutável e liberação dos recursos.
+
+Os três ataques ocupam y=522–680, dentro da área creme do painel. O botão Voltar
+fica no alto da coluna esquerda, em `(390,520,120,28)`, junto ao atalho de efeitos.
