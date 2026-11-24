@@ -82,11 +82,13 @@ GameAudioSnapshot game_audio_capture(const Game *game)
 
 static void react_screen_change(GameAudio *audio, GameScreen from, GameScreen to)
 {
-    bool forward = (from == GAME_MENU && to == GAME_TRAINER_SELECT) ||
+    bool forward = (from == GAME_MENU && to == GAME_LEADERBOARD) ||
+                   (from == GAME_LEADERBOARD && to == GAME_TRAINER_SELECT) ||
                    (from == GAME_TRAINER_SELECT && to == GAME_NAME_ENTRY) ||
                    (from == GAME_NAME_ENTRY && to == GAME_INTRO) ||
                    (from == GAME_INTRO && to == GAME_EXPLORATION);
-    bool backward = (from == GAME_TRAINER_SELECT && to == GAME_MENU) ||
+    bool backward = (from == GAME_LEADERBOARD && to == GAME_MENU) ||
+                    (from == GAME_TRAINER_SELECT && to == GAME_MENU) ||
                     (from == GAME_NAME_ENTRY && to == GAME_TRAINER_SELECT) ||
                     (from == GAME_INTRO && to == GAME_NAME_ENTRY) ||
                     (from == GAME_EXPLORATION && to == GAME_MENU);
@@ -296,6 +298,7 @@ static MusicId screen_music(const Game *game)
 {
     switch (game->screen) {
         case GAME_MENU:
+        case GAME_LEADERBOARD:
         case GAME_TRAINER_SELECT:
         case GAME_NAME_ENTRY:
         case GAME_INTRO:

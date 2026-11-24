@@ -28,6 +28,7 @@ A lógica proposicional integra a experiência por meio de desafios com conectiv
 
 ## ✨ Funcionalidades
 
+- **Rankings da estufa:** recordes de conclusão mais rápida e de menor dano recebido.
 - **Personalização do protagonista:** escolha do personagem e definição do nome.
 - **Prólogo narrativo:** apresentação da missão, dos personagens e do universo do jogo.
 - **Formação de equipe:** seleção de exatamente **três entre seis plantas**.
@@ -46,7 +47,7 @@ A experiência está organizada em uma sequência de exploração e desafios:
 
 | Etapa | Experiência |
 | :--- | :--- |
-| **1. Preparação** | Criação do personagem, prólogo e escolha das três plantas iniciais. |
+| **1. Preparação** | Rankings da estufa, criação do personagem, prólogo e escolha das três plantas iniciais. |
 | **2. Exploração** | Conhecer a Estufa Lógica, interagir com personagens e descobrir os objetivos. |
 | **3. Desafios** | Resolver mecanismos, interpretar condições e avançar pelos ambientes. |
 | **4. Confrontos** | Usar estratégias de combate para superar os guardiões da estufa. |
@@ -74,16 +75,21 @@ Os atributos e os golpes das espécies estão definidos em [`src/plant_data.c`](
 ### Começando a aventura
 
 1. Na tela inicial, pressione **Enter**.
-2. Selecione o personagem e informe seu nome.
-3. Acompanhe o prólogo e escolha **três plantas** para a equipe.
-4. Explore a Estufa Lógica, converse com os personagens e acompanhe os objetivos.
-5. Resolva os enigmas, vença as batalhas e conclua a jornada.
+2. Nos rankings, alterne entre **mais rápidos** e **menos dano** com as setas esquerda/direita, navegue pelos recordes com as setas cima/baixo e pressione **Enter** para jogar.
+3. Selecione o personagem e informe seu nome.
+4. Acompanhe o prólogo e escolha **três plantas** para a equipe.
+5. Explore a Estufa Lógica, converse com os personagens e acompanhe os objetivos.
+6. Resolva os enigmas, vença as batalhas e conclua a jornada.
 
 ### ⌨️ Controles
 
 | Contexto | Tecla | Ação |
 | :--- | :--- | :--- |
-| Tela inicial | `Enter` | Iniciar a aventura |
+| Tela inicial | `Enter` | Abrir os rankings |
+| Rankings | `←` / `→` ou `A` / `D` | Alternar entre tempo e dano |
+| Rankings | `↑` / `↓` ou `W` / `S` | Navegar pelos recordes |
+| Rankings | `Enter` | Iniciar a aventura |
+| Rankings | `Esc` | Voltar ao menu |
 | Menus e seleções | `Setas` / `WASD` | Navegar |
 | Seleção de plantas | `Espaço` | Selecionar ou remover uma planta |
 | Exploração | `WASD` / `Setas` | Movimentar o personagem |
@@ -100,6 +106,8 @@ Os atributos e os golpes das espécies estão definidos em [`src/plant_data.c`](
 | Menus e exploração | `Esc` | Voltar conforme o contexto |
 
 O mouse também pode ser utilizado nos menus e nas interfaces interativas.
+
+Os recordes das partidas concluídas ficam em `data/leaderboard.csv`, criado na primeira vitória. O arquivo guarda nome, tempo em milissegundos, data e dano total; a tela de rankings apresenta as duas ordens em abas separadas, derivadas do mesmo histórico.
 
 ### ⚔️ Sistema de combate
 

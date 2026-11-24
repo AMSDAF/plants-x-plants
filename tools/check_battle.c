@@ -78,6 +78,39 @@ static void check_refreshed_rules(void)
     assert(battle.current_turn == 1);
 }
 
+/* O recorde de dano soma golpes e status recebidos, mas nunca dano causado. */
+static void check_damage_taken(void)
+{
+    Team player = {0}, enemy = {0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_CLOVER));
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_ALOE));
+
+    BattleState battle;
+    Battle_Init(&battle,player,enemy);
+    battle.current_turn = 1;
+    battle.enemy_team.plants[0].moves[0].power = 10000;
+    battle.enemy_team.plants[0].moves[0].accuracy = 100;
+    int hp = battle.player_team.plants[0].current_hp;
+    assert(Battle_ExecuteMove(&battle,0));
+    int dealt = hp - battle.player_team.plants[0].current_hp;
+    assert(dealt > 0 && battle.damage_taken == dealt);
+
+    Battle_Init(&battle,player,enemy);
+    battle.current_turn = 0;
+    Plant_AddStatus(&battle.player_team.plants[0],PLANT_STATUS_PARALYZED,2,1.0f);
+    Plant_AddStatus(&battle.player_team.plants[0],PLANT_STATUS_POISON,2,1.0f);
+    hp = battle.player_team.plants[0].current_hp;
+    assert(Battle_SkipParalyzedTurn(&battle));
+    dealt = hp - battle.player_team.plants[0].current_hp;
+    assert(dealt > 0 && battle.damage_taken == dealt);
+
+    Battle_Init(&battle,player,enemy);
+    battle.player_team.plants[0].moves[0].power = 10000;
+    battle.player_team.plants[0].moves[0].accuracy = 100;
+    assert(Battle_ExecuteMove(&battle,0));
+    assert(battle.damage_taken == 0);
+}
+
 /* Condições de status, velocidade, ataque e defesa, além do bônus do operador E. */
 static void check_logic_conditions(void)
 {
@@ -182,6 +215,7 @@ static void check_host_lifetime(void)
 int main(void)
 {
     check_refreshed_rules();
+    check_damage_taken();
     check_logic_conditions();
     check_host_lifetime();
     /* Um guardião sozinho encerra a luta ao cair, sem pedir reserva. */

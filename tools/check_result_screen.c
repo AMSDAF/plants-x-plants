@@ -111,6 +111,8 @@ int main(void)
     Rectangle button = result_screen_button_bounds(0);
     event(7,(int)(button.x+button.width/2),(int)(button.y+button.height/2)); event(6,0,0); tick(&game);
     event(5,0,0); tick(&game); tick(&game);
+    assert(game.screen == GAME_LEADERBOARD);
+    key(&game,KEY_ENTER);
     assert(game.screen == GAME_TRAINER_SELECT);
     /* ESC só abandona a sessão depois de confirmação explícita. */
     game.screen = GAME_EXPLORATION; game.input_blocked = false;

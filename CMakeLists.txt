@@ -44,11 +44,17 @@ set(BATTLE_SOURCES
     src/battle_screen_assets.c
 )
 
+set(LEADERBOARD_SOURCES
+    src/leaderboard.c
+    src/leaderboard_screen.c
+)
+
 add_executable(plants_x_plants
     src/main.c
 
     src/game.c
     ${BATTLE_SOURCES}
+    ${LEADERBOARD_SOURCES}
     src/player.c
     src/world.c
     src/trainer_select_screen.c
@@ -70,6 +76,7 @@ add_executable(selection_scene_check EXCLUDE_FROM_ALL
     ${BATTLE_SOURCES}
 
     src/game.c
+    ${LEADERBOARD_SOURCES}
     src/menu_screen.c
     src/trainer_select_screen.c
     src/selection_ui.c
@@ -87,6 +94,7 @@ add_executable(menu_screen_check EXCLUDE_FROM_ALL
     ${BATTLE_SOURCES}
 
     src/game.c
+    ${LEADERBOARD_SOURCES}
     src/menu_screen.c
     src/trainer_select_screen.c
     src/selection_ui.c
@@ -102,7 +110,8 @@ add_executable(trainer_background_check EXCLUDE_FROM_ALL
     tools/check_trainer_background.c
     ${BATTLE_SOURCES}
 
-    src/game.c src/menu_screen.c src/trainer_select_screen.c src/selection_ui.c src/name_entry_screen.c
+    src/game.c ${LEADERBOARD_SOURCES}
+    src/menu_screen.c src/trainer_select_screen.c src/selection_ui.c src/name_entry_screen.c
     src/trainer_background.c src/player.c src/world.c
 )
 target_include_directories(trainer_background_check PRIVATE include)
@@ -113,7 +122,8 @@ if(WIN32)
         tools/check_name_entry.c tools/check_name_entry_input.c
         ${BATTLE_SOURCES}
 
-        src/game.c src/menu_screen.c src/trainer_select_screen.c src/trainer_background.c
+        src/game.c ${LEADERBOARD_SOURCES}
+        src/menu_screen.c src/trainer_select_screen.c src/trainer_background.c
         src/name_entry_screen.c src/selection_ui.c src/player.c src/world.c)
     target_include_directories(name_entry_check PRIVATE include)
     target_link_libraries(name_entry_check PRIVATE raylib)
@@ -143,7 +153,8 @@ endforeach()
 
 add_executable(exploration_hud_check EXCLUDE_FROM_ALL
     tools/check_exploration_hud.c ${BATTLE_SOURCES}
-    src/game.c src/menu_screen.c src/trainer_select_screen.c
+    src/game.c ${LEADERBOARD_SOURCES}
+    src/menu_screen.c src/trainer_select_screen.c
     src/selection_ui.c src/name_entry_screen.c src/trainer_background.c
     src/player.c src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c src/dialogue_ui.c)
 target_include_directories(exploration_hud_check PRIVATE include)
@@ -209,6 +220,14 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(battle_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Persistência e ordenação dos recordes, sem janela nem dependência da raylib.
+add_executable(leaderboard_check EXCLUDE_FROM_ALL
+    tools/check_leaderboard.c src/leaderboard.c)
+target_include_directories(leaderboard_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(leaderboard_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Central industrial com recursos reais e capturas OpenGL.
 add_executable(relay_ui_check EXCLUDE_FROM_ALL tools/check_relay_ui.c ${INTRO_CHECK_SOURCES})
 target_include_directories(relay_ui_check PRIVATE include)
@@ -231,6 +250,15 @@ target_include_directories(result_screen_check PRIVATE include)
 target_link_libraries(result_screen_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(result_screen_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Rankings: navegação, abas e registro da partida com o coordenador real.
+add_executable(leaderboard_screen_check EXCLUDE_FROM_ALL
+    tools/check_leaderboard_screen.c ${INTRO_CHECK_SOURCES})
+target_include_directories(leaderboard_screen_check PRIVATE include)
+target_link_libraries(leaderboard_screen_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(leaderboard_screen_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Efeitos e áudio dos golpes, usando o motor real e capturas OpenGL.

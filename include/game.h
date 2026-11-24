@@ -19,12 +19,13 @@
 #include "relay_ui.h"
 #include "audio.h"
 #include "result_screen.h"
+#include "leaderboard_screen.h"
 
 #define GAME_TARGET_FPS 60
 #define GAME_TITLE "Plants x Plants"
 
 typedef enum {
-    GAME_MENU, GAME_TRAINER_SELECT, GAME_NAME_ENTRY,
+    GAME_MENU, GAME_LEADERBOARD, GAME_TRAINER_SELECT, GAME_NAME_ENTRY,
     GAME_EXPLORATION, GAME_BATTLE, GAME_INTRO, GAME_ENDING, GAME_DEFEAT
 } GameScreen;
 
@@ -39,15 +40,24 @@ typedef struct {
     int boosted_move_indices[MAX_TEAM_SIZE];
 } CampaignSession;
 
+/* Medição da partida: cronômetro da carta ao desfecho e dano acumulado. */
+typedef struct {
+    bool active;
+    double elapsed;
+    long long damage_taken;
+} RunStats;
+
 /* Estado e recursos compartilhados entre as telas. */
 typedef struct {
     bool exit_requested;
     UiTheme ui;
     MenuScreen menu;
+    LeaderboardScreen leaderboard;
     GameScreen screen;
     bool input_blocked;
     bool exit_confirm_open;
     int exit_confirm_cursor;
+    RunStats run;
     PlayerAssets player_assets;
     TrainerSelectAssets trainer_select_assets;
     TrainerSelectScreen trainer_select;

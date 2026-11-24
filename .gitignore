@@ -39,6 +39,9 @@ CMakeUserPresets.json
 *.user
 *.sln.docstates
 
+# Leaderboard gerado em tempo de execução
+/data/
+
 # Editor temporary files
 *.swp
 *.swo
