@@ -155,6 +155,7 @@ de veneno, queimadura ou captura, nem balanceamento final.
 |---|---|
 | `include/battle.h` | Definir o estado da batalha, as ações disponíveis e as funções de combate. |
 | `src/battle.c` | Validar ações, calcular dano, aplicar ataques, realizar trocas, resolver as duas ações da rodada por velocidade, rastrear a origem de Hospedeiro e identificar o vencedor. |
+| `tools/check_balance_audit.c`, `tools/summarize_balance_audit.py` | Simular duelos, equipes e bosses sem janela usando o motor real; resumir resultados reproduzíveis em `docs/BALANCE_AUDIT.md`, sem alterar atributos. |
 
 Todas as regras devem ser verificadas pelo módulo de combate, mesmo quando a interface já impede uma escolha inválida.
 

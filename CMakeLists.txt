@@ -225,6 +225,14 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(boss_balance_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Auditoria opcional de balanceamento, sem janela nem mudanças nos atributos.
+add_executable(balance_audit_check EXCLUDE_FROM_ALL tools/check_balance_audit.c
+    src/plant.c src/plant_data.c src/battle.c src/ai.c)
+target_include_directories(balance_audit_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(balance_audit_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Resultados da campanha: navegação, revanche e capturas reais.
 add_executable(result_screen_check EXCLUDE_FROM_ALL tools/check_result_screen.c ${INTRO_CHECK_SOURCES})
 target_include_directories(result_screen_check PRIVATE include)

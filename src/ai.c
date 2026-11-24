@@ -35,6 +35,20 @@ AIActionType AI_GetActionForSide(const BattleState *battle, int side, int *actio
     if (opponent && active->current_hp * 10 > active->max_hp * 7 &&
         opponent->current_hp * 10 > opponent->max_hp * 3) {
         for (int i = 0; i < MAX_MOVES; i++) {
+            const Move *move = &active->moves[i];
+            /* Um preparo basta; acumular vários buffs cede ataques demais ao rival. */
+            if (move->effect == MOVE_EFFECT_ATTRIBUTE) {
+                if (move->target == MOVE_TARGET_SELF &&
+                    ((move->stat == MOVE_STAT_ATTACK && active->attack > active->base_attack) ||
+                     (move->stat == MOVE_STAT_DEFENSE && active->defense > active->base_defense)))
+                    continue;
+                if (move->target == MOVE_TARGET_OPPONENT && move->stat == MOVE_STAT_DEFENSE &&
+                    opponent->defense < opponent->base_defense) continue;
+            }
+            /* Velocidade só ajuda se a planta ainda não age antes do rival. */
+            if (active->moves[i].effect == MOVE_EFFECT_ATTRIBUTE &&
+                active->moves[i].stat == MOVE_STAT_SPEED &&
+                active->speed > opponent->speed) continue;
             if (active->moves[i].effect != MOVE_EFFECT_DAMAGE &&
                 Battle_CanUseMove(battle, side, own_team->active_index, i)) {
                 if (action_index) *action_index = i;

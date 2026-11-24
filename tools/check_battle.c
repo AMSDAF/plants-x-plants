@@ -62,7 +62,7 @@ static void check_refreshed_rules(void)
         assert(Battle_ExecuteMove(&battle,1));
         assert(Battle_SwitchPlant(&battle,1-battle.enemy_team.active_index));
     }
-    assert(battle.player_team.plants[0].attack == 2*initial_attack);
+    assert(battle.player_team.plants[0].attack == (int)(1.5f*initial_attack+0.5f));
     assert(battle.player_team.plants[0].fruit_count == 1);
     assert(Battle_CanUseMove(&battle,0,0,2));
     before = battle;
@@ -179,8 +179,58 @@ static void check_host_lifetime(void)
                                   &source_side,&source_index));
 }
 
+/* Regressões: não prende o último combatente nem gasta velocidade sem benefício. */
+static void check_balance_fixes(void)
+{
+    Team player = {0}, enemy = {0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_PEPPER));
+    assert(Team_SelectSpecies(&player,1,SPECIES_CLOVER));
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_ALOE));
+    BattleState battle;
+    Battle_Init(&battle,player,enemy);
+    battle.boosted_move_indices[0][0] = 0;
+    battle.formulas[0][0] = (LogicFormula){LOGIC_OWN_LOW_HP,LOGIC_OWN_RESERVE,LOGIC_AND};
+    Plant *pepper = &battle.player_team.plants[0];
+    pepper->attack = (int)(pepper->base_attack * pepper->moves[1].effect_cap + 0.5f);
+    pepper->fruit_count = 0;
+    assert(!Battle_CanUseMove(&battle,0,0,0));
+    assert(Battle_CanSideSwitch(&battle,0,1));
+    battle.player_team.plants[1].current_hp = 0;
+    pepper->attack = pepper->base_attack;
+    assert(!Battle_CanUseMove(&battle,0,0,0)); /* Crescer ainda é uma opção. */
+    pepper->attack = (int)(pepper->base_attack * pepper->moves[1].effect_cap + 0.5f);
+    assert(!Battle_CanUseMove(&battle,0,0,2)); /* Não cria fruto para destravar. */
+    assert(Battle_CanUseMove(&battle,0,0,0));
+    assert(Battle_GetMovePower(&battle,0,0) == pepper->moves[0].power);
+    assert(Battle_ExecuteMove(&battle,0));
+    assert(!battle.feedback.boosted && battle.feedback.hit);
+    battle.current_turn = 0;
+    pepper->fruit_count = 1;
+    assert(!Battle_CanUseMove(&battle,0,0,0)); /* Há outro ataque disponível. */
+    BattleState before = battle;
+    assert(!Battle_ExecuteMove(&battle,0));
+    assert(memcmp(&before,&battle,sizeof(battle)) == 0);
+
+    player = (Team){0}; enemy = (Team){0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_CLOVER));
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_CACTUS));
+    Battle_Init(&battle,player,enemy);
+    int index = -1;
+    assert(AI_GetActionForSide(&battle,0,&index) == AI_ACTION_MOVE && index != 2);
+    assert(Team_SelectSpecies(&enemy,0,SPECIES_ORCHID));
+    Battle_Init(&battle,player,enemy);
+    assert(AI_GetActionForSide(&battle,0,&index) == AI_ACTION_MOVE && index == 2);
+    player = (Team){0};
+    assert(Team_SelectSpecies(&player,0,SPECIES_POISON_IVY));
+    Battle_Init(&battle,player,enemy);
+    assert(AI_GetActionForSide(&battle,0,&index) == AI_ACTION_MOVE && index == 2);
+    battle.player_team.plants[0].defense += 1;
+    assert(AI_GetActionForSide(&battle,0,&index) == AI_ACTION_MOVE && index != 2);
+}
+
 int main(void)
 {
+    check_balance_fixes();
     check_refreshed_rules();
     check_logic_conditions();
     check_host_lifetime();

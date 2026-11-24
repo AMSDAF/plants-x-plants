@@ -744,7 +744,8 @@ static void menu_moves(const BattleView *view, const BattleScreen *screen)
             LogicEvaluation value = Battle_EvaluatePlantFormula(battle,0,index,formula);
             const char *evaluation = TextFormat("%s %s %s = %s · %s",value.left ? "V" : "F",
                 operators[formula.operator],value.right ? "V" : "F",value.result ? "V" : "F",
-                value.result ? TextFormat("+%d",Battle_GetFormulaPowerBonus(formula.operator)) : "bloqueado");
+                value.result ? TextFormat("+%d",Battle_GetFormulaPowerBonus(formula.operator))
+                             : enabled ? "sem bônus" : "bloqueado");
             float width = selection_ui_measure(view->ui,view->fonts,evaluation,20)+12;
             text(view,TextFormat("%d · %s · lógico",i+1,move->name),box.x+48,box.y+2,24,color);
             text(view,evaluation,box.x+box.width-width,box.y+6,20,
@@ -847,7 +848,7 @@ static void setup_view(const BattleView *view, const BattleScreen *screen)
     text(view,operator_rules[screen->draft.operator],86,383,24,ink);
     text(view,TextFormat("Bônus de poder: +%d quando a fórmula for verdadeira.",
                           Battle_GetFormulaPowerBonus(screen->draft.operator)),86,422,24,ink);
-    text(view,TextFormat("Agora: %s %s %s = %s · Falso bloqueia o golpe escolhido",value.left ? "V" : "F",operators[screen->draft.operator],
+    text(view,TextFormat("Agora: %s %s %s = %s · Falso bloqueia; sem alternativa, poder base",value.left ? "V" : "F",operators[screen->draft.operator],
                           value.right ? "V" : "F",value.result ? "V" : "F"),86,465,24,ink);
     BattleState preview = screen->battle;
     preview.formulas[screen->setup_side][plant_index] = screen->draft;
