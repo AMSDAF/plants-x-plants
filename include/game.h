@@ -57,6 +57,7 @@ typedef struct {
     bool input_blocked;
     bool exit_confirm_open;
     int exit_confirm_cursor;
+    UiPointer exit_confirm_pointer;
     RunStats run;
     PlayerAssets player_assets;
     TrainerSelectAssets trainer_select_assets;

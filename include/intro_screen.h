@@ -1,6 +1,7 @@
 /* Apresenta o pedido de ajuda, a equipe inicial e a viagem até a vila. */
 #ifndef INTRO_SCREEN_H
 #define INTRO_SCREEN_H
+#include "ui_input.h"
 
 #include "trainer_select_screen.h"
 #include "plant_data.h"
@@ -28,6 +29,7 @@ typedef struct {
 
 typedef struct {
     IntroStage stage;
+    UiPointer pointer;
     int cursor;
     int selected[INTRO_TEAM_SIZE]; /* Índices na lista de iniciais, não IDs de espécie. */
     int count;

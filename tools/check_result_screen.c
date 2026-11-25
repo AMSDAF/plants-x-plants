@@ -250,7 +250,15 @@ int main(void)
     game.battle_screen.pending_action = BATTLE_PENDING_NONE;
     key(&game,KEY_ESCAPE);
     assert(game.screen == GAME_DEFEAT && !game.result.campaign_lost);
-    key(&game,KEY_ESCAPE); /* Desistir não conserva uma sessão recuperável. */
+    CampaignSession preserved_campaign = game.campaign;
+    key(&game,KEY_ESCAPE);
+    assert(game.result.abandon_confirm && !game.result.campaign_lost);
+    assert(memcmp(&preserved_campaign,&game.campaign,sizeof(preserved_campaign)) == 0);
+    capture(&game,1280,720,"abandon_confirmation");
+    capture(&game,1920,1080,"abandon_confirmation_1080p");
+    key(&game,KEY_ESCAPE); /* Cancelar preserva a chance de revanche. */
+    assert(!game.result.abandon_confirm && !game.result.campaign_lost);
+    key(&game,KEY_ESCAPE); key(&game,KEY_RIGHT); key(&game,KEY_ENTER);
     assert(game.result.campaign_lost && !game.campaign.has_team);
     key(&game,KEY_RIGHT); key(&game,KEY_ENTER);
     assert(game.screen == GAME_MENU && game.campaign.team.count == 0);

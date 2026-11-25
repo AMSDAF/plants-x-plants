@@ -96,12 +96,14 @@ plantas; `BattleMenu` guarda apenas o submenu e o foco da interface. O desenho
 não altera o estado. Os comandos continuam passando por `Battle_ExecuteMove`,
 `Battle_SwitchPlant` e `Battle_SkipParalyzedTurn`, com planejamento por `AI_GetPlannedAction`, sem calcular dano ou alterar HP na tela.
 
-- Setas e ENTER/Espaço navegam e confirmam; clique também funciona.
+- Setas/WASD e ENTER/Espaço navegam e confirmam; clique confirma ao soltar no mesmo controle.
 - Atacar abre os golpes; **1/2/3** continuam disponíveis como atalhos diretos.
-- Trocar abre a equipe; **Q/W/E/R** continuam escolhendo as posições.
+- Trocar abre a equipe; **1/2/3/4** escolhem as posições somente nesse menu ou na troca obrigatória.
 - **ESC**, Backspace ou Voltar fecham um submenu voluntário sem consumir turno.
-- Na raiz, na montagem ou na substituição obrigatória, **ESC** preserva o retorno
-  anterior à estufa; o aviso não aparece no topo.
+- Na raiz, na montagem ou na substituição obrigatória, **ESC** pede confirmação
+  antes de sair ao menu. No painel de atributos, ESC apenas fecha a consulta.
+- Com o painel aberto, ataques, trocas e resolução pendente ficam bloqueados;
+  TAB também fecha. Números da fileira superior e do numpad são equivalentes.
 - Na troca obrigatória, a equipe abre automaticamente e somente reservas vivas
   podem entrar. Ações humanas, da CPU e paralisia exibem mensagens com avanço automático em 1,5 s após a animação, com opção de adiantar.
 - No beat da mensagem, golpe físico avança e volta, golpe de status pula e golpe

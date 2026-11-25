@@ -269,6 +269,14 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(random_team_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Regressões de teclado, foco e cliques com os módulos reais, sem carregar assets.
+add_executable(controls_check EXCLUDE_FROM_ALL tools/check_controls.c ${INTRO_CHECK_SOURCES})
+target_include_directories(controls_check PRIVATE include)
+target_link_libraries(controls_check PRIVATE raylib)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(controls_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Resultados da campanha: navegação, revanche e capturas reais.
 add_executable(result_screen_check EXCLUDE_FROM_ALL tools/check_result_screen.c ${INTRO_CHECK_SOURCES})
 target_include_directories(result_screen_check PRIVATE include)

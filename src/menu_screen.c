@@ -136,7 +136,7 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
         if (!menu_input_down()) screen->input_blocked = false;
         return MENU_ACTION_NONE;
     }
-    if (IsKeyPressed(KEY_ENTER)) return MENU_ACTION_CAMPAIGN;
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) return MENU_ACTION_CAMPAIGN;
     if (IsKeyPressed(KEY_ESCAPE)) return MENU_ACTION_EXIT;
     return MENU_ACTION_NONE;
 }

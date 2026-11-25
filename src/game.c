@@ -27,7 +27,9 @@ static bool transition_input_down(void)
 {
     const int keys[] = {KEY_ENTER, KEY_ESCAPE, KEY_SPACE, KEY_W, KEY_A, KEY_S,
                         KEY_D, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
-                        KEY_ONE, KEY_TWO, KEY_THREE, KEY_Q, KEY_E, KEY_R, KEY_M, KEY_BACKSPACE};
+                        KEY_ONE, KEY_TWO, KEY_THREE, KEY_FOUR, KEY_Q, KEY_E, KEY_R, KEY_M, KEY_BACKSPACE,
+                        KEY_KP_0, KEY_KP_1, KEY_KP_2, KEY_KP_3, KEY_KP_4,
+                        KEY_KP_5, KEY_KP_6, KEY_KP_7, KEY_KP_8, KEY_KP_9};
     for (unsigned int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
         if (IsKeyDown(keys[i])) return true;
     return IsMouseButtonDown(MOUSE_BUTTON_LEFT);
@@ -186,19 +188,20 @@ static void update_exit_confirm(Game *game)
 {
     float scale = fminf(GetRenderWidth()/1280.0f,GetRenderHeight()/720.0f);
     selection_ui_update_fonts(&game->trainer_select_assets.ui,scale);
+    ui_pointer_update(&game->exit_confirm_pointer,!game->input_blocked);
     if (game->input_blocked) {
         if (!transition_input_down()) game->input_blocked = false;
         return;
     }
     int previous = game->exit_confirm_cursor;
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_A) ||
-        IsKeyPressed(KEY_D) || IsKeyPressed(KEY_TAB)) game->exit_confirm_cursor = 1-previous;
+    if (ui_nav_left() || ui_nav_right() || ui_nav_up() || ui_nav_down() ||
+        IsKeyPressed(KEY_TAB)) game->exit_confirm_cursor = 1-previous;
     Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
     int action = -1;
     for (int i = 0; i < 2; i++) {
         if (!CheckCollisionPointRec(mouse,exit_confirm_button(i))) continue;
         if (motion.x != 0 || motion.y != 0) game->exit_confirm_cursor = i;
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) action = i;
+        if (ui_pointer_clicked(&game->exit_confirm_pointer,exit_confirm_button(i))) action = i;
     }
     if (IsKeyPressed(KEY_ESCAPE)) action = 0;
     else if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) action = game->exit_confirm_cursor;
@@ -229,8 +232,8 @@ static void draw_exit_confirm(const Game *game)
     for (int i = 0; i < 2; i++)
         selection_ui_button(ui,fonts,exit_confirm_button(i),
             i == 0 ? "Continuar jogando" : "Sair para o menu",game->exit_confirm_cursor == i,false,1);
-    selection_ui_pixel_box(ui,fonts,"Setas: escolher · ENTER: confirmar · ESC: continuar",
-        (Rectangle){190,535,900,30},24,SELECTION_CREAM);
+    selection_ui_pixel_box(ui,fonts,"Setas/WASD: escolher · ENTER/Espaço: confirmar · ESC: continuar",
+        (Rectangle){190,535,900,30},22,SELECTION_CREAM);
 }
 
 static void update_screens(Game *game)
@@ -383,6 +386,7 @@ static void update_screens(Game *game)
         }
         case GAME_ENDING:
         case GAME_DEFEAT: {
+            game->result.defeat = game->screen == GAME_DEFEAT;
             ResultAction action = result_screen_update(&game->result,true,GetFrameTime());
             if (game->screen == GAME_DEFEAT) {
                 if (game->result.campaign_lost) {

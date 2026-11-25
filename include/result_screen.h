@@ -2,10 +2,15 @@
 #ifndef RESULT_SCREEN_H
 #define RESULT_SCREEN_H
 #include "intro_screen.h"
+#include "ui_input.h"
 
 typedef enum { RESULT_NONE, RESULT_PRIMARY, RESULT_SECONDARY, RESULT_CORRECT, RESULT_WRONG } ResultAction;
 typedef struct {
     int cursor;
+    UiPointer pointer;
+    bool defeat;
+    bool abandon_confirm;
+    bool confirm_blocked;
     float elapsed;
     bool quiz_open;
     bool campaign_lost;

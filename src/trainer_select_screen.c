@@ -112,17 +112,17 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
         }
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             screen->pressed = screen->hovered;
-            if (screen->pressed >= 0 && screen->pressed < TRAINER_COUNT)
-                screen->selected = (Trainer)screen->pressed;
         }
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
             if (screen->pressed == screen->hovered) {
+                if (screen->pressed >= 0 && screen->pressed < TRAINER_COUNT)
+                    screen->selected = (Trainer)screen->pressed;
                 if (screen->pressed == CONFIRM_CONTROL) action = TRAINER_SELECT_CONFIRM;
                 if (screen->pressed == BACK_CONTROL) action = TRAINER_SELECT_BACK;
             }
             screen->pressed = -1;
         }
-        if (IsKeyPressed(KEY_ENTER)) action = TRAINER_SELECT_CONFIRM;
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) action = TRAINER_SELECT_CONFIRM;
         if (IsKeyPressed(KEY_ESCAPE)) action = TRAINER_SELECT_BACK;
     } else screen->pressed = -1;
     return action;

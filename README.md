@@ -85,27 +85,36 @@ Os atributos e os golpes das espécies estão definidos em [`src/plant_data.c`](
 
 | Contexto | Tecla | Ação |
 | :--- | :--- | :--- |
-| Tela inicial | `Enter` | Abrir os rankings |
+| Tela inicial | `Enter` / `Espaço` | Abrir os rankings |
 | Rankings | `←` / `→` ou `A` / `D` | Alternar entre tempo e dano |
 | Rankings | `↑` / `↓` ou `W` / `S` | Navegar pelos recordes |
 | Rankings | `Enter` | Iniciar a aventura |
 | Rankings | `Esc` | Voltar ao menu |
-| Menus e seleções | `Setas` / `WASD` | Navegar |
+| Menus de opções, batalha, perguntas e relés | `Setas` / `WASD` | Navegar |
+| Menus de opções | `Enter` / `Espaço` | Confirmar a opção em foco |
+| Seleção de personagem | `←` / `→` ou `A` / `D` | Escolher o personagem |
+| Entrada de nome | `Tab` / `Shift+Tab` e `Enter` | Mudar foco e confirmar; Espaço continua escrevendo no nome |
 | Seleção de plantas | `Espaço` | Selecionar ou remover uma planta |
 | Exploração | `WASD` / `Setas` | Movimentar o personagem |
 | Exploração | `Shift` | Correr |
 | Exploração | `E` | Interagir com objetos e personagens próximos |
-| Batalha | `1`, `2`, `3` | Escolher um dos três golpes |
-| Batalha | `Q`, `W`, `E`, `R` | Selecionar uma posição para troca de planta |
+| Batalha: raiz ou Atacar | `1`, `2`, `3` | Escolher um dos três golpes |
+| Batalha: Trocar ou substituição obrigatória | `1`, `2`, `3`, `4` | Selecionar a planta que entra em campo |
 | Batalha | `Tab` | Exibir ou ocultar os atributos |
 | Diálogos e menus | `Enter` | Confirmar ou avançar o texto |
 | Áudio | `F9` | Ativar ou silenciar sons e música |
 | Exibição | `F11` | Alternar entre janela e tela cheia |
-| Exploração | `F8` | Comparar versões do mapa |
-| Seleção de personagem | `F7` | Visualizar o cenário animado |
 | Menus e exploração | `Esc` | Voltar conforme o contexto |
 
-O mouse também pode ser utilizado nos menus e nas interfaces interativas.
+Nos botões e cartões, pressione e solte o mouse sobre o mesmo controle para
+confirmar; soltar fora cancela o clique. As teclas numéricas também aceitam o
+teclado numérico. O painel de atributos bloqueia ataques e trocas enquanto aberto.
+Na derrota, ESC ou Encerrar campanha abre uma confirmação com Continuar como
+opção inicial; somente confirmar Apagar progresso encerra a sessão. Uma resposta
+errada à pergunta de revanche continua encerrando a campanha imediatamente.
+
+Atalhos de visualização: **F8** compara versões do mapa na exploração e **F7**
+mostra a prévia do cenário na seleção de personagem. São ferramentas de inspeção.
 
 Os recordes das partidas concluídas ficam em `data/leaderboard.csv`, criado na primeira vitória. O arquivo guarda nome, tempo em milissegundos, data e dano total; a tela de rankings apresenta as duas ordens em abas separadas, derivadas do mesmo histórico.
 

@@ -21,6 +21,7 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 
 | Arquivo | Responsabilidade |
 |---|---|
+| `include/ui_input.h` | Helpers sem estado global para navegação por setas/WASD, números/numpad e cliques confirmados ao soltar no controle de origem. Cada tela possui seu `UiPointer`; o desenho não o modifica. |
 | `src/main.c` | Abrir a janela, executar o loop principal e encerrar o programa. |
 | `include/game_canvas.h`, `src/game_canvas.c` | Gerenciar o alvo na resolução física do viewport, mantendo coordenadas lógicas de 1280 × 720, enquadramento, mouse e recortes de interface. O alvo é recriado somente ao mudar de tamanho. |
 | `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify dos diálogos e do HUD, as molduras de interação e diálogo e os três retratos, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus ou botânicas compartilhadas. `Game` possui os recursos e os passa explicitamente às telas. |

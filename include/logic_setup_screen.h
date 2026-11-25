@@ -4,9 +4,11 @@
 
 #include "battle.h"
 #include "intro_screen.h"
+#include "ui_input.h"
 
 typedef struct {
     LogicFormula formulas[MAX_TEAM_SIZE];
+    UiPointer pointer;
     int moves[MAX_TEAM_SIZE];
     unsigned int initialized_mask;
     unsigned int confirmed_mask;

@@ -155,6 +155,6 @@ void relay_ui_draw(const UiTheme *ui, const SelectionUiAssets *fonts,
     label(ui,fonts,TextFormat("Tentativas: %u",world->relay_attempts),(Rectangle){960,580,220,30},22,ink);
     DrawLine(90,619,1190,619,(Color){91,114,85,255});
     action(ui,fonts,assets,world_relay_close_bounds(),"Voltar · ESC",false);
-    label(ui,fonts,"1/2/3 ou clique: alternar relés",(Rectangle){350,641,550,25},22,ink);
+    label(ui,fonts,"WASD/setas: foco · Espaço/1–3: alternar",(Rectangle){350,641,550,25},22,ink);
     action(ui,fonts,assets,world_relay_validate_bounds(),"Validar · ENTER",true);
 }

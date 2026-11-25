@@ -54,10 +54,9 @@ static int selected_slot(const IntroScreen *screen, int species)
     return -1;
 }
 
-static bool activate(Rectangle bounds)
+static bool activate(const UiPointer *pointer, Rectangle bounds)
 {
-    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-           CheckCollisionPointRec(GetMousePosition(), bounds);
+    return ui_pointer_clicked(pointer,bounds);
 }
 
 static void set_stage(IntroScreen *screen, IntroStage stage)
@@ -175,6 +174,7 @@ bool intro_screen_team(const IntroScreen *screen, Team *team)
 
 IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt)
 {
+    ui_pointer_update(&screen->pointer,accept_input && !screen->input_blocked);
     if (dt < 0) dt = 0;
     if (dt > 0.1f) dt = 0.1f;
     screen->elapsed += dt;
@@ -184,7 +184,7 @@ IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt
         return INTRO_NONE;
     }
     if (!accept_input) return INTRO_NONE;
-    if (IsKeyPressed(KEY_ESCAPE) || activate(prologue_button_bounds(screen->stage, false))) {
+    if (IsKeyPressed(KEY_ESCAPE) || activate(&screen->pointer, prologue_button_bounds(screen->stage, false))) {
         if (screen->stage == INTRO_LETTER) return INTRO_BACK;
         set_stage(screen, (IntroStage)(screen->stage - 1));
         return INTRO_NONE;
@@ -203,7 +203,7 @@ IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt
         screen->cursor = (cursor + INTRO_STARTER_COUNT) % INTRO_STARTER_COUNT;
         int chosen = IsKeyPressed(KEY_SPACE) ? screen->cursor : -1;
         for (int i = 0; i < INTRO_STARTER_COUNT; i++)
-            if (activate(starter_card(i))) { chosen = i; screen->cursor = i; break; }
+            if (activate(&screen->pointer, starter_card(i))) { chosen = i; screen->cursor = i; break; }
         if (chosen >= 0) {
             int slot = selected_slot(screen, chosen);
             if (slot >= 0) {
@@ -213,7 +213,7 @@ IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt
             } else if (screen->count < INTRO_TEAM_SIZE) screen->selected[screen->count++] = chosen;
         }
     }
-    if (IsKeyPressed(KEY_ENTER) || activate(prologue_button_bounds(screen->stage, true))) {
+    if (IsKeyPressed(KEY_ENTER) || activate(&screen->pointer, prologue_button_bounds(screen->stage, true))) {
         if (screen->stage == INTRO_STARTERS) {
             if (screen->count == INTRO_TEAM_SIZE) set_stage(screen, INTRO_TRAVEL);
         } else if (screen->reveal < GetCodepointCount(passages[screen->stage])) {

@@ -11,15 +11,19 @@ Detalhes e capturas em [BATTLE_UI_PREPARATION.md](BATTLE_UI_PREPARATION.md).
 | Comando | Ação |
 | --- | --- |
 | **1**, **2** ou **3** | Usar um golpe; o escolhido para o buff só fica disponível quando a fórmula for verdadeira. |
-| **Q/W/E/R** | Escolher uma das quatro posições da equipe para entrar em campo. |
+| **1/2/3/4** em Trocar | Escolher uma das quatro posições da equipe para entrar em campo. |
 | **TAB** | Abrir ou fechar o painel com os status e atributos atuais de todas as plantas. |
 | **ENTER** no resultado | Retornar à estufa. |
-| **ESC** | Retornar à estufa, inclusive durante a montagem ou a batalha. |
+| **ESC** | Fechar o painel/submenu; na raiz, abrir a confirmação de saída. |
 
 Os golpes, as trocas e os botões do resultado também aceitam cliques.
-Use setas e ENTER/Espaço nos menus. ESC, Backspace ou Voltar fecham os submenus
-voluntários; ESC na raiz mantém o retorno à estufa. A troca obrigatória abre
-automaticamente as reservas. Os atalhos diretos 1/2/3 e Q/W/E/R foram preservados.
+Use setas/WASD e ENTER/Espaço nos menus. ESC, Backspace ou Voltar fecham os submenus
+voluntários; ESC na raiz pede confirmação para sair ao menu. A troca obrigatória abre
+automaticamente as reservas. 1/2/3 atacam na raiz ou em Atacar; em Trocar, 1/2/3/4
+escolhem a posição. Numpad também é aceito. W/E nunca trocam plantas no combate.
+O painel de atributos captura os comandos e pausa a resolução de ações pendentes
+até ser fechado com TAB ou ESC. Cliques confirmam ao soltar no mesmo controle;
+arrastar e soltar fora cancela, sem consumir turno.
 
 ## Adquira um golpe lógico por planta
 
@@ -92,7 +96,7 @@ Cada espécie tem três golpes, incluindo buffs/debuffs de atributo quando dispo
 
 A montagem de reserva da interface de batalha continua disponível como alternativa
 interna de duas a quatro plantas, usando somente as seis iniciais. Na campanha,
-a equipe do prólogo é preservada. Nessa montagem, selecione uma vaga com **Q/W/E/R** ou clique nela. Depois selecione a espécie
+a equipe do prólogo é preservada. Nessa montagem, selecione uma vaga com **1/2/3/4** ou clique nela. Depois selecione a espécie
 com **setas** e **Espaço** ou clique no cartão. A primeira posição começa
 ativa. Se escolher uma espécie já presente para uma vaga ocupada, as duas
 trocam de lugar. Para adicionar em uma vaga livre, escolha uma espécie que
