@@ -145,7 +145,7 @@ atributo exibem o aumento ou redução correspondente e não causam dano direto.
 - **Pimenta:** gera um fruto a cada dois turnos próprios em campo. O terceiro golpe consome um fruto e tem 30% de chance de causar Queimadura; seu segundo golpe aumenta o ataque em 0,5x, até 2x do valor inicial. O contador aparece enquanto ela está ativa.
 - **Cacto:** devolve 20% do dano recebido de golpes físicos; seu terceiro golpe reduz a defesa adversária em passos de 0,5x, até acumular 2x da defesa inicial.
 - **Orquídea:** cada golpe que acerta tem 40% de chance de aplicar Hospedeiro; seu terceiro golpe aumenta a defesa em 0,5x, até 2,5x do valor inicial.
-- **Planta Carnívora:** cada golpe que acerta tem 20% de chance de paralisar o alvo pela próxima ação; seu terceiro golpe aumenta o ataque em 0,5x, até 2x do valor inicial.
+- **Planta Carnívora:** cada golpe que acerta tem 30% de chance de paralisar o alvo pela próxima ação; seu terceiro golpe aumenta o ataque em 0,5x, até 2x do valor inicial.
 
 Os golpes de atributo são ações normais e consomem o turno, sem causar dano.
 Eles acumulam os aumentos a partir do atributo inicial. O golpe do Cacto usa
@@ -207,10 +207,12 @@ dos encontros.
 Execute os comandos na raiz do projeto.
 
 ```powershell
-cmake --build build --target plants_x_plants battle_check name_entry_check menu_screen_check
+cmake --build build --target plants_x_plants battle_check name_entry_check menu_screen_check boss_matchup_check random_team_check
 .\build\battle_check.exe
 .\build\name_entry_check.exe
 .\build\menu_screen_check.exe
+.\build\boss_matchup_check.exe
+.\build\random_team_check.exe
 ```
 
 `battle_check` verifica atributos das oito espécies, as seis iniciais sem bosses,
@@ -221,4 +223,8 @@ entrada direta na seleção, teclas mantidas, retorno à tela inicial e encerram
 O modo de batalha independente e seus recursos exclusivos foram removidos.
 
 O balanceamento dos guardiões é conferido por `boss_balance_check`; metodologia
-e comparação em [BOSS_BALANCE.md](BOSS_BALANCE.md).
+e comparação em [BOSS_BALANCE.md](BOSS_BALANCE.md). Os duelos 1x1 de cada planta contra os guardiões, comparados por HP e turnos,
+são gerados por `boss_matchup_check`. A chance de vitória com equipes aleatórias
+e a comparação de políticas de ataque, com e sem buff lógico escolhido pela
+equipe, são geradas por `random_team_check`; todas são descritas no mesmo
+documento.

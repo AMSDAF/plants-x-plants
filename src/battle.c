@@ -7,6 +7,8 @@
 #include <string.h>
 #include <limits.h>
 
+#define CARNIVOROUS_PARALYSIS_CHANCE 30
+
 static int has_reserve(const Team *team)
 {
     for (int i = 0; i < team->count; i++) {
@@ -711,7 +713,7 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
         Plant_IsAlive(defender)) {
         if (Plant_HasStatus(defender, PLANT_STATUS_PARALYZED)) {
             append_status_message(battle, "O adversário já está paralisado.");
-        } else if (rand() % 100 < 20 &&
+        } else if (rand() % 100 < CARNIVOROUS_PARALYSIS_CHANCE &&
                    Battle_ApplyStatus(battle, 1 - acting_side,
                                       defender_team->active_index,
                                       PLANT_STATUS_PARALYZED, 1, 1.0f)) {

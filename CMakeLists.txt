@@ -244,6 +244,22 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(boss_balance_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Duelos 1x1 das plantas iniciais contra cada boss, sem janela nem dependência da raylib.
+add_executable(boss_matchup_check EXCLUDE_FROM_ALL tools/check_boss_matchups.c
+    src/plant.c src/plant_data.c src/battle.c src/ai.c)
+target_include_directories(boss_matchup_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(boss_matchup_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Chance de vitoria de equipes aleatorias contra cada boss, sem buff logico.
+add_executable(random_team_check EXCLUDE_FROM_ALL tools/check_random_teams.c
+    src/plant.c src/plant_data.c src/battle.c src/ai.c)
+target_include_directories(random_team_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(random_team_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Resultados da campanha: navegação, revanche e capturas reais.
 add_executable(result_screen_check EXCLUDE_FROM_ALL tools/check_result_screen.c ${INTRO_CHECK_SOURCES})
 target_include_directories(result_screen_check PRIVATE include)
