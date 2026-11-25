@@ -7,6 +7,8 @@
 #include <string.h>
 #include <limits.h>
 
+#define CARNIVOROUS_PARALYSIS_CHANCE 30
+
 static int has_reserve(const Team *team)
 {
     for (int i = 0; i < team->count; i++) {
@@ -85,6 +87,16 @@ static int status_damage(const Plant *plant, int denominator)
 {
     int damage = plant->max_hp / denominator;
     return damage > 0 ? damage : 1;
+}
+
+/* Aplica o dano e devolve o HP efetivamente perdido para mensagens e recordes. */
+static int damage_plant(BattleState *battle, int side, Plant *plant, int requested)
+{
+    int previous_hp = plant->current_hp;
+    Plant_TakeDamage(plant, requested);
+    int damage = previous_hp - plant->current_hp;
+    if (side == 0) battle->damage_taken += damage;
+    return damage;
 }
 
 static int heal_plant(Plant *plant, int percent)
@@ -201,9 +213,7 @@ static void apply_turn_statuses(BattleState *battle, int side, int plant_index)
         if (denominator == 0) continue;
 
         int requested_damage = status_damage(plant, denominator);
-        int previous_hp = plant->current_hp;
-        Plant_TakeDamage(plant, requested_damage);
-        int damage = previous_hp - plant->current_hp;
+        int damage = damage_plant(battle, side, plant, requested_damage);
         char message[128];
         if (type == PLANT_STATUS_POISON) {
             snprintf(message, sizeof(message), "Veneno: %s sofreu %d de dano.",
@@ -649,9 +659,7 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
     int critical = 0;
     int raw_damage = calculate_damage(&effective_move, attacker, defender, &critical);
 
-    int previous_hp = defender->current_hp;
-    Plant_TakeDamage(defender, raw_damage);
-    int damage = previous_hp - defender->current_hp;
+    int damage = damage_plant(battle, 1 - acting_side, defender, raw_damage);
     feedback.hit = 1;
     feedback.critical = critical;
     feedback.damage = damage;
@@ -702,11 +710,9 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
     if (damage > 0 && defender->id == SPECIES_CACTUS &&
         move->category == MOVE_CATEGORY_PHYSICAL) {
         int reflected = (damage * 3 + 9) / 10;
-        int attacker_hp = attacker->current_hp;
-        Plant_TakeDamage(attacker, reflected);
+        int reflected_damage = damage_plant(battle, acting_side, attacker, reflected);
         char message[96];
-        snprintf(message, sizeof(message), "Cacto devolveu %d de dano.",
-                 attacker_hp - attacker->current_hp);
+        snprintf(message, sizeof(message), "Cacto devolveu %d de dano.", reflected_damage);
         append_status_message(battle, message);
     }
     if (damage > 0 && attacker->id == SPECIES_ORCHID && Plant_IsAlive(defender)) {
@@ -725,7 +731,7 @@ int Battle_ExecuteMove(BattleState *battle, int move_index)
         Plant_IsAlive(defender)) {
         if (Plant_HasStatus(defender, PLANT_STATUS_PARALYZED)) {
             append_status_message(battle, "O adversário já está paralisado.");
-        } else if (rand() % 100 < 20 &&
+        } else if (rand() % 100 < CARNIVOROUS_PARALYSIS_CHANCE &&
                    Battle_ApplyStatus(battle, 1 - acting_side,
                                       defender_team->active_index,
                                       PLANT_STATUS_PARALYZED, 1, 1.0f)) {

@@ -4,7 +4,7 @@ Este documento explica a organização do projeto e a responsabilidade de cada a
 
 O jogo será desenvolvido em C com raylib. A estrutura inicial prioriza simplicidade, divisão de tarefas e separação entre as regras do jogo e a interface gráfica.
 
-> ENTER na tela inicial abre a seleção de personagem, seguida do nome, do prólogo e da Estufa Lógica. As batalhas são encontros contra guardiões da campanha.
+> ENTER na tela inicial abre os rankings, com abas para tempo e dano; ENTER abre a seleção de personagem, seguida do nome, da carta, do prólogo e da Estufa Lógica. As batalhas são encontros contra guardiões da campanha.
 
 ## Estrutura de pastas
 
@@ -26,8 +26,8 @@ Os arquivos `.gitkeep` mantêm as pastas de assets no Git enquanto estiverem vaz
 | `include/ui_theme.h`, `src/ui_theme.c` | Carregar e liberar os dois pesos de Atkinson, a Pixelify dos diálogos e do HUD, as molduras de interação e diálogo e os três retratos, importar o chevron na grade de pixels, atualizar seu relógio visual, medir textos UTF-8 e desenhar molduras creme em degraus ou botânicas compartilhadas. `Game` possui os recursos e os passa explicitamente às telas. |
 | `include/exploration_hud.h`, `src/exploration_hud.c` | Desenhar brilhos e balões de descoberta a partir de posições fornecidas por `world`, objetivo e aviso botânico inferior com indicação textual de E e seta a partir da descrição somente de leitura da interação. Não seleciona ações nem modifica o mundo. |
 | `include/dialogue_ui.h`, `src/dialogue_ui.c` | Compor a arte horizontal botânica, retrato e textos de diálogo, com moldura em nove partes para placas e reserva. Recebe nome, fala, caracteres visíveis e disponibilidade da próxima página; não processa entrada nem modifica o mundo. Recursos de imagem pertencem a `UiTheme`. |
-| `include/game.h` | Definir o estado geral do jogo e declarar suas funções de controle. |
-| `src/game.c` | Controlar as telas da campanha, a entrada na estufa e os encontros contra guardiões. |
+| `include/game.h` | Definir o estado geral do jogo, incluindo `RunStats` (cronômetro e dano da partida), e declarar suas funções de controle. |
+| `src/game.c` | Controlar as telas da campanha, a entrada na estufa, os encontros contra guardiões e a medição da partida: cronômetro da carta até a conclusão, soma do dano por batalha e gravação do recorde antes da tela final. |
 | `include/audio.h`, `src/audio.c` | Carregar e liberar efeitos (`assets/sounds/sfx/`) e músicas (`assets/sounds/music/`), tocar efeitos imediatos ou com pequeno atraso, fazer a transição suave entre faixas e silenciar por F9. Arquivos ausentes ou falta de dispositivo deixam o jogo em silêncio, sem erro. Não conhece telas nem regras. |
 | `include/game_audio.h`, `src/game_audio.c` | Capturar campos do estado antes de cada quadro e comparar com o estado depois de `game_update`, escolhendo efeitos de interface, exploração e combate e a música de cada tela. Somente lê o estado; dano, turnos e entrada continuam em `battle`, `battle_screen` e nas telas. |
 
@@ -46,7 +46,9 @@ observam esse resultado; ele não modifica balanceamento ou regras.
 
 | Arquivos | Responsabilidade |
 |---|---|
-| `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial em pixel art e relógios contínuos de grama e mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. ENTER abre a seleção de personagem; ESC solicita encerramento. O coordenador protege as transições até soltar entradas. |
+| `include/menu_screen.h`, `src/menu_screen.c` | Tela inicial em pixel art e relógios contínuos de grama e mascote. Carrega texturas com filtro pontual, calcula limites visíveis uma vez e valida atlas opcional. ENTER abre os rankings; ESC solicita encerramento. O coordenador protege as transições até soltar entradas. |
+| `include/leaderboard.h`, `src/leaderboard.c` | Persistência dos recordes em um único CSV (`data/leaderboard.csv`) e ordenação por tempo ou dano. Sem raylib: lê, valida e grava nome, milissegundos, data e dano com `stdio`; as duas listas são visões do mesmo arquivo. |
+| `include/leaderboard_screen.h`, `src/leaderboard_screen.c` | Tela entre menu e seleção: lê o CSV ao entrar e mostra um ranking por vez, com abas de tempo e dano. Setas esquerda/direita (ou A/D) alternam o ranking; setas cima/baixo (ou W/S) movem a linha selecionada e rolam a lista. ENTER inicia a partida; ESC volta ao menu. Reaproveita fundo, molduras e fontes; o desenho não grava nem altera recordes. |
 | `include/trainer_select_screen.h`, `src/trainer_select_screen.c` | Cartões botânicos de madeira e controles Pixelify sobre `TrainerBackgroundAssets`, retratos de repouso com durações explícitas e relógios independentes e escolha por teclado/mouse. Usa metadados dos atlas de repouso para igualar altura e pés. Retorna confirmar/voltar; clicar no cartão apenas seleciona. F7 exibe somente o fundo, sem reiniciar seu relógio. |
 | `include/intro_screen.h`, `src/intro_screen.c` | Pedido de Lia, aceite, seleção de três entre seis plantas, viagem e montagem validada da equipe inicial. Reutiliza o fundo e a interface; `IntroAssets`, pertencente a `Game`, carrega as seis sprites `*_v2.png`, calcula os limites de alfa e usa filtro pontual. Também carrega as seis artes de `assets/ui/plant_selection/`, com recortes fixos, foco independente da seleção e botões em nove partes. A seleção mantém seis atlas Pixelify nos tamanhos físicos do viewport, atualizados fora do desenho quando a resolução muda. O desenho preserva a proporção, alinha as raízes e oferece reserva se faltar uma textura. A entrada usa as mesmas áreas dos novos cartões e botões. Não resolve combate. |
 | `include/name_entry_screen.h`, `src/name_entry_screen.c` | Rascunho UTF-8 de até 12 codepoints, foco, edição e transição reversível de 0,6 s; reutiliza o cartão/retrato e os relógios da seleção. |
@@ -70,15 +72,32 @@ observam esse resultado; ele não modifica balanceamento ou regras.
 | `tools/prepare_trainer_selection_background.py`, `include/trainer_background_data.h` | Extração e reconstrução local da nova fonte; poses e fases próprias, sem alterar recursos do menu aprovado. |
 | `tools/check_trainer_background.c`, `tools/preview_trainer_selection_background.py` | Capturas OpenGL do ciclo completo, verificação da prévia e montagem de GIF/contatos em `build/trainer_selection_preview/`. Consulte [os detalhes do fundo](TRAINER_SELECTION_BACKGROUND.md). |
 
-`Game` mantém os estados de tela inicial, seleção, entrada de nome, prólogo, exploração
-e batalha, além de `CampaignSession` com personagem, nome e equipe somente em
-memória. ENTER na tela inicial abre diretamente a seleção. A confirmação do
-personagem abre o nome; um nome válido inicia o prólogo. A abertura apresenta
+`Game` mantém os estados de tela inicial, rankings, seleção, entrada de nome,
+prólogo, exploração e batalha, além de `CampaignSession` com personagem, nome e
+equipe somente em memória. ENTER na tela inicial abre os rankings, com tempo e
+dano em abas; ENTER em seguida abre a seleção. A confirmação do personagem abre
+o nome; um nome válido inicia a carta. A abertura apresenta
 o pedido de Lia, o aceite, a escolha de três entre seis espécies e a viagem.
 A chegada abre o mapa existente da estufa como primeiro destino na vila.
 `OpeningStep` e `selection_ui_progress` unificam o indicador em seis passos:
 personagem, nome, carta, aceite, equipe e viagem. O desenho deriva da tela/etapa
 atual, sem armazenar outro contador; retornar acompanha automaticamente o fluxo.
+
+### Rankings e tempo de partida
+
+`RunStats` começa quando a carta aparece e avança em todas as telas da partida,
+inclusive batalhas e diálogos. O cronômetro é congelado no quadro em que
+`world.completed` vira `true`, antes de `GAME_ENDING`; derrota e saída não geram
+recorde. `BattleState.damage_taken` soma o HP efetivamente perdido pelo jogador
+em golpes, reflexo e status; `game` transfere esse total para `RunStats` ao sair
+de cada batalha, sem alterar o HP da campanha.
+
+O histórico usa um único CSV em vez de JSON: o formato é fixo, não há necessidade
+de parser ou dependência nova, e os nomes aceitos pela interface não contêm
+vírgulas, aspas nem quebras de linha. Assim, `leaderboard.c` lê e grava com
+`stdio`, e as duas classificações são ordenações do mesmo arquivo. O tempo é
+persistido em milissegundos e exibido como `min:seg:miliseg`; a data é local,
+no formato `AAAA-MM-DD`.
 
 A home reutiliza os atlas Pixelify de `SelectionUiAssets` para o aviso inicial
 e o título de reserva. O prólogo usa seus atlas próprios também nos textos

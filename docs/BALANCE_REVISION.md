@@ -1,5 +1,8 @@
 # Correções de balanceamento — 23/11/2026
 
+> Registro histórico. Na integração de 25/11/2026, o usuário escolheu manter o
+> catálogo remoto `89aa715`; os atributos e percentuais abaixo são da revisão anterior.
+
 ## Alterações aplicadas
 
 | Planta | Antes | Depois |

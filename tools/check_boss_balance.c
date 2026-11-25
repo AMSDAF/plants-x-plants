@@ -63,30 +63,38 @@ static void check_limits(void)
         enemy.plants[0].current_hp -= 50;
         BattleState battle;
         Battle_Init(&battle,player,enemy);
-        assert(Battle_SwitchPlant(&battle,1));
-        assert(Battle_ExecuteMove(&battle,2));
-        assert(Battle_SwitchPlant(&battle,0));
-        assert(Battle_ExecuteMove(&battle,2));
-        /* 25% de 45 arredonda para 11; a Babosa chega ao teto no terceiro uso. */
-        if (boss == SPECIES_ALOE) {
-            assert(Battle_SwitchPlant(&battle,1));
+        int own_turns = 0;
+        while (Battle_CanUseMove(&battle,1,0,2)) {
+            assert(own_turns < 16);
+            assert(Battle_SwitchPlant(&battle,1-battle.player_team.active_index));
             assert(Battle_ExecuteMove(&battle,2));
+            own_turns++;
         }
         const Plant *active = &battle.enemy_team.plants[0];
         int base = boss == SPECIES_ALOE ? active->base_defense : active->base_attack;
         int actual = boss == SPECIES_ALOE ? active->defense : active->attack;
-        assert(actual == (int)(base*1.5f+0.5f));
-        assert(active->current_hp == active->max_hp-50);
+        assert(actual == (int)(base*active->moves[2].effect_cap+0.5f));
+        int healing = (active->max_hp*15+99)/100;
+        int expected_hp = active->max_hp-50;
+        if (boss == SPECIES_SUNFLOWER) expected_hp += (own_turns/3)*healing;
+        if (expected_hp > active->max_hp) expected_hp = active->max_hp;
+        assert(active->current_hp == expected_hp);
         assert(Battle_SwitchPlant(&battle,1-battle.player_team.active_index));
         BattleState before = battle;
         assert(!Battle_ExecuteMove(&battle,2));
         assert(memcmp(&before,&battle,sizeof(battle)) == 0);
-        /* Girassol só regenera no terceiro turno próprio, mesmo errando o golpe. */
+        /* Erros também contam turnos para a cura periódica do Girassol. */
         if (boss == SPECIES_SUNFLOWER) {
             battle.enemy_team.plants[0].moves[0].accuracy = 0;
-            assert(Battle_ExecuteMove(&battle,0));
-            int healed = (active->max_hp*15+99)/100;
-            assert(active->current_hp == active->max_hp-50+healed);
+            do {
+                assert(Battle_ExecuteMove(&battle,0));
+                own_turns++;
+                if (own_turns % 3 != 0)
+                    assert(Battle_SwitchPlant(&battle,1-battle.player_team.active_index));
+            } while (own_turns % 3 != 0);
+            expected_hp += healing;
+            if (expected_hp > active->max_hp) expected_hp = active->max_hp;
+            assert(active->current_hp == expected_hp);
         }
     }
     Team player = {0}, enemy = {0};

@@ -1,5 +1,8 @@
 # Auditoria de balanceamento — 23/11/2026
 
+> Registro histórico anterior ao catálogo remoto `89aa715`, integrado em
+> 25/11/2026. Estes percentuais não descrevem o balanceamento atual.
+
 Foram simulados **1,200,960 combates**: 1,200,960 encerrados com vencedor e **0 sem ação válida**. Não houve erros de preparação/substituição nem luta que alcançasse o limite de 300 rodadas.
 
 ## Metodologia

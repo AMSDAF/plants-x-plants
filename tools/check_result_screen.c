@@ -100,6 +100,7 @@ int main(void)
     Team_SelectSpecies(&game.campaign.team,2,SPECIES_ORCHID);
     world_init(&game.world); game.world.maintenance_key = true;
     game.world.light = true; game.world.relay_step = 1; game.world.logic_move_mask = 1;
+    game.run = (RunStats){.active=true,.elapsed=12,.damage_taken=77};
     lost_battle(&game,WORLD_ENCOUNTER_ALOE);
     capture(&game,1280,720,"defeat_long_name");
     strcpy(game.campaign.player_name,"Marcos");
@@ -124,6 +125,7 @@ int main(void)
         assert(plant->current_hp == plant->max_hp);
     }
     assert(game.world.maintenance_key && game.world.light && game.world.relay_step == 1);
+    assert(game.run.active && game.run.elapsed >= 12 && game.run.damage_taken == 77);
     lost_battle(&game,WORLD_ENCOUNTER_SUNFLOWER);
     open_retry_quiz(&game);
     /* Resposta por clique, inclusive quando a alternativa correta é Falso. */
@@ -142,9 +144,12 @@ int main(void)
     assert(!game.world.maintenance_key && !game.world.light && !game.world.logic_move_mask);
     assert(!game.world.guardian_defeated && !game.world.completed && !game.world.relay_step);
     assert(!game.logic_setup.questions_seen_mask && !game.battle_screen.battle.player_team.count);
+    assert(!game.run.active && game.run.elapsed == 0 && game.run.damage_taken == 0);
     for (int i = 0; i < MAX_TEAM_SIZE; i++) assert(game.campaign.boosted_move_indices[i] == -1);
     capture(&game,1280,720,"campaign_lost");
     capture(&game,1920,1080,"campaign_lost_1080p");
+    key(&game,KEY_ENTER);
+    assert(game.screen == GAME_LEADERBOARD);
     key(&game,KEY_ENTER);
     assert(game.screen == GAME_TRAINER_SELECT);
     /* Novo cenário independente para conclusão e navegação já existentes. */
@@ -168,6 +173,8 @@ int main(void)
     Rectangle button = result_screen_button_bounds(0);
     event(7,(int)(button.x+button.width/2),(int)(button.y+button.height/2)); event(6,0,0); tick(&game);
     event(5,0,0); tick(&game); tick(&game);
+    assert(game.screen == GAME_LEADERBOARD);
+    key(&game,KEY_ENTER);
     assert(game.screen == GAME_TRAINER_SELECT);
     /* ESC só abandona a sessão depois de confirmação explícita. */
     game.screen = GAME_EXPLORATION; game.input_blocked = false;

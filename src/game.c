@@ -3,6 +3,7 @@
 #include "ui_theme.h"
 #include "plant_data.h"
 #include "game_audio.h"
+#include "leaderboard.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -30,6 +31,22 @@ static bool transition_input_down(void)
     for (unsigned int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
         if (IsKeyDown(keys[i])) return true;
     return IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+}
+
+/* Só a conclusão registra recorde; saídas e derrotas encerram a medição sem salvar. */
+static void finish_run(Game *game)
+{
+    if (!game->run.active) return;
+    game->run.active = false;
+    long long time_ms = (long long)(game->run.elapsed * 1000.0 + 0.5);
+    leaderboard_add(game->campaign.player_name, time_ms, game->run.damage_taken);
+}
+
+static void update_run_clock(Game *game)
+{
+    if (!game->run.active || game->screen == GAME_ENDING || game->screen == GAME_DEFEAT) return;
+    double dt = GetFrameTime();
+    if (dt > 0) game->run.elapsed += dt;
 }
 
 static Team guardian_team(WorldEncounter encounter)
@@ -73,8 +90,10 @@ static void start_encounter(Game *game, WorldEncounter encounter)
 
 static void remember_battle_team(Game *game)
 {
-    const BattleScreen *screen = &game->battle_screen;
+    BattleScreen *screen = &game->battle_screen;
     if (screen->setup_side < 0) {
+        game->run.damage_taken += screen->battle.damage_taken;
+        screen->battle.damage_taken = 0;
         game->campaign.team = screen->battle.player_team;
         Team_Restore(&game->campaign.team);
         for (int i = 0; i < screen->battle.player_team.count; i++)
@@ -104,6 +123,7 @@ static void leave_encounter(Game *game)
 /* Descarta somente a sessão; os recursos gráficos e de áudio continuam carregados. */
 static void lose_campaign(Game *game)
 {
+    game->run = (RunStats){0};
     game->campaign = (CampaignSession){0};
     for (int i = 0; i < MAX_TEAM_SIZE; i++) game->campaign.boosted_move_indices[i] = -1;
     game->logic_setup = (LogicSetupScreen){0};
@@ -187,6 +207,7 @@ static void update_exit_confirm(Game *game)
     game->exit_confirm_open = false;
     if (action == 1) {
         audio_play(&game->audio,SFX_UI_CONFIRM);
+        game->run.active = false;
         change_screen(game,GAME_MENU);
     } else {
         audio_play(&game->audio,SFX_UI_BACK);
@@ -214,8 +235,9 @@ static void draw_exit_confirm(const Game *game)
 
 static void update_screens(Game *game)
 {
-    if (game->screen == GAME_MENU || game->screen == GAME_TRAINER_SELECT ||
-        game->screen == GAME_NAME_ENTRY || game->screen == GAME_BATTLE ||
+    if (game->screen == GAME_MENU || game->screen == GAME_LEADERBOARD ||
+        game->screen == GAME_TRAINER_SELECT || game->screen == GAME_NAME_ENTRY ||
+        game->screen == GAME_BATTLE ||
         game->screen == GAME_ENDING || game->screen == GAME_DEFEAT ||
         (game->screen == GAME_EXPLORATION && (game->world.logic_quiz_open || game->world.relay_panel_open))) {
         float scale = fminf(GetRenderWidth() / 1280.0f, GetRenderHeight() / 720.0f);
@@ -234,11 +256,13 @@ static void update_screens(Game *game)
             game->campaign.team=(Team){0};
             game->logic_setup = (LogicSetupScreen){0};
             for (int i = 0; i < MAX_TEAM_SIZE; i++) game->campaign.boosted_move_indices[i] = -1;
+            game->run = (RunStats){0};
             intro_screen_init(&game->intro);
             world_init(&game->world);
             player_init(&game->player,game->campaign.trainer,world_spawn());
             world_snap_camera(&game->world, game->player.feet);
             change_screen(game,GAME_INTRO);
+            game->run.active = true; /* A carta marca o início da medição. */
         }
         if (!transition_input_down()) game->input_blocked=false;
         return;
@@ -248,6 +272,7 @@ static void update_screens(Game *game)
         intro_assets_update_fonts(&game->intro_assets, scale);
         IntroAction action = intro_screen_update(&game->intro, !game->input_blocked, GetFrameTime());
         if (action == INTRO_BACK) {
+            game->run.active = false;
             name_entry_begin(&game->name_entry, true);
             change_screen(game, GAME_NAME_ENTRY);
         } else if (action == INTRO_FINISH && intro_screen_team(&game->intro, &game->campaign.team)) {
@@ -277,8 +302,18 @@ static void update_screens(Game *game)
             MenuAction action = menu_screen_update(&game->menu, true);
             if (action == MENU_ACTION_EXIT) game->exit_requested = true;
             if (action == MENU_ACTION_CAMPAIGN) {
+                leaderboard_screen_begin(&game->leaderboard);
+                change_screen(game, GAME_LEADERBOARD);
+            }
+            break;
+        }
+        case GAME_LEADERBOARD: {
+            LeaderboardScreenAction action = leaderboard_screen_update(&game->leaderboard, true, GetFrameTime());
+            if (action == LEADERBOARD_SCREEN_PLAY) {
                 trainer_select_screen_init(&game->trainer_select);
                 change_screen(game, GAME_TRAINER_SELECT);
+            } else if (action == LEADERBOARD_SCREEN_BACK) {
+                change_screen(game, GAME_MENU);
             }
             break;
         }
@@ -304,6 +339,7 @@ static void update_screens(Game *game)
             } else if (game->world.relay_panel_open) {
                 world_update_relay_panel(&game->world, game->campaign.player_name);
             } else if (game->world.completed) {
+                finish_run(game); /* Encerra antes da tela de conclusão. */
                 result_screen_begin(&game->result);
                 change_screen(game, GAME_ENDING);
             } else if (IsKeyPressed(KEY_ESCAPE)) {
@@ -351,8 +387,8 @@ static void update_screens(Game *game)
             if (game->screen == GAME_DEFEAT) {
                 if (game->result.campaign_lost) {
                     if (action == RESULT_PRIMARY) {
-                        trainer_select_screen_init(&game->trainer_select);
-                        change_screen(game,GAME_TRAINER_SELECT);
+                        leaderboard_screen_begin(&game->leaderboard);
+                        change_screen(game,GAME_LEADERBOARD);
                     } else if (action == RESULT_SECONDARY) change_screen(game,GAME_MENU);
                 } else if (action == RESULT_CORRECT) {
                     WorldEncounter encounter = game->encounter;
@@ -364,8 +400,8 @@ static void update_screens(Game *game)
                     game->input_blocked = true;
                 }
             } else if (action == RESULT_PRIMARY) {
-                trainer_select_screen_init(&game->trainer_select);
-                change_screen(game,GAME_TRAINER_SELECT);
+                leaderboard_screen_begin(&game->leaderboard);
+                change_screen(game,GAME_LEADERBOARD);
             } else if (action == RESULT_SECONDARY) change_screen(game,GAME_MENU);
             break;
         }
@@ -378,6 +414,7 @@ static void update_screens(Game *game)
 void game_update(Game *game)
 {
     GameAudioSnapshot before = game_audio_capture(game);
+    update_run_clock(game);
     /* O bloqueio de transição também protege os botões das telas de resultado. */
     if (game->input_blocked && (game->screen == GAME_ENDING || game->screen == GAME_DEFEAT))
         result_screen_update(&game->result,false,GetFrameTime());
@@ -399,6 +436,10 @@ void game_draw(const Game *game)
                 game->encounter == WORLD_ENCOUNTER_ALOE ? "Depósito" : "Viveiro");
             break;
         case GAME_MENU: menu_screen_draw(ui, &game->menu, &game->trainer_select_assets.ui); break;
+        case GAME_LEADERBOARD:
+            leaderboard_screen_draw(ui, &game->trainer_select_assets.ui,
+                                    &game->trainer_select_assets.background, &game->leaderboard);
+            break;
         case GAME_BATTLE:
             battle_screen_draw(ui, &game->battle_screen, &game->battle_assets, &game->trainer_select_assets.ui,
                                 game->intro_assets.plants, game->intro_assets.sources);

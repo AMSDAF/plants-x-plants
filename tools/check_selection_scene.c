@@ -46,7 +46,20 @@ static void campaign(Game *game)
     assert(game->screen == GAME_MENU);
     key(game, KEY_ENTER);
     for (int i = 0; i < 20; i++) tick(game);
+    assert(game->screen == GAME_LEADERBOARD && !game->input_blocked);
+    assert(game->leaderboard.time_count == game->leaderboard.damage_count);
+    key(game, KEY_ENTER);
+    for (int i = 0; i < 20; i++) tick(game);
     assert(game->screen == GAME_TRAINER_SELECT && !game->input_blocked);
+}
+
+static void leave_session(Game *game)
+{
+    key(game, KEY_ESCAPE);
+    assert(game->exit_confirm_open && game->screen == GAME_EXPLORATION);
+    key(game, KEY_RIGHT);
+    key(game, KEY_ENTER);
+    assert(!game->exit_confirm_open && game->screen == GAME_MENU);
 }
 
 static void check_botanical_walk(Game *game)
@@ -216,7 +229,7 @@ int main(void)
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_FEMALE);
     check_botanical_walk(&game);
     capture(&game, target, "build/selection_preview/botanical_female_game.png", false);
-    key(&game, KEY_ESCAPE);
+    leave_session(&game);
     campaign(&game);
     input(2, KEY_D, 0);
     tick(&game);
@@ -233,7 +246,7 @@ int main(void)
     tick(&game);
     assert(!game.input_blocked);
     confirm_campaign_name(&game);
-    key(&game, KEY_ESCAPE);
+    leave_session(&game);
     campaign(&game);
     click(&game, 180, 660);
     assert(game.screen == GAME_MENU);
@@ -251,7 +264,7 @@ int main(void)
     assert(game.screen == GAME_EXPLORATION && game.player.trainer == TRAINER_MALE);
     check_botanical_walk(&game);
     capture(&game, target, "build/selection_preview/botanical_male_game.png", false);
-    key(&game, KEY_ESCAPE);
+    leave_session(&game);
     campaign(&game);
 
     trainer_select_screen_init(&game.trainer_select);

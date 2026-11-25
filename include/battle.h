@@ -71,6 +71,7 @@ typedef struct {
     int boosted_move_indices[2][MAX_TEAM_SIZE]; /* -1 mantém todos os golpes normais. */
     char last_message[128];
     BattleMoveFeedback feedback;
+    int damage_taken; /* Dano real recebido pelo lado 0 neste combate. */
 } BattleState;
 
 void Battle_Init(BattleState *battle, Team player_team, Team enemy_team);

@@ -168,6 +168,9 @@ exige outra pergunta. Errar uma única resposta ou desistir na tela de derrota
 encerra a campanha: equipe, nome, fórmulas, recompensas e progresso do mundo
 são descartados. A tela informa a perda e oferece **Nova campanha** ou
 **Menu principal**. O progresso existe somente em memória; não há arquivo de save.
+As estatísticas da tentativa também são descartadas no erro/desistência, sem
+gravar recorde. No acerto, o dano acumulado é preservado para o ranking; o relógio
+fica pausado na pergunta. **Nova campanha** passa pela tela de rankings.
 Não é possível voltar à vila nem contornar o desafio com ESC após a derrota.
 A vinheta de derrota já existente toca sem música de fundo na tela de derrota.
 
