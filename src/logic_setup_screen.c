@@ -1,34 +1,8 @@
 /* Compõe o modal botânico e edita fórmulas sem executar ações de combate. */
 #include "logic_setup_screen.h"
+#include "logic_quiz.h"
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
-
-enum { LOGIC_QUIZ_QUESTION_COUNT = 13 };
-
-typedef struct {
-    bool p;
-    bool has_q;
-    bool q;
-    const char *expression;
-    bool answer;
-} LogicQuizQuestion;
-
-static const LogicQuizQuestion questions[LOGIC_QUIZ_QUESTION_COUNT] = {
-    {true, true, false, "P OU Q", true},
-    {true, true, false, "P E Q", false},
-    {false, false, false, "NÃO P", true},
-    {true, true, true, "P E Q", true},
-    {false, true, false, "P OU Q", false},
-    {false, true, true, "P XOR Q", true},
-    {true, true, true, "P XOR Q", false},
-    {true, true, false, "P E NÃO Q", true},
-    {false, true, true, "P OU NÃO Q", false},
-    {false, true, false, "NÃO P E NÃO Q", true},
-    {true, true, false, "NÃO P OU Q", false},
-    {false, false, false, "NÃO P", true},
-    {true, false, false, "NÃO P", false}
-};
 
 static const Color ink = {24,52,30,255};
 static const Color cream = {253,245,216,255};
@@ -104,18 +78,8 @@ static void assign_question(LogicSetupScreen *screen, int plant_index)
     unsigned int plant_bit = 1u << plant_index;
     if (screen->question_assigned_mask & plant_bit) return;
 
-    unsigned int all_questions = (1u << LOGIC_QUIZ_QUESTION_COUNT) - 1u;
-    if ((screen->questions_seen_mask & all_questions) == all_questions)
-        screen->questions_seen_mask = 0;
-
-    int available[LOGIC_QUIZ_QUESTION_COUNT];
-    int available_count = 0;
-    for (int i = 0; i < LOGIC_QUIZ_QUESTION_COUNT; i++)
-        if (!(screen->questions_seen_mask & (1u << i))) available[available_count++] = i;
-
-    int choice = available[rand() % available_count];
+    int choice = logic_quiz_pick(&screen->questions_seen_mask);
     screen->question_indices[plant_index] = choice;
-    screen->questions_seen_mask |= 1u << choice;
     screen->question_assigned_mask |= plant_bit;
 }
 
@@ -254,7 +218,7 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
         if (screen->focus == 3 && confirm_key()) return true;
         if (answer >= 0) {
             screen->focus = answer+1;
-            const LogicQuizQuestion *question = &questions[screen->question_indices[selected]];
+            const LogicQuizQuestion *question = logic_quiz_question(screen->question_indices[selected]);
             if ((answer == 0) == question->answer) {
                 *solved |= 1u << selected;
                 screen->dirty_mask |= 1u << selected;
@@ -435,7 +399,7 @@ void logic_setup_draw(const UiTheme *ui, const SelectionUiAssets *fonts, const I
     if (!unlocked) {
         int question_index = screen->question_indices[index];
         if (question_index < 0 || question_index >= LOGIC_QUIZ_QUESTION_COUNT) question_index = 0;
-        const LogicQuizQuestion *question = &questions[question_index];
+        const LogicQuizQuestion *question = logic_quiz_question(question_index);
         label(ui,fonts,"Avalie a expressão",(Rectangle){414,230,730,42},36);
         for (int i = 0; i < (question->has_q ? 2 : 1); i++) {
             Rectangle value = {question->has_q ? 414+i*380 : 604,285,350,64};

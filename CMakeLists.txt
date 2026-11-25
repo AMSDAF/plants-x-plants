@@ -40,6 +40,7 @@ set(BATTLE_SOURCES
     src/battle_fx.c
     src/relay_ui.c
     src/result_screen.c
+    src/logic_quiz.c
     src/logic_setup_screen.c
     src/battle_screen_assets.c
 )

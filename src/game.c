@@ -101,6 +101,24 @@ static void leave_encounter(Game *game)
     change_screen(game, GAME_EXPLORATION);
 }
 
+/* Descarta somente a sessão; os recursos gráficos e de áudio continuam carregados. */
+static void lose_campaign(Game *game)
+{
+    game->campaign = (CampaignSession){0};
+    for (int i = 0; i < MAX_TEAM_SIZE; i++) game->campaign.boosted_move_indices[i] = -1;
+    game->logic_setup = (LogicSetupScreen){0};
+    game->battle_screen = (BattleScreen){0};
+    game->encounter = WORLD_ENCOUNTER_NONE;
+    world_init(&game->world);
+    intro_screen_init(&game->intro);
+    name_entry_init(&game->name_entry);
+    player_init(&game->player,TRAINER_MALE,world_spawn());
+    world_snap_camera(&game->world,game->player.feet);
+    result_screen_begin(&game->result);
+    game->result.campaign_lost = true;
+    change_screen(game,GAME_DEFEAT);
+}
+
 void game_init(Game *game)
 {
     *game = (Game){0};
@@ -318,18 +336,33 @@ static void update_screens(Game *game)
                 game->battle_screen.setup_side = -1;
                 game->battle_screen.battle.enemy_team = guardian_team(game->encounter);
             }
-            if (action == BATTLE_SCREEN_RETURN) leave_encounter(game);
+            if (action == BATTLE_SCREEN_RETURN) {
+                /* ESC durante a animação final não pode contornar a derrota. */
+                if (game->battle_screen.battle.state == BATTLE_STATE_ENEMY_WIN) {
+                    result_screen_begin(&game->result);
+                    change_screen(game,GAME_DEFEAT);
+                } else leave_encounter(game);
+            }
             break;
         }
         case GAME_ENDING:
         case GAME_DEFEAT: {
             ResultAction action = result_screen_update(&game->result,true,GetFrameTime());
             if (game->screen == GAME_DEFEAT) {
-                if (action == RESULT_PRIMARY) {
+                if (game->result.campaign_lost) {
+                    if (action == RESULT_PRIMARY) {
+                        trainer_select_screen_init(&game->trainer_select);
+                        change_screen(game,GAME_TRAINER_SELECT);
+                    } else if (action == RESULT_SECONDARY) change_screen(game,GAME_MENU);
+                } else if (action == RESULT_CORRECT) {
                     WorldEncounter encounter = game->encounter;
                     remember_battle_team(game);
                     start_encounter(game,encounter);
-                } else if (action == RESULT_SECONDARY) leave_encounter(game);
+                } else if (action == RESULT_WRONG || action == RESULT_SECONDARY) lose_campaign(game);
+                else if (action == RESULT_PRIMARY) {
+                    result_screen_begin_quiz(&game->result,&game->logic_setup.questions_seen_mask);
+                    game->input_blocked = true;
+                }
             } else if (action == RESULT_PRIMARY) {
                 trainer_select_screen_init(&game->trainer_select);
                 change_screen(game,GAME_TRAINER_SELECT);

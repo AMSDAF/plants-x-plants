@@ -83,8 +83,8 @@ canal e libera a travessia.
 
 Interaja com um guardião para lutar na arena. Monte o grupo e o Golpe
 Lógico no primeiro encontro. A equipe recupera o HP entre lutas e mantém
-a composição escolhida. Uma derrota ou recuo leva o jogador de volta ao
-pátio, preservando o progresso do mapa.
+a composição escolhida. Uma derrota abre o desafio de revanche descrito abaixo;
+um recuo antes da derrota mantém o fluxo de retorno ao pátio.
 
 Vencer o Girassol no viveiro libera a central. O desafio possui três etapas
 lineares e independentes, com dificuldade gradual:
@@ -126,7 +126,7 @@ cmake --build build --target plants_x_plants name_entry_check
 O teste percorre a missão depois de confirmar o nome. Verifica a colisão
 das fachadas e paredes, as oito combinações da ponte e suas duas soluções,
 a escotilha antes e depois da chave, o retorno
-com progresso após derrota, o acesso ao viveiro e a coleta de pistas.
+com progresso após acertar a pergunta de revanche, o acesso ao viveiro e a coleta de pistas.
 Também valida a solução única entre as 256 configurações da central, o
 avanço guiado, o retorno a uma regra quebrada e a conclusão.
 As capturas ficam em `build/name_entry_preview/`.
@@ -156,20 +156,32 @@ as páginas. Em seguida, a tela final apresenta as três companheiras, o nome do
 jogador e as opções **Jogar novamente** (retorna à criação de personagem) e
 **Menu principal**. A trilha `ending.ogg` continua nessa tela.
 
-A derrota contra qualquer guardião abre uma tela dedicada com **Tentar novamente**
-e **Voltar à vila**. A revanche repete o mesmo encontro com a equipe recuperada,
-as fórmulas e os golpes lógicos confirmados. Voltar à vila mantém os objetivos,
-as chaves e as etapas resolvidas; perder não derrota o guardião nem conclui a estufa.
+A derrota contra qualquer guardião oferece **Responder para tentar** ou
+**Encerrar campanha**. A primeira opção sorteia uma pergunta do mesmo banco
+de 13 perguntas usado para liberar golpes lógicos: os valores de P/Q, uma
+expressão com E, OU, XOR ou NÃO e as alternativas Verdadeiro/Falso.
+O sorteio compartilha o histórico da sessão e evita repetições até esgotar o banco.
+
+Acertar repete o mesmo encontro com a equipe recuperada, as fórmulas e os
+golpes lógicos confirmados, preservando chaves e objetivos. Cada nova derrota
+exige outra pergunta. Errar uma única resposta ou desistir na tela de derrota
+encerra a campanha: equipe, nome, fórmulas, recompensas e progresso do mundo
+são descartados. A tela informa a perda e oferece **Nova campanha** ou
+**Menu principal**. O progresso existe somente em memória; não há arquivo de save.
+Não é possível voltar à vila nem contornar o desafio com ESC após a derrota.
 A vinheta de derrota já existente toca sem música de fundo na tela de derrota.
 
 Ambas reutilizam o fundo escurecido, a moldura botânica, os botões e as sprites da
 abertura. A Pixelify usa os tamanhos já rasterizados para cada resolução. Setas,
-A/D e TAB mudam o foco; ENTER/Espaço e clique confirmam; ESC escolhe a segunda ação.
+A/D e TAB mudam o foco; ENTER/Espaço e clique confirmam; ESC escolhe a segunda ação
+nas telas de resultado e não responde nem fecha a pergunta. Durante a pergunta,
+**1** responde Verdadeiro e **2** responde Falso.
 Entradas mantidas na transição aguardam soltura para evitar confirmação acidental.
 
 Verificação: `cmake --build build --target result_screen_check` e
 `build/result_screen_check.exe`. O teste cobre revanche nos dois encontros,
-equipe/fórmulas/progresso, espera pelo diálogo final, menu/reinício, teclado/mouse,
+equipe/fórmulas/progresso no acerto, perda da sessão no erro ou desistência,
+banco compartilhado, proteção de ESC após a derrota, espera pelo diálogo final, menu/reinício, teclado/mouse,
 resoluções, recursos ausentes e desenho imutável. Capturas em `build/result_preview/`.
 
 ## Confirmação ao sair
