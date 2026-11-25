@@ -447,15 +447,15 @@ Rectangle world_relay_bounds(int index)
 Rectangle world_relay_close_bounds(void) { return close_relays; }
 Rectangle world_relay_validate_bounds(void) { return validate_relays; }
 
-static bool clicked(Rectangle bounds)
+static bool clicked(const UiPointer *pointer, Rectangle bounds)
 {
-    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), bounds);
+    return ui_pointer_clicked(pointer,bounds);
 }
 
 void world_update_relay_panel(World *world, const char *player_name)
 {
     if (!world->relay_panel_open || world->completed) return;
-    if (input_back_pressed() || clicked(close_relays)) {
+    if (input_back_pressed() || IsKeyPressed(KEY_ESCAPE) || clicked(&world->relay_pointer, close_relays)) {
         world->relay_panel_open = false;
         return;
     }
@@ -466,18 +466,18 @@ void world_update_relay_panel(World *world, const char *player_name)
     if (motion.x || motion.y)
         for (int i = 0; i < count; i++)
             if (CheckCollisionPointRec(GetMousePosition(),world_relay_bounds(i))) world->relay_cursor = i;
-    if (input_direction_pressed(INPUT_DIR_RIGHT)) world->relay_cursor = (world->relay_cursor+1)%count;
-    if (input_direction_pressed(INPUT_DIR_LEFT)) world->relay_cursor = (world->relay_cursor+count-1)%count;
+    if (input_direction_pressed(INPUT_DIR_RIGHT) || ui_nav_right() || ui_nav_down()) world->relay_cursor = (world->relay_cursor+1)%count;
+    if (input_direction_pressed(INPUT_DIR_LEFT) || ui_nav_left() || ui_nav_up()) world->relay_cursor = (world->relay_cursor+count-1)%count;
     for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
-        if (IsKeyPressed(KEY_ONE + i) || clicked(world_relay_bounds(i)) ||
-            (input_secondary_pressed() && world->relay_cursor == i)) {
+        if (IsKeyPressed(KEY_ONE + i) || ui_digit_pressed(i+1) || clicked(&world->relay_pointer, world_relay_bounds(i)) ||
+            (input_secondary_pressed() && world->relay_cursor == i) || (IsKeyPressed(KEY_SPACE) && world->relay_cursor == i)) {
             world->relay_cursor = i;
             world->relay_mask ^= 1u << i;
             world->relay_rejected = false;
         }
     }
 
-    if (input_confirm_pressed() || clicked(validate_relays)) {
+    if (input_confirm_pressed() || IsKeyPressed(KEY_ENTER) || clicked(&world->relay_pointer, validate_relays)) {
         world->relay_attempts++;
         world->relay_rejected = !relay_stage_matches(world->relay_mask,world->relay_step);
         if (world->relay_rejected) return;

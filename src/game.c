@@ -182,19 +182,20 @@ static void update_exit_confirm(Game *game)
 {
     float scale = fminf(GetRenderWidth()/1280.0f,GetRenderHeight()/720.0f);
     selection_ui_update_fonts(&game->trainer_select_assets.ui,scale);
+    ui_pointer_update(&game->exit_confirm_pointer,!game->input_blocked);
     if (game->input_blocked) {
         if (!transition_input_down()) game->input_blocked = false;
         return;
     }
     int previous = game->exit_confirm_cursor;
-    if (input_horizontal_pressed() || input_secondary_pressed())
+    if (input_horizontal_pressed() || input_secondary_pressed() || ui_nav_left() || ui_nav_right() || ui_nav_up() || ui_nav_down() || IsKeyPressed(KEY_TAB))
         game->exit_confirm_cursor = 1-previous;
     Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
     int action = -1;
     for (int i = 0; i < 2; i++) {
         if (!CheckCollisionPointRec(mouse,exit_confirm_button(i))) continue;
         if (motion.x != 0 || motion.y != 0) game->exit_confirm_cursor = i;
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) action = i;
+        if (ui_pointer_clicked(&game->exit_confirm_pointer,exit_confirm_button(i))) action = i;
     }
     if (input_back_pressed()) action = 0;
     else if (input_confirm_pressed()) action = game->exit_confirm_cursor;
@@ -226,9 +227,9 @@ static void draw_exit_confirm(const Game *game)
         selection_ui_button(ui,fonts,exit_confirm_button(i),
             i == 0 ? "Continuar jogando" : "Sair para o menu",game->exit_confirm_cursor == i,false,1);
     selection_ui_pixel_box(ui,fonts,input_gamepad_active()
-        ? "D-pad: escolher · A: confirmar · B: continuar"
-        : "Setas: escolher · ENTER: confirmar · ESC: continuar",
-        (Rectangle){190,535,900,30},24,SELECTION_CREAM);
+        ? "D-pad: escolher ? A: confirmar ? B: continuar"
+        : "Setas/WASD: escolher ? ENTER/Espa?o: confirmar ? ESC: continuar",
+        (Rectangle){190,535,900,30},22,SELECTION_CREAM);
 }
 
 static void update_screens(Game *game)
@@ -385,6 +386,7 @@ static void update_screens(Game *game)
         }
         case GAME_ENDING:
         case GAME_DEFEAT: {
+            game->result.defeat = game->screen == GAME_DEFEAT;
             ResultAction action = result_screen_update(&game->result,true,GetFrameTime());
             if (game->screen == GAME_DEFEAT) {
                 if (game->result.campaign_lost) {

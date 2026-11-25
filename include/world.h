@@ -1,6 +1,7 @@
 /* Mantém o cenário e o estado dos desafios lógicos da estufa. */
 #ifndef WORLD_H
 #define WORLD_H
+#include "ui_input.h"
 #include "raylib.h"
 #include "ui_theme.h"
 #include "exploration_hud.h"
@@ -73,6 +74,7 @@ typedef struct {
     bool logic_quiz_open;
     unsigned int logic_move_mask;
     bool relay_panel_open;
+    UiPointer relay_pointer;
     unsigned int relay_mask;
     unsigned int relay_attempts;
     int relay_step;

@@ -172,11 +172,14 @@ As estatísticas da tentativa também são descartadas no erro/desistência, sem
 gravar recorde. No acerto, o dano acumulado é preservado para o ranking; o relógio
 fica pausado na pergunta. **Nova campanha** passa pela tela de rankings.
 Não é possível voltar à vila nem contornar o desafio com ESC após a derrota.
+ESC ou **Encerrar campanha** abre **Encerrar a campanha?**, com **Continuar**
+selecionado. ESC ou Continuar cancela; somente **Apagar progresso** confirma a
+desistência. Errar a pergunta permanece definitivo, sem confirmação adicional.
 A vinheta de derrota já existente toca sem música de fundo na tela de derrota.
 
 Ambas reutilizam o fundo escurecido, a moldura botânica, os botões e as sprites da
 abertura. A Pixelify usa os tamanhos já rasterizados para cada resolução. Setas,
-A/D e TAB mudam o foco; ENTER/Espaço e clique confirmam; ESC escolhe a segunda ação
+A/D, W/S, setas e TAB mudam o foco; ENTER/Espaço e clique confirmam; ESC escolhe a segunda ação
 nas telas de resultado e não responde nem fecha a pergunta. Durante a pergunta,
 **1** responde Verdadeiro e **2** responde Falso.
 Entradas mantidas na transição aguardam soltura para evitar confirmação acidental.

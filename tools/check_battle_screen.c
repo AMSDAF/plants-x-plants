@@ -201,7 +201,7 @@ int main(void)
     key(&game,KEY_ONE);
     assert(game.battle_screen.menu == BATTLE_MENU_TEAM && memcmp(&before,battle,sizeof(before)) == 0);
     capture(&game,1920,1080,"forced_replacement_1080p");
-    key(&game,KEY_W);
+    key(&game,KEY_TWO);
     resolve_action(&game);
     assert(battle->state == BATTLE_STATE_ONGOING && battle->current_turn == 0 && battle->player_team.active_index == 1);
     before = *battle;

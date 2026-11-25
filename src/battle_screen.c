@@ -14,9 +14,8 @@
 static const Color ink = {28, 58, 46, 255};
 static const Color paper = {253, 245, 216, 255};
 
-static const int move_keys[MAX_MOVES] = {KEY_ONE, KEY_TWO, KEY_THREE};
-static const int switch_keys[MAX_TEAM_SIZE] = {KEY_Q, KEY_W, KEY_E, KEY_R};
-static const char *const switch_labels[MAX_TEAM_SIZE] = {"Q", "W", "E", "R"};
+static const int switch_keys[MAX_TEAM_SIZE] = {KEY_ONE, KEY_TWO, KEY_THREE, KEY_FOUR};
+static const char *const switch_labels[MAX_TEAM_SIZE] = {"1", "2", "3", "4"};
 
 static const Rectangle return_button = {568, 518, 647, 60};
 static const Rectangle back_button = {390, 520, 120, 28};
@@ -84,10 +83,10 @@ static Rectangle switch_button(int index)
 
 static Rectangle root_button(int index) { return switch_button(index); }
 
-static bool activate(Rectangle bounds, int key)
+static bool activate(const UiPointer *pointer, Rectangle bounds, int key)
 {
     return IsKeyPressed(key) ||
-           (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), bounds));
+           ui_pointer_clicked(pointer,bounds);
 }
 
 static Rectangle species_card(int index)
@@ -104,33 +103,33 @@ static Rectangle team_slot_button(int index)
 static bool update_team_selection(BattleScreen *screen)
 {
     Team *team = screen->setup_side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
-    if (activate(setup_confirm, KEY_NULL) || input_primary_pressed()) {
+    if (activate(&screen->pointer, setup_confirm, KEY_NULL) || input_primary_pressed()) {
         screen->choosing_team = false;
         return true;
     }
 
     for (int i = 0; i < MAX_TEAM_SIZE && i <= team->count; i++) {
-        if (activate(team_slot_button(i), switch_keys[i])) screen->team_slot = i;
+        if (activate(&screen->pointer, team_slot_button(i), switch_keys[i])) screen->team_slot = i;
     }
     if (input_left_bumper_pressed() && team->count > 0)
         screen->team_slot = (screen->team_slot + team->count - 1) % team->count;
     if (input_right_bumper_pressed() && team->count > 0)
         screen->team_slot = (screen->team_slot + 1) % team->count;
-    if (activate(remove_reserve, KEY_NULL) || input_cancel_pressed()) {
+    if (activate(&screen->pointer, remove_reserve, KEY_NULL) || input_cancel_pressed()) {
         Team_RemoveReserve(team, screen->team_slot);
         return false;
     }
 
     int cursor = screen->roster_cursor;
-    if (input_direction_pressed(INPUT_DIR_LEFT)) cursor--;
-    else if (input_direction_pressed(INPUT_DIR_RIGHT)) cursor++;
-    else if (input_direction_pressed(INPUT_DIR_UP)) cursor -= ROSTER_COLUMNS;
-    else if (input_direction_pressed(INPUT_DIR_DOWN)) cursor += ROSTER_COLUMNS;
+    if (input_direction_pressed(INPUT_DIR_LEFT) || ui_nav_left()) cursor--;
+    else if (input_direction_pressed(INPUT_DIR_RIGHT) || ui_nav_right()) cursor++;
+    else if (input_direction_pressed(INPUT_DIR_UP) || ui_nav_up()) cursor -= ROSTER_COLUMNS;
+    else if (input_direction_pressed(INPUT_DIR_DOWN) || ui_nav_down()) cursor += ROSTER_COLUMNS;
     screen->roster_cursor = (cursor + PLAYABLE_SPECIES_COUNT) % PLAYABLE_SPECIES_COUNT;
 
     int selected = -1;
     for (int i = 0; i < PLAYABLE_SPECIES_COUNT; i++) {
-        if (activate(species_card(i), KEY_NULL)) {
+        if (activate(&screen->pointer, species_card(i), KEY_NULL)) {
             screen->roster_cursor = i;
             const SpeciesData *species = PlantData_GetPlayableSpecies(i);
             selected = species ? (int)species->id : -1;
@@ -174,12 +173,12 @@ static void update_setup(BattleScreen *screen)
         *draft = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND};
     int previous_plant = screen->draft_plant_index;
     int selected_plant = previous_plant;
-    if (team->count > 0 && input_horizontal_pressed()) {
-        int direction = input_direction_pressed(INPUT_DIR_RIGHT) ? 1 : -1;
+    if (team->count > 0 && (input_horizontal_pressed() || ui_nav_left() || ui_nav_right())) {
+        int direction = (input_direction_pressed(INPUT_DIR_RIGHT) || ui_nav_right()) ? 1 : -1;
         selected_plant = (previous_plant + direction + team->count) % team->count;
     } else {
         for (int i = 0; i < team->count; i++) {
-            if (activate(setup_plant_buttons[i], KEY_NULL)) {
+            if (activate(&screen->pointer, setup_plant_buttons[i], KEY_NULL)) {
                 selected_plant = i;
                 break;
             }
@@ -193,11 +192,11 @@ static void update_setup(BattleScreen *screen)
             [screen->setup_side][selected_plant];
     }
     int plant_index = screen->draft_plant_index;
-    if (activate(setup_left, KEY_NULL) || IsKeyPressed(KEY_Q) || input_secondary_pressed()) {
+    if (activate(&screen->pointer, setup_left, KEY_Q) || input_secondary_pressed()) {
         draft->left = next_condition(draft->left, draft->right);
-    } else if (activate(setup_right, KEY_NULL) || IsKeyPressed(KEY_W) || input_extra_pressed()) {
+    } else if (activate(&screen->pointer, setup_right, KEY_W) || input_extra_pressed()) {
         draft->right = next_condition(draft->right, draft->left);
-    } else if (activate(setup_operator, KEY_NULL) || IsKeyPressed(KEY_E) || input_right_bumper_pressed()) {
+    } else if (activate(&screen->pointer, setup_operator, KEY_E) || input_right_bumper_pressed()) {
         draft->operator = (draft->operator + 1) % LOGIC_OPERATOR_COUNT;
     } else if (input_left_bumper_pressed()) {
         int move = screen->draft_move_index < 0 ? 0 : (screen->draft_move_index + 1) % MAX_MOVES;
@@ -205,19 +204,19 @@ static void update_setup(BattleScreen *screen)
             screen->draft_move_index = move;
             screen->battle.boosted_move_indices[screen->setup_side][plant_index] = move;
         }
-    } else if (activate(setup_move_buttons[0], KEY_ONE) &&
+    } else if (activate(&screen->pointer, setup_move_buttons[0], KEY_ONE) &&
                team->plants[plant_index].moves[0].effect == MOVE_EFFECT_DAMAGE) {
         screen->draft_move_index = 0;
         screen->battle.boosted_move_indices[screen->setup_side][plant_index] = 0;
-    } else if (activate(setup_move_buttons[1], KEY_TWO) &&
+    } else if (activate(&screen->pointer, setup_move_buttons[1], KEY_TWO) &&
                team->plants[plant_index].moves[1].effect == MOVE_EFFECT_DAMAGE) {
         screen->draft_move_index = 1;
         screen->battle.boosted_move_indices[screen->setup_side][plant_index] = 1;
-    } else if (activate(setup_move_buttons[2], KEY_THREE) &&
+    } else if (activate(&screen->pointer, setup_move_buttons[2], KEY_THREE) &&
                team->plants[plant_index].moves[2].effect == MOVE_EFFECT_DAMAGE) {
         screen->draft_move_index = 2;
         screen->battle.boosted_move_indices[screen->setup_side][plant_index] = 2;
-    } else if (activate(setup_confirm, KEY_NULL) || input_primary_pressed()) {
+    } else if (activate(&screen->pointer, setup_confirm, KEY_NULL) || input_primary_pressed()) {
         screen->battle.formulas[screen->setup_side][plant_index] = *draft;
         screen->battle.boosted_move_indices[screen->setup_side][plant_index] = screen->draft_move_index;
         screen->setup_side = -1;
@@ -425,12 +424,13 @@ static void resolve_pending_action(BattleScreen *screen)
 BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 {
     dt = fminf(0.1f,fmaxf(0,dt));
+    ui_pointer_update(&screen->pointer,true);
     battle_fx_update(&screen->fx,dt);
     BattleState *battle = &screen->battle;
     if (battle_over(battle) && screen->fx.active) return BATTLE_SCREEN_NONE;
     bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
-    if (input_back_pressed()) {
-        if (screen->show_statuses) { screen->show_statuses = false; return BATTLE_SCREEN_NONE; }
+    if (input_back_pressed() || IsKeyPressed(KEY_ESCAPE)) {
+        if (screen->show_statuses) { screen->show_statuses = false; screen->pointer = (UiPointer){0}; return BATTLE_SCREEN_NONE; }
         if (screen->pending_action != BATTLE_PENDING_NONE) return BATTLE_SCREEN_NONE;
         if (screen->setup_side < 0 && screen->menu != BATTLE_MENU_ROOT && !forced && !battle_over(battle)) {
             screen->menu = BATTLE_MENU_ROOT;
@@ -448,8 +448,16 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
         return BATTLE_SCREEN_NONE;
     }
 
-    if (IsKeyPressed(KEY_TAB) || input_extra_pressed())
+    if (IsKeyPressed(KEY_TAB) || input_extra_pressed()) {
         screen->show_statuses = !screen->show_statuses;
+        screen->pointer = (UiPointer){0};
+        return BATTLE_SCREEN_NONE;
+    }
+    /* O painel de consulta captura a entrada e pausa a resolu??o pendente. */
+    if (screen->show_statuses) {
+        screen->pointer = (UiPointer){0};
+        return BATTLE_SCREEN_NONE;
+    }
 
     if (screen->pending_action != BATTLE_PENDING_NONE) {
         if (screen->pending_action == BATTLE_PENDING_ROUND_RESULT) {
@@ -464,7 +472,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
                 if (!held) screen->message_armed = true;
                 return BATTLE_SCREEN_NONE;
             }
-            if (input_confirm_pressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            if (input_confirm_pressed() || ui_confirm_pressed() || ui_pointer_clicked(&screen->pointer,(Rectangle){568,638,647,36}))
                 resolve_pending_action(screen);
         } else {
             screen->action_timer -= dt;
@@ -481,8 +489,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
         if (screen->round_active) Battle_FinishRound(battle,&screen->round);
         clear_pending(screen); clear_round(screen);
         screen->menu = BATTLE_MENU_ROOT; screen->menu_cursor = 0;
-        if (activate(return_button,KEY_NULL) || input_primary_pressed())
-            return BATTLE_SCREEN_RETURN;
+        if (activate(&screen->pointer, return_button,KEY_NULL) || input_primary_pressed()) return BATTLE_SCREEN_RETURN;
         return BATTLE_SCREEN_NONE;
     }
 
@@ -503,7 +510,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     if (forced) screen->menu = BATTLE_MENU_TEAM;
     if (!forced && screen->menu != BATTLE_MENU_ROOT &&
-        (activate(back_button, KEY_NULL) || input_cancel_pressed())) {
+        (activate(&screen->pointer, back_button, KEY_NULL) || input_cancel_pressed())) {
         screen->menu = BATTLE_MENU_ROOT;
         screen->menu_cursor = 0;
         return BATTLE_SCREEN_NONE;
@@ -511,10 +518,10 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     int cursor = screen->menu_cursor;
     int count = screen->menu == BATTLE_MENU_MOVES ? MAX_MOVES : MAX_TEAM_SIZE;
-    if (input_direction_pressed(INPUT_DIR_LEFT)) cursor--;
-    if (input_direction_pressed(INPUT_DIR_RIGHT)) cursor++;
-    if (input_direction_pressed(INPUT_DIR_UP)) cursor -= screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
-    if (input_direction_pressed(INPUT_DIR_DOWN)) cursor += screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
+    if (input_direction_pressed(INPUT_DIR_LEFT) || ui_nav_left()) cursor--;
+    if (input_direction_pressed(INPUT_DIR_RIGHT) || ui_nav_right()) cursor++;
+    if (input_direction_pressed(INPUT_DIR_UP) || ui_nav_up()) cursor -= screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
+    if (input_direction_pressed(INPUT_DIR_DOWN) || ui_nav_down()) cursor += screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
     screen->menu_cursor = (cursor + count) % count;
     Vector2 motion = GetMouseDelta();
     if (motion.x != 0 || motion.y != 0 || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -527,7 +534,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     if (screen->menu == BATTLE_MENU_ROOT) {
         for (int i = 0; i < 4; i++) {
-            if (activate(root_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)) {
+            if (activate(&screen->pointer, root_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)) {
                 if (i < 2) {
                     screen->menu = i == 0 ? BATTLE_MENU_MOVES : BATTLE_MENU_TEAM;
                     screen->menu_cursor = 0;
@@ -537,15 +544,15 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
         }
     }
 
-    /* Os atalhos antigos continuam disponíveis, sem criar regras paralelas. */
+    /* Números atacam na raiz/Atacar e selecionam reservas somente em Trocar. */
     if (battle->state == BATTLE_STATE_ONGOING) {
         for (int i = 0; i < MAX_MOVES; i++) {
             bool pad_move = (i == 0 && input_secondary_pressed()) ||
                             (i == 1 && input_extra_pressed()) ||
                             (i == 2 && input_right_bumper_pressed());
-            bool chosen = IsKeyPressed(move_keys[i]) || pad_move ||
+            bool chosen = IsKeyPressed(move_keys[i]) || pad_move || (screen->menu != BATTLE_MENU_TEAM && ui_digit_pressed(i+1)) ||
                 (screen->menu == BATTLE_MENU_MOVES &&
-                 (activate(move_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)));
+                 (activate(&screen->pointer, move_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)));
             if (chosen) {
                 if (Battle_CanUseMove(battle,0,battle->player_team.active_index,i)) {
                     queue_round(screen, (BattleAction){BATTLE_ACTION_MOVE, i},
@@ -563,9 +570,9 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
                           (i == 1 && input_left_trigger_pressed()) ||
                           (i == 2 && input_right_bumper_pressed()) ||
                           (i == 3 && input_right_trigger_pressed());
-        bool chosen = IsKeyPressed(switch_keys[i]) || pad_switch ||
+        bool chosen = IsKeyPressed(switch_keys[i]) || pad_switch || (screen->menu == BATTLE_MENU_TEAM && ui_digit_pressed(i+1)) ||
             (screen->menu == BATTLE_MENU_TEAM &&
-             (activate(switch_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)));
+             (activate(&screen->pointer, switch_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)));
         if (chosen) {
             if (forced) {
                 if (Battle_CanSwitch(battle, i)) {
@@ -735,7 +742,7 @@ static void menu_root(const BattleView *view, const BattleScreen *screen, bool e
             text_box(view,"Em breve",badge,20,paper);
         }
     }
-    text_box(view,"Vamos implementar em breve",(Rectangle){600,652,600,24},20,(Color){124,127,112,255});
+    text_box(view,"Setas/WASD: navegar · ENTER/Espaço: escolher",(Rectangle){600,652,600,24},20,(Color){124,127,112,255});
 }
 
 static void back_control(const BattleView *view)
@@ -806,7 +813,7 @@ static void menu_team(const BattleView *view, const BattleScreen *screen, bool f
         if (focus) DrawRectangleLinesEx((Rectangle){box.x+3,box.y+3,box.width-6,box.height-6},2,ORANGE);
     }
     if (!forced) back_control(view);
-    text(view,forced ? "Escolha uma planta viva." : "Q/W/E/R · escolher reserva",575,654,20,ink);
+    text(view,forced ? "Escolha uma planta viva." : "1–4 · reserva · Setas/WASD: navegar",575,654,20,ink);
 }
 
 static void setup_button(const BattleView *view, Rectangle bounds, const char *label, bool enabled)

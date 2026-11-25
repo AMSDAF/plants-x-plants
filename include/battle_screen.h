@@ -1,6 +1,7 @@
 /* Define a arena botânica, seus recursos e comandos de navegação. */
 #ifndef BATTLE_SCREEN_H
 #define BATTLE_SCREEN_H
+#include "ui_input.h"
 #include "ui_theme.h"
 
 #include <stdbool.h>
@@ -46,6 +47,7 @@ typedef enum {
 
 typedef struct {
     BattleState battle;
+    UiPointer pointer;
     BattleFx fx;
     BattlePendingAction pending_action;
     float action_timer;

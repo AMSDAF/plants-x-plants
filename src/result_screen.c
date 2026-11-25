@@ -21,51 +21,62 @@ void result_screen_begin_quiz(ResultScreen *screen, unsigned int *seen_mask)
     screen->quiz_open = true;
 }
 
+static Rectangle abandon_button(int index)
+{
+    return (Rectangle){index == 0 ? 245 : 655,410,380,64};
+}
+
 ResultAction result_screen_update(ResultScreen *screen, bool accept_input, float dt)
 {
     screen->elapsed += fminf(0.1f, fmaxf(0, dt));
+    ui_pointer_update(&screen->pointer,accept_input && !screen->confirm_blocked);
     if (!accept_input) return RESULT_NONE;
+    if (screen->confirm_blocked) {
+        if (!IsKeyDown(KEY_ENTER) && !IsKeyDown(KEY_SPACE) && !IsKeyDown(KEY_ESCAPE) &&
+            !IsMouseButtonDown(MOUSE_BUTTON_LEFT)) screen->confirm_blocked = false;
+        return RESULT_NONE;
+    }
     int answer = -1;
     if (screen->quiz_open) {
-        if (IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_KP_1)) answer = 0;
-        else if (IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_KP_2)) answer = 1;
+        if (ui_digit_pressed(1)) answer = 0;
+        else if (ui_digit_pressed(2)) answer = 1;
     }
-    if (input_horizontal_pressed() || input_secondary_pressed() ||
-        input_left_bumper_pressed() || input_right_bumper_pressed())
-        screen->cursor = 1-screen->cursor;
+    if (ui_nav_left() || ui_nav_right() || ui_nav_up() || ui_nav_down() ||
+        IsKeyPressed(KEY_TAB)) screen->cursor = 1-screen->cursor;
     Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
     for (int i = 0; i < 2; i++) {
-        bool hover = CheckCollisionPointRec(mouse,result_screen_button_bounds(i));
-        if (hover && (motion.x != 0 || motion.y != 0)) screen->cursor = i;
-        if (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) answer = i;
+        Rectangle box = screen->abandon_confirm ? abandon_button(i) : result_screen_button_bounds(i);
+        if (CheckCollisionPointRec(mouse,box) && (motion.x != 0 || motion.y != 0)) screen->cursor = i;
+        if (ui_pointer_clicked(&screen->pointer,box)) answer = i;
     }
-    if (input_back_pressed() && !screen->quiz_open) return RESULT_SECONDARY;
-    if (input_confirm_pressed())
-        answer = screen->cursor;
-    if (answer >= 0) {
-        if (screen->quiz_open) {
-            const LogicQuizQuestion *question = logic_quiz_question(screen->question_index);
-            return question && ((answer == 0) == question->answer) ? RESULT_CORRECT : RESULT_WRONG;
+    if (input_back_pressed() || IsKeyPressed(KEY_ESCAPE)) {
+        if (screen->abandon_confirm) {
+            screen->abandon_confirm = false;
+            screen->cursor = 0;
+            screen->pointer = (UiPointer){0};
+            return RESULT_NONE;
         }
-        return answer == 0 ? RESULT_PRIMARY : RESULT_SECONDARY;
+        if (!screen->quiz_open) answer = 1;
     }
-    Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
-    for (int i = 0; i < 2; i++) {
-        bool hover = CheckCollisionPointRec(mouse,result_screen_button_bounds(i));
-        if (hover && (motion.x != 0 || motion.y != 0)) screen->cursor = i;
-        if (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) answer = i;
+    if (input_confirm_pressed() || ui_confirm_pressed()) answer = screen->cursor;
+    if (answer < 0) return RESULT_NONE;
+    if (screen->abandon_confirm) {
+        screen->abandon_confirm = false;
+        screen->cursor = 0;
+        return answer == 1 ? RESULT_SECONDARY : RESULT_NONE;
     }
-    if (input_back_pressed() && !screen->quiz_open) return RESULT_SECONDARY;
-    if (input_confirm_pressed())
-        answer = screen->cursor;
-    if (answer >= 0) {
-        if (screen->quiz_open) {
-            const LogicQuizQuestion *question = logic_quiz_question(screen->question_index);
-            return question && ((answer == 0) == question->answer) ? RESULT_CORRECT : RESULT_WRONG;
-        }
-        return answer == 0 ? RESULT_PRIMARY : RESULT_SECONDARY;
+    if (screen->quiz_open) {
+        const LogicQuizQuestion *question = logic_quiz_question(screen->question_index);
+        return question && ((answer == 0) == question->answer) ? RESULT_CORRECT : RESULT_WRONG;
     }
-    return RESULT_NONE;
+    if (answer == 1 && screen->defeat && !screen->campaign_lost) {
+        screen->abandon_confirm = true;
+        screen->confirm_blocked = true;
+        screen->cursor = 0;
+        screen->pointer = (UiPointer){0};
+        return RESULT_NONE;
+    }
+    return answer == 0 ? RESULT_PRIMARY : RESULT_SECONDARY;
 }
 
 static void label(const UiTheme *ui, const SelectionUiAssets *fonts, const char *text,
@@ -155,8 +166,23 @@ void result_screen_draw(const UiTheme *ui, const SelectionUiAssets *fonts,
     }
     const char *help = defeated
         ? (screen->campaign_lost ? "Setas: escolher · ENTER ou clique: confirmar · ESC: menu"
-                                 : "Setas: escolher · ENTER ou clique: confirmar · ESC: encerrar campanha")
+                                 : "Setas: escolher · ENTER ou clique: confirmar · ESC: desistir (confirmação)")
         : "Setas / A D: escolher · ENTER ou clique: confirmar · ESC: voltar";
     label(ui,fonts,help,
         (Rectangle){100,687,1080,22},20,cream);
+    if (screen->abandon_confirm) {
+        DrawRectangle(0,0,1280,720,Fade((Color){12,25,17,255},0.85f));
+        ui_botanical_panel(ui,(Rectangle){185,210,910,300});
+        label(ui,fonts,"Encerrar a campanha?",(Rectangle){225,242,830,52},36,ink);
+        label(ui,fonts,"Todo o progresso desta campanha será apagado.",
+            (Rectangle){225,312,830,34},28,ink);
+        label(ui,fonts,"Você ainda pode responder à pergunta e tentar uma revanche.",
+            (Rectangle){225,354,830,30},24,ink);
+        for (int i = 0; i < 2; i++)
+            selection_ui_button(ui,fonts,abandon_button(i),i == 0 ? "Continuar" : "Apagar progresso",
+                screen->cursor == i,false,1);
+        label(ui,fonts,"Setas/WASD: escolher · ENTER/Espaço: confirmar · ESC: cancelar",
+            (Rectangle){190,535,900,30},22,cream);
+    }
+
 }

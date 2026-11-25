@@ -60,9 +60,9 @@ static void reveal_option(LogicSetupScreen *screen, int count)
     if (screen->dropdown_scroll < 0) screen->dropdown_scroll = 0;
 }
 
-static bool clicked(Rectangle box)
+static bool clicked(const UiPointer *pointer, Rectangle box)
 {
-    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(),box);
+    return ui_pointer_clicked(pointer,box);
 }
 
 static bool confirm_key(void) { return input_confirm_pressed(); }
@@ -120,6 +120,7 @@ void logic_setup_begin(LogicSetupScreen *screen, const Team *team,
     assign_question(screen, screen->selected);
     screen->dropdown = -1;
     screen->dropdown_scroll = 0;
+    screen->pointer = (UiPointer){0};
     screen->elapsed = 0;
     screen->success_time = 0;
     screen->focus = 0;
@@ -135,13 +136,14 @@ static bool option_enabled(const LogicSetupScreen *screen, const Plant *plant, i
 bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int *solved,
                         LogicFormula formulas[MAX_TEAM_SIZE], int moves[MAX_TEAM_SIZE])
 {
+    ui_pointer_update(&screen->pointer,true);
     float dt = fminf(.1f,fmaxf(0,GetFrameTime()));
     screen->elapsed += dt;
     screen->success_time = fmaxf(0,screen->success_time-dt);
     if (team->count <= 0 || team->count > MAX_TEAM_SIZE) return true;
     int selected = screen->selected;
     for (int i = 0; i < team->count; i++) {
-        if (clicked(tab_box(i,team->count))) {
+        if (clicked(&screen->pointer, tab_box(i,team->count))) {
             screen->selected = i;
             assign_question(screen, i);
             screen->focus = 0;
@@ -153,8 +155,8 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
     if (screen->dropdown >= 0) {
         if (input_back_pressed()) { screen->dropdown = -1; return false; }
         int count = screen->dropdown == 0 ? MAX_MOVES : LOGIC_CONDITION_COUNT;
-        int direction = input_direction_pressed(INPUT_DIR_UP) ? -1
-            : input_direction_pressed(INPUT_DIR_DOWN) ? 1 : 0;
+        int direction = (input_direction_pressed(INPUT_DIR_UP) || ui_nav_up()) ? -1
+            : (input_direction_pressed(INPUT_DIR_DOWN) || ui_nav_down()) ? 1 : 0;
         if (direction) {
             for (int attempts = 0; attempts < count; attempts++) {
                 screen->option = (screen->option+count+direction)%count;
@@ -185,7 +187,7 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
                 Vector2 delta = GetMouseDelta();
                 if (delta.x || delta.y || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) screen->option = i;
             }
-            if (clicked(box)) choice = i;
+            if (clicked(&screen->pointer, box)) choice = i;
         }
         if (choice >= 0 && option_enabled(screen,plant,choice)) {
             if (screen->dropdown == 0) screen->moves[selected] = choice;
@@ -193,30 +195,26 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
             else screen->formulas[selected].right = (LogicCondition)choice;
             screen->dirty_mask |= 1u << selected;
             screen->dropdown = -1;
-        } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !inside) screen->dropdown = -1;
+        } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !inside) {
+            screen->dropdown = -1;
+            screen->pointer = (UiPointer){0};
+        }
         return false;
     }
-    if (input_back_pressed() || clicked(back_box)) return true;
-    bool unlocked = (*solved & (1u << selected)) != 0;
-    int focus_count = unlocked ? 7 : 4;
-    if (input_secondary_pressed() || input_right_bumper_pressed() ||
-        input_direction_pressed(INPUT_DIR_DOWN)) screen->focus = (screen->focus+1)%focus_count;
-    if (input_direction_pressed(INPUT_DIR_UP) || input_left_bumper_pressed())
-        screen->focus = (screen->focus+focus_count-1)%focus_count;
-    if (screen->focus == 0 && input_horizontal_pressed()) {
-        int direction = input_direction_pressed(INPUT_DIR_RIGHT) ? 1 : -1;
+        int direction = (input_direction_pressed(INPUT_DIR_UP) || ui_nav_up()) ? -1
+            : (input_direction_pressed(INPUT_DIR_DOWN) || ui_nav_down()) ? 1 : 0;
         screen->selected = (selected+direction+team->count)%team->count;
         assign_question(screen, screen->selected);
         return false;
     }
     if (!unlocked) {
-        if ((screen->focus == 1 || screen->focus == 2) && input_horizontal_pressed())
+        if ((screen->focus == 1 || screen->focus == 2) && (input_horizontal_pressed() || ui_nav_left() || ui_nav_right()))
             screen->focus = 3-screen->focus;
         int answer = -1;
-        if (IsKeyPressed(KEY_ONE) || input_secondary_pressed()) answer = 0;
-        else if (IsKeyPressed(KEY_TWO) || input_extra_pressed()) answer = 1;
+        if (IsKeyPressed(KEY_ONE) || ui_digit_pressed(1) || input_secondary_pressed()) answer = 0;
+        else if (IsKeyPressed(KEY_TWO) || ui_digit_pressed(2) || input_extra_pressed()) answer = 1;
         for (int i = 0; i < 2; i++) {
-            if (clicked(answer_box(i))) { screen->focus = i+1; answer = i; }
+            if (clicked(&screen->pointer, answer_box(i))) { screen->focus = i+1; answer = i; }
             else if (screen->focus == i+1 && confirm_key()) answer = i;
         }
         if (screen->focus == 3 && confirm_key()) return true;
@@ -238,7 +236,7 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
         return false;
     }
     for (int i = 0; i < 3; i++) {
-        if (clicked(field_box(i)) || (screen->focus == i+1 && confirm_key())) {
+        if (clicked(&screen->pointer, field_box(i)) || (screen->focus == i+1 && confirm_key())) {
             screen->focus = i+1;
             screen->dropdown = i;
             screen->option = i == 0 ? screen->moves[selected]
@@ -249,9 +247,9 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
         }
     }
     int op = -1;
-    for (int i = 0; i < LOGIC_OPERATOR_COUNT; i++) if (clicked(operator_box(i))) op = i;
-    if (screen->focus == 4 && (input_horizontal_pressed() || confirm_key())) {
-        int direction = input_direction_pressed(INPUT_DIR_LEFT) ? -1 : 1;
+    for (int i = 0; i < LOGIC_OPERATOR_COUNT; i++) if (clicked(&screen->pointer, operator_box(i))) op = i;
+    if (screen->focus == 4 && (input_horizontal_pressed() || ui_nav_left() || ui_nav_right() || confirm_key())) {
+        int direction = (input_direction_pressed(INPUT_DIR_LEFT) || ui_nav_left()) ? -1 : 1;
         op = (screen->formulas[selected].operator+direction+LOGIC_OPERATOR_COUNT)%LOGIC_OPERATOR_COUNT;
     }
     if (op >= 0) {
@@ -259,7 +257,7 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
         screen->dirty_mask |= 1u << selected;
         screen->focus = 4;
     }
-    if (clicked(confirm_box) || (screen->focus == 5 && confirm_key())) {
+    if (clicked(&screen->pointer, confirm_box) || (screen->focus == 5 && confirm_key())) {
         int move = screen->moves[selected];
         if (valid_formula(screen->formulas[selected]) && move >= 0 && move < MAX_MOVES &&
             plant->moves[move].effect == MOVE_EFFECT_DAMAGE) {
@@ -464,7 +462,7 @@ void logic_setup_draw(const UiTheme *ui, const SelectionUiAssets *fonts, const I
     }
     DrawLine(82,632,1198,632,(Color){102,126,67,255});
     action_button(ui,fonts,back_box,"Voltar · ESC",screen->focus == (unlocked ? 6 : 3));
-    label(ui,fonts,"TAB / setas: navegar · ENTER ou clique: selecionar",(Rectangle){350,644,800,30},20);
+    label(ui,fonts,"TAB / Setas / WASD: navegar · ENTER ou clique: selecionar",(Rectangle){350,644,800,30},20);
     if (screen->dropdown >= 0) {
         int field = screen->dropdown;
         int count = field == 0 ? MAX_MOVES : LOGIC_CONDITION_COUNT;
