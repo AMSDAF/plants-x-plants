@@ -4,6 +4,7 @@
 #include "selection_ui.h"
 #include "male_portrait_idle_data.h"
 #include "female_portrait_idle_data.h"
+#include "input_map.h"
 #include <math.h>
 
 #define CONFIRM_CONTROL 2
@@ -93,19 +94,21 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
     screen->background_time = fmodf(screen->background_time + dt, 128.0f);
     screen->male_idle_time = fmodf(screen->male_idle_time + dt, MALE_PORTRAIT_IDLE_SECONDS);
     screen->female_idle_time = fmodf(screen->female_idle_time + dt, FEMALE_PORTRAIT_IDLE_SECONDS);
-    if (accept_input && IsKeyPressed(KEY_F7)) {
+    if (accept_input && (IsKeyPressed(KEY_F7) || input_extra_pressed())) {
         screen->background_preview = !screen->background_preview;
         screen->pressed = -1;
     }
     if (screen->background_preview) {
         screen->pressed = screen->hovered = -1;
-        return accept_input && IsKeyPressed(KEY_ESCAPE) ? TRAINER_SELECT_BACK : TRAINER_SELECT_NONE;
+        return accept_input && input_back_pressed() ? TRAINER_SELECT_BACK : TRAINER_SELECT_NONE;
     }
     screen->hovered = -1;
     TrainerSelectAction action = TRAINER_SELECT_NONE;
     if (accept_input) {
-        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) screen->selected = TRAINER_MALE;
-        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) screen->selected = TRAINER_FEMALE;
+        if (input_direction_pressed(INPUT_DIR_LEFT) || input_left_bumper_pressed())
+            screen->selected = TRAINER_MALE;
+        if (input_direction_pressed(INPUT_DIR_RIGHT) || input_right_bumper_pressed())
+            screen->selected = TRAINER_FEMALE;
         Vector2 mouse = GetMousePosition();
         for (int i = 0; i < 4; i++) {
             if (CheckCollisionPointRec(mouse, control_bounds(i))) screen->hovered = i;
@@ -122,8 +125,8 @@ TrainerSelectAction trainer_select_screen_update(TrainerSelectScreen *screen, bo
             }
             screen->pressed = -1;
         }
-        if (IsKeyPressed(KEY_ENTER)) action = TRAINER_SELECT_CONFIRM;
-        if (IsKeyPressed(KEY_ESCAPE)) action = TRAINER_SELECT_BACK;
+        if (input_confirm_pressed()) action = TRAINER_SELECT_CONFIRM;
+        if (input_back_pressed()) action = TRAINER_SELECT_BACK;
     } else screen->pressed = -1;
     return action;
 }

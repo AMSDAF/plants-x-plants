@@ -1,5 +1,6 @@
 /* Compõe a tela de recordes com abas e seleção de linha navegável. */
 #include "leaderboard_screen.h"
+#include "input_map.h"
 #include <math.h>
 
 static Rectangle panel_bounds(void) { return (Rectangle){100, 196, 1080, 414}; }
@@ -101,14 +102,16 @@ LeaderboardScreenAction leaderboard_screen_update(LeaderboardScreen *screen, boo
         else select_index(screen, hovered - 4 + screen->scroll[screen->order]);
     }
 
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) set_order(screen, LEADERBOARD_ORDER_TIME);
-    else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) set_order(screen, LEADERBOARD_ORDER_DAMAGE);
-    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W))
+    if (input_direction_pressed(INPUT_DIR_LEFT) || input_left_bumper_pressed())
+        set_order(screen, LEADERBOARD_ORDER_TIME);
+    else if (input_direction_pressed(INPUT_DIR_RIGHT) || input_right_bumper_pressed())
+        set_order(screen, LEADERBOARD_ORDER_DAMAGE);
+    if (input_direction_pressed(INPUT_DIR_UP))
         select_index(screen, screen->selected[screen->order] - 1);
-    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
+    if (input_direction_pressed(INPUT_DIR_DOWN))
         select_index(screen, screen->selected[screen->order] + 1);
-    if (IsKeyPressed(KEY_ESCAPE)) return LEADERBOARD_SCREEN_BACK;
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) return LEADERBOARD_SCREEN_PLAY;
+    if (input_back_pressed()) return LEADERBOARD_SCREEN_BACK;
+    if (input_confirm_pressed()) return LEADERBOARD_SCREEN_PLAY;
     return LEADERBOARD_SCREEN_NONE;
 }
 

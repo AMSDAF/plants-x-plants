@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #include <direct.h>
 #define leaderboard_mkdir(path) _mkdir(path)
 #else
@@ -51,7 +51,7 @@ static bool current_date(char *output, size_t capacity)
     time_t now = time(NULL);
     if (now == (time_t)-1) return false;
     struct tm local;
-#if defined(_MSC_VER)
+#if defined(_WIN32)
     if (localtime_s(&local, &now) != 0) return false;
 #else
     if (!localtime_r(&now, &local)) return false;

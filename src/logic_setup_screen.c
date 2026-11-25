@@ -1,5 +1,6 @@
 /* Compõe o modal botânico e edita fórmulas sem executar ações de combate. */
 #include "logic_setup_screen.h"
+#include "input_map.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,7 +91,7 @@ static bool clicked(Rectangle box)
     return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(),box);
 }
 
-static bool confirm_key(void) { return IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE); }
+static bool confirm_key(void) { return input_confirm_pressed(); }
 
 static bool valid_formula(LogicFormula value)
 {
@@ -186,9 +187,10 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
     }
     const Plant *plant = &team->plants[selected];
     if (screen->dropdown >= 0) {
-        if (IsKeyPressed(KEY_ESCAPE)) { screen->dropdown = -1; return false; }
+        if (input_back_pressed()) { screen->dropdown = -1; return false; }
         int count = screen->dropdown == 0 ? MAX_MOVES : LOGIC_CONDITION_COUNT;
-        int direction = IsKeyPressed(KEY_UP) ? -1 : IsKeyPressed(KEY_DOWN) ? 1 : 0;
+        int direction = input_direction_pressed(INPUT_DIR_UP) ? -1
+            : input_direction_pressed(INPUT_DIR_DOWN) ? 1 : 0;
         if (direction) {
             for (int attempts = 0; attempts < count; attempts++) {
                 screen->option = (screen->option+count+direction)%count;
@@ -230,23 +232,25 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
         } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !inside) screen->dropdown = -1;
         return false;
     }
-    if (IsKeyPressed(KEY_ESCAPE) || clicked(back_box)) return true;
+    if (input_back_pressed() || clicked(back_box)) return true;
     bool unlocked = (*solved & (1u << selected)) != 0;
     int focus_count = unlocked ? 7 : 4;
-    if (IsKeyPressed(KEY_TAB) || IsKeyPressed(KEY_DOWN)) screen->focus = (screen->focus+1)%focus_count;
-    if (IsKeyPressed(KEY_UP)) screen->focus = (screen->focus+focus_count-1)%focus_count;
-    if (screen->focus == 0 && (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT))) {
-        int direction = IsKeyPressed(KEY_RIGHT) ? 1 : -1;
+    if (input_secondary_pressed() || input_right_bumper_pressed() ||
+        input_direction_pressed(INPUT_DIR_DOWN)) screen->focus = (screen->focus+1)%focus_count;
+    if (input_direction_pressed(INPUT_DIR_UP) || input_left_bumper_pressed())
+        screen->focus = (screen->focus+focus_count-1)%focus_count;
+    if (screen->focus == 0 && input_horizontal_pressed()) {
+        int direction = input_direction_pressed(INPUT_DIR_RIGHT) ? 1 : -1;
         screen->selected = (selected+direction+team->count)%team->count;
         assign_question(screen, screen->selected);
         return false;
     }
     if (!unlocked) {
-        if ((screen->focus == 1 || screen->focus == 2) &&
-            (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT))) screen->focus = 3-screen->focus;
+        if ((screen->focus == 1 || screen->focus == 2) && input_horizontal_pressed())
+            screen->focus = 3-screen->focus;
         int answer = -1;
-        if (IsKeyPressed(KEY_ONE)) answer = 0;
-        else if (IsKeyPressed(KEY_TWO)) answer = 1;
+        if (IsKeyPressed(KEY_ONE) || input_secondary_pressed()) answer = 0;
+        else if (IsKeyPressed(KEY_TWO) || input_extra_pressed()) answer = 1;
         for (int i = 0; i < 2; i++) {
             if (clicked(answer_box(i))) { screen->focus = i+1; answer = i; }
             else if (screen->focus == i+1 && confirm_key()) answer = i;
@@ -282,8 +286,8 @@ bool logic_setup_update(LogicSetupScreen *screen, const Team *team, unsigned int
     }
     int op = -1;
     for (int i = 0; i < LOGIC_OPERATOR_COUNT; i++) if (clicked(operator_box(i))) op = i;
-    if (screen->focus == 4 && (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || confirm_key())) {
-        int direction = IsKeyPressed(KEY_LEFT) ? -1 : 1;
+    if (screen->focus == 4 && (input_horizontal_pressed() || confirm_key())) {
+        int direction = input_direction_pressed(INPUT_DIR_LEFT) ? -1 : 1;
         op = (screen->formulas[selected].operator+direction+LOGIC_OPERATOR_COUNT)%LOGIC_OPERATOR_COUNT;
     }
     if (op >= 0) {

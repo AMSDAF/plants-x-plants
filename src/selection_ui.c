@@ -1,6 +1,7 @@
 /* Desenha formas na grade de pixels e protege a entrada nas transições. */
 #include "selection_ui.h"
 #include "ui_theme.h"
+#include "input_map.h"
 #include <math.h>
 const Color SELECTION_CREAM = {247,237,198,255};
 const Color SELECTION_INK = {24,52,30,255};
@@ -205,8 +206,7 @@ void selection_ui_text(const UiTheme *ui, const char *text, int center, int y, i
 
 bool selection_ui_input_down(void)
 {
-    for (int key=32; key<=348; key++) if (IsKeyDown(key)) return true;
-    return IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    return input_any_down();
 }
 
 void selection_ui_discard_text(void)

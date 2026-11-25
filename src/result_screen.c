@@ -1,5 +1,6 @@
 /* Reutiliza fundo, molduras e sprites da abertura para os resultados da campanha. */
 #include "result_screen.h"
+#include "input_map.h"
 #include <math.h>
 
 Rectangle result_screen_button_bounds(int index)
@@ -16,8 +17,9 @@ ResultAction result_screen_update(ResultScreen *screen, bool accept_input, float
 {
     screen->elapsed += fminf(0.1f, fmaxf(0, dt));
     if (!accept_input) return RESULT_NONE;
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_A) ||
-        IsKeyPressed(KEY_D) || IsKeyPressed(KEY_TAB)) screen->cursor = 1-screen->cursor;
+    if (input_horizontal_pressed() || input_secondary_pressed() ||
+        input_left_bumper_pressed() || input_right_bumper_pressed())
+        screen->cursor = 1-screen->cursor;
     Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
     for (int i = 0; i < 2; i++) {
         bool hover = CheckCollisionPointRec(mouse,result_screen_button_bounds(i));
@@ -25,8 +27,8 @@ ResultAction result_screen_update(ResultScreen *screen, bool accept_input, float
         if (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             return i == 0 ? RESULT_PRIMARY : RESULT_SECONDARY;
     }
-    if (IsKeyPressed(KEY_ESCAPE)) return RESULT_SECONDARY;
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
+    if (input_back_pressed()) return RESULT_SECONDARY;
+    if (input_confirm_pressed())
         return screen->cursor == 0 ? RESULT_PRIMARY : RESULT_SECONDARY;
     return RESULT_NONE;
 }

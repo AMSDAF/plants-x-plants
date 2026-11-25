@@ -2,6 +2,7 @@
 #include "intro_screen.h"
 #include "plant_data.h"
 #include "selection_ui.h"
+#include "input_map.h"
 #include <math.h>
 
 static const Color ink = {35, 64, 46, 255};
@@ -184,7 +185,7 @@ IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt
         return INTRO_NONE;
     }
     if (!accept_input) return INTRO_NONE;
-    if (IsKeyPressed(KEY_ESCAPE) || activate(prologue_button_bounds(screen->stage, false))) {
+    if (input_back_pressed() || activate(prologue_button_bounds(screen->stage, false))) {
         if (screen->stage == INTRO_LETTER) return INTRO_BACK;
         set_stage(screen, (IntroStage)(screen->stage - 1));
         return INTRO_NONE;
@@ -196,12 +197,12 @@ IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt
                 if (CheckCollisionPointRec(GetMousePosition(), starter_card(i))) screen->cursor = i;
         }
         int cursor = screen->cursor;
-        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) cursor--;
-        else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) cursor++;
-        else if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) cursor -= 3;
-        else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) cursor += 3;
+        if (input_direction_pressed(INPUT_DIR_LEFT)) cursor--;
+        else if (input_direction_pressed(INPUT_DIR_RIGHT)) cursor++;
+        else if (input_direction_pressed(INPUT_DIR_UP)) cursor -= 3;
+        else if (input_direction_pressed(INPUT_DIR_DOWN)) cursor += 3;
         screen->cursor = (cursor + INTRO_STARTER_COUNT) % INTRO_STARTER_COUNT;
-        int chosen = IsKeyPressed(KEY_SPACE) ? screen->cursor : -1;
+        int chosen = (IsKeyPressed(KEY_SPACE) || input_secondary_pressed()) ? screen->cursor : -1;
         for (int i = 0; i < INTRO_STARTER_COUNT; i++)
             if (activate(starter_card(i))) { chosen = i; screen->cursor = i; break; }
         if (chosen >= 0) {
@@ -213,7 +214,7 @@ IntroAction intro_screen_update(IntroScreen *screen, bool accept_input, float dt
             } else if (screen->count < INTRO_TEAM_SIZE) screen->selected[screen->count++] = chosen;
         }
     }
-    if (IsKeyPressed(KEY_ENTER) || activate(prologue_button_bounds(screen->stage, true))) {
+    if (input_confirm_pressed() || activate(prologue_button_bounds(screen->stage, true))) {
         if (screen->stage == INTRO_STARTERS) {
             if (screen->count == INTRO_TEAM_SIZE) set_stage(screen, INTRO_TRAVEL);
         } else if (screen->reveal < GetCodepointCount(passages[screen->stage])) {

@@ -4,6 +4,7 @@
 
 #include "ai.h"
 #include "plant_data.h"
+#include "input_map.h"
 #include "raylib.h"
 #include <math.h>
 #include <stddef.h>
@@ -103,7 +104,7 @@ static Rectangle team_slot_button(int index)
 static bool update_team_selection(BattleScreen *screen)
 {
     Team *team = screen->setup_side == 0 ? &screen->battle.player_team : &screen->battle.enemy_team;
-    if (activate(setup_confirm, KEY_ENTER)) {
+    if (activate(setup_confirm, KEY_NULL) || input_primary_pressed()) {
         screen->choosing_team = false;
         return true;
     }
@@ -111,16 +112,20 @@ static bool update_team_selection(BattleScreen *screen)
     for (int i = 0; i < MAX_TEAM_SIZE && i <= team->count; i++) {
         if (activate(team_slot_button(i), switch_keys[i])) screen->team_slot = i;
     }
-    if (activate(remove_reserve, KEY_BACKSPACE)) {
+    if (input_left_bumper_pressed() && team->count > 0)
+        screen->team_slot = (screen->team_slot + team->count - 1) % team->count;
+    if (input_right_bumper_pressed() && team->count > 0)
+        screen->team_slot = (screen->team_slot + 1) % team->count;
+    if (activate(remove_reserve, KEY_NULL) || input_cancel_pressed()) {
         Team_RemoveReserve(team, screen->team_slot);
         return false;
     }
 
     int cursor = screen->roster_cursor;
-    if (IsKeyPressed(KEY_LEFT)) cursor--;
-    else if (IsKeyPressed(KEY_RIGHT)) cursor++;
-    else if (IsKeyPressed(KEY_UP)) cursor -= ROSTER_COLUMNS;
-    else if (IsKeyPressed(KEY_DOWN)) cursor += ROSTER_COLUMNS;
+    if (input_direction_pressed(INPUT_DIR_LEFT)) cursor--;
+    else if (input_direction_pressed(INPUT_DIR_RIGHT)) cursor++;
+    else if (input_direction_pressed(INPUT_DIR_UP)) cursor -= ROSTER_COLUMNS;
+    else if (input_direction_pressed(INPUT_DIR_DOWN)) cursor += ROSTER_COLUMNS;
     screen->roster_cursor = (cursor + PLAYABLE_SPECIES_COUNT) % PLAYABLE_SPECIES_COUNT;
 
     int selected = -1;
@@ -132,7 +137,7 @@ static bool update_team_selection(BattleScreen *screen)
             break;
         }
     }
-    if (selected < 0 && IsKeyPressed(KEY_SPACE)) {
+    if (selected < 0 && (IsKeyPressed(KEY_SPACE) || input_secondary_pressed())) {
         const SpeciesData *species = PlantData_GetPlayableSpecies(screen->roster_cursor);
         selected = species ? (int)species->id : -1;
     }
@@ -169,8 +174,8 @@ static void update_setup(BattleScreen *screen)
         *draft = (LogicFormula){LOGIC_OWN_LOW_HP, LOGIC_ENEMY_STATUS, LOGIC_AND};
     int previous_plant = screen->draft_plant_index;
     int selected_plant = previous_plant;
-    if (team->count > 0 && (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT))) {
-        int direction = IsKeyPressed(KEY_RIGHT) ? 1 : -1;
+    if (team->count > 0 && input_horizontal_pressed()) {
+        int direction = input_direction_pressed(INPUT_DIR_RIGHT) ? 1 : -1;
         selected_plant = (previous_plant + direction + team->count) % team->count;
     } else {
         for (int i = 0; i < team->count; i++) {
@@ -188,12 +193,18 @@ static void update_setup(BattleScreen *screen)
             [screen->setup_side][selected_plant];
     }
     int plant_index = screen->draft_plant_index;
-    if (activate(setup_left, KEY_Q)) {
+    if (activate(setup_left, KEY_NULL) || IsKeyPressed(KEY_Q) || input_secondary_pressed()) {
         draft->left = next_condition(draft->left, draft->right);
-    } else if (activate(setup_right, KEY_W)) {
+    } else if (activate(setup_right, KEY_NULL) || IsKeyPressed(KEY_W) || input_extra_pressed()) {
         draft->right = next_condition(draft->right, draft->left);
-    } else if (activate(setup_operator, KEY_E)) {
+    } else if (activate(setup_operator, KEY_NULL) || IsKeyPressed(KEY_E) || input_right_bumper_pressed()) {
         draft->operator = (draft->operator + 1) % LOGIC_OPERATOR_COUNT;
+    } else if (input_left_bumper_pressed()) {
+        int move = screen->draft_move_index < 0 ? 0 : (screen->draft_move_index + 1) % MAX_MOVES;
+        if (team->plants[plant_index].moves[move].effect == MOVE_EFFECT_DAMAGE) {
+            screen->draft_move_index = move;
+            screen->battle.boosted_move_indices[screen->setup_side][plant_index] = move;
+        }
     } else if (activate(setup_move_buttons[0], KEY_ONE) &&
                team->plants[plant_index].moves[0].effect == MOVE_EFFECT_DAMAGE) {
         screen->draft_move_index = 0;
@@ -206,7 +217,7 @@ static void update_setup(BattleScreen *screen)
                team->plants[plant_index].moves[2].effect == MOVE_EFFECT_DAMAGE) {
         screen->draft_move_index = 2;
         screen->battle.boosted_move_indices[screen->setup_side][plant_index] = 2;
-    } else if (activate(setup_confirm, KEY_ENTER)) {
+    } else if (activate(setup_confirm, KEY_NULL) || input_primary_pressed()) {
         screen->battle.formulas[screen->setup_side][plant_index] = *draft;
         screen->battle.boosted_move_indices[screen->setup_side][plant_index] = screen->draft_move_index;
         screen->setup_side = -1;
@@ -418,15 +429,14 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     BattleState *battle = &screen->battle;
     if (battle_over(battle) && screen->fx.active) return BATTLE_SCREEN_NONE;
     bool forced = battle->state == BATTLE_STATE_REPLACEMENT && battle->current_turn == 0;
-    if (IsKeyPressed(KEY_ESCAPE)) {
+    if (input_back_pressed()) {
         if (screen->show_statuses) { screen->show_statuses = false; return BATTLE_SCREEN_NONE; }
         if (screen->pending_action != BATTLE_PENDING_NONE) return BATTLE_SCREEN_NONE;
         if (screen->setup_side < 0 && screen->menu != BATTLE_MENU_ROOT && !forced && !battle_over(battle)) {
             screen->menu = BATTLE_MENU_ROOT;
             screen->menu_cursor = 0;
-            return BATTLE_SCREEN_NONE;
         }
-        return BATTLE_SCREEN_RETURN;
+        return BATTLE_SCREEN_NONE;
     }
 
     if (screen->setup_side >= 0) {
@@ -438,11 +448,12 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
         return BATTLE_SCREEN_NONE;
     }
 
-    if (IsKeyPressed(KEY_TAB)) screen->show_statuses = !screen->show_statuses;
+    if (IsKeyPressed(KEY_TAB) || input_extra_pressed())
+        screen->show_statuses = !screen->show_statuses;
 
     if (screen->pending_action != BATTLE_PENDING_NONE) {
         if (screen->pending_action == BATTLE_PENDING_ROUND_RESULT) {
-            bool held = IsKeyDown(KEY_ENTER) || IsKeyDown(KEY_SPACE) || IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+            bool held = input_confirm_down() || IsMouseButtonDown(MOUSE_BUTTON_LEFT);
             if (screen->fx.active || screen->show_statuses) { screen->message_armed = false; return BATTLE_SCREEN_NONE; }
             screen->message_elapsed += dt;
             if (screen->message_elapsed >= message_read_seconds) {
@@ -453,7 +464,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
                 if (!held) screen->message_armed = true;
                 return BATTLE_SCREEN_NONE;
             }
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            if (input_confirm_pressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
                 resolve_pending_action(screen);
         } else {
             screen->action_timer -= dt;
@@ -470,7 +481,8 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
         if (screen->round_active) Battle_FinishRound(battle,&screen->round);
         clear_pending(screen); clear_round(screen);
         screen->menu = BATTLE_MENU_ROOT; screen->menu_cursor = 0;
-        if (activate(return_button,KEY_ENTER)) return BATTLE_SCREEN_RETURN;
+        if (activate(return_button,KEY_NULL) || input_primary_pressed())
+            return BATTLE_SCREEN_RETURN;
         return BATTLE_SCREEN_NONE;
     }
 
@@ -491,7 +503,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     if (forced) screen->menu = BATTLE_MENU_TEAM;
     if (!forced && screen->menu != BATTLE_MENU_ROOT &&
-        (activate(back_button, KEY_BACKSPACE))) {
+        (activate(back_button, KEY_NULL) || input_cancel_pressed())) {
         screen->menu = BATTLE_MENU_ROOT;
         screen->menu_cursor = 0;
         return BATTLE_SCREEN_NONE;
@@ -499,10 +511,10 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
 
     int cursor = screen->menu_cursor;
     int count = screen->menu == BATTLE_MENU_MOVES ? MAX_MOVES : MAX_TEAM_SIZE;
-    if (IsKeyPressed(KEY_LEFT)) cursor--;
-    if (IsKeyPressed(KEY_RIGHT)) cursor++;
-    if (IsKeyPressed(KEY_UP)) cursor -= screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
-    if (IsKeyPressed(KEY_DOWN)) cursor += screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
+    if (input_direction_pressed(INPUT_DIR_LEFT)) cursor--;
+    if (input_direction_pressed(INPUT_DIR_RIGHT)) cursor++;
+    if (input_direction_pressed(INPUT_DIR_UP)) cursor -= screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
+    if (input_direction_pressed(INPUT_DIR_DOWN)) cursor += screen->menu == BATTLE_MENU_MOVES ? 1 : 2;
     screen->menu_cursor = (cursor + count) % count;
     Vector2 motion = GetMouseDelta();
     if (motion.x != 0 || motion.y != 0 || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -511,7 +523,7 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
             if (CheckCollisionPointRec(GetMousePosition(),bounds)) screen->menu_cursor = i;
         }
     }
-    bool confirm = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE);
+    bool confirm = input_confirm_pressed();
 
     if (screen->menu == BATTLE_MENU_ROOT) {
         for (int i = 0; i < 4; i++) {
@@ -528,7 +540,10 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     /* Os atalhos antigos continuam disponíveis, sem criar regras paralelas. */
     if (battle->state == BATTLE_STATE_ONGOING) {
         for (int i = 0; i < MAX_MOVES; i++) {
-            bool chosen = IsKeyPressed(move_keys[i]) ||
+            bool pad_move = (i == 0 && input_secondary_pressed()) ||
+                            (i == 1 && input_extra_pressed()) ||
+                            (i == 2 && input_right_bumper_pressed());
+            bool chosen = IsKeyPressed(move_keys[i]) || pad_move ||
                 (screen->menu == BATTLE_MENU_MOVES &&
                  (activate(move_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)));
             if (chosen) {
@@ -544,7 +559,11 @@ BattleScreenAction battle_screen_update(BattleScreen *screen, float dt)
     }
 
     for (int i = 0; i < team->count; i++) {
-        bool chosen = IsKeyPressed(switch_keys[i]) ||
+        bool pad_switch = (i == 0 && input_left_bumper_pressed()) ||
+                          (i == 1 && input_left_trigger_pressed()) ||
+                          (i == 2 && input_right_bumper_pressed()) ||
+                          (i == 3 && input_right_trigger_pressed());
+        bool chosen = IsKeyPressed(switch_keys[i]) || pad_switch ||
             (screen->menu == BATTLE_MENU_TEAM &&
              (activate(switch_button(i), KEY_NULL) || (confirm && screen->menu_cursor == i)));
         if (chosen) {

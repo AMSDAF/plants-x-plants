@@ -4,6 +4,7 @@
 #include "plant_data.h"
 #include "game_audio.h"
 #include "leaderboard.h"
+#include "input_map.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -25,12 +26,7 @@ static void change_screen(Game *game, GameScreen screen)
 
 static bool transition_input_down(void)
 {
-    const int keys[] = {KEY_ENTER, KEY_ESCAPE, KEY_SPACE, KEY_W, KEY_A, KEY_S,
-                        KEY_D, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
-                        KEY_ONE, KEY_TWO, KEY_THREE, KEY_Q, KEY_E, KEY_R, KEY_M, KEY_BACKSPACE};
-    for (unsigned int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-        if (IsKeyDown(keys[i])) return true;
-    return IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    return input_any_down();
 }
 
 /* Só a conclusão registra recorde; saídas e derrotas encerram a medição sem salvar. */
@@ -172,8 +168,8 @@ static void update_exit_confirm(Game *game)
         return;
     }
     int previous = game->exit_confirm_cursor;
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_A) ||
-        IsKeyPressed(KEY_D) || IsKeyPressed(KEY_TAB)) game->exit_confirm_cursor = 1-previous;
+    if (input_horizontal_pressed() || input_secondary_pressed())
+        game->exit_confirm_cursor = 1-previous;
     Vector2 mouse = GetMousePosition(), motion = GetMouseDelta();
     int action = -1;
     for (int i = 0; i < 2; i++) {
@@ -181,8 +177,8 @@ static void update_exit_confirm(Game *game)
         if (motion.x != 0 || motion.y != 0) game->exit_confirm_cursor = i;
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) action = i;
     }
-    if (IsKeyPressed(KEY_ESCAPE)) action = 0;
-    else if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) action = game->exit_confirm_cursor;
+    if (input_back_pressed()) action = 0;
+    else if (input_confirm_pressed()) action = game->exit_confirm_cursor;
     if (previous != game->exit_confirm_cursor) audio_play(&game->audio,SFX_UI_MOVE);
     if (action < 0) return;
     game->exit_confirm_open = false;
@@ -210,7 +206,9 @@ static void draw_exit_confirm(const Game *game)
     for (int i = 0; i < 2; i++)
         selection_ui_button(ui,fonts,exit_confirm_button(i),
             i == 0 ? "Continuar jogando" : "Sair para o menu",game->exit_confirm_cursor == i,false,1);
-    selection_ui_pixel_box(ui,fonts,"Setas: escolher · ENTER: confirmar · ESC: continuar",
+    selection_ui_pixel_box(ui,fonts,input_gamepad_active()
+        ? "D-pad: escolher · A: confirmar · B: continuar"
+        : "Setas: escolher · ENTER: confirmar · ESC: continuar",
         (Rectangle){190,535,900,30},24,SELECTION_CREAM);
 }
 
@@ -271,7 +269,10 @@ static void update_screens(Game *game)
         if (!transition_input_down()) game->input_blocked = false;
         return;
     }
-    if (IsKeyPressed(KEY_ESCAPE) && escape_leaves_session(game)) {
+    bool shoulder_exit = game->screen == GAME_BATTLE && input_shoulders_pressed();
+    if ((input_start_pressed() || shoulder_exit ||
+         (input_back_pressed() && !input_gamepad_active()))
+        && escape_leaves_session(game)) {
         game->exit_confirm_open = true;
         game->exit_confirm_cursor = 0;
         game->input_blocked = true;
@@ -308,7 +309,8 @@ static void update_screens(Game *game)
             break;
         }
         case GAME_EXPLORATION:
-            if (IsKeyPressed(KEY_F8)) game->world.detail_enabled = !game->world.detail_enabled;
+            if (IsKeyPressed(KEY_F8) || input_extra_pressed())
+                game->world.detail_enabled = !game->world.detail_enabled;
             if (game->world.dialogue_title) {
                 world_update_dialogue(&game->world, GetFrameTime());
             } else if (game->world.logic_quiz_open) {
@@ -323,13 +325,13 @@ static void update_screens(Game *game)
                 finish_run(game); /* Encerra antes da tela de conclusão. */
                 result_screen_begin(&game->result);
                 change_screen(game, GAME_ENDING);
-            } else if (IsKeyPressed(KEY_ESCAPE)) {
+            } else if (input_back_pressed() || input_start_pressed()) {
                 change_screen(game, GAME_MENU);
             } else if (!game->world.completed) {
                 float dt = GetFrameTime();
                 player_update(&game->player, &game->world, dt);
                 world_follow_camera(&game->world, game->player.feet, dt);
-                if (IsKeyPressed(KEY_E)) {
+                if (input_interact_pressed()) {
                     WorldEncounter encounter = world_interact(&game->world, &game->player.feet, game->campaign.player_name);
                     if (game->world.logic_quiz_open)
                         logic_setup_begin(&game->logic_setup,&game->campaign.team,game->campaign.formulas,
@@ -379,6 +381,7 @@ static void update_screens(Game *game)
 /* Compara o estado antes e depois das telas para escolher sons sem alterar regras. */
 void game_update(Game *game)
 {
+    input_map_begin_frame(GetFrameTime());
     GameAudioSnapshot before = game_audio_capture(game);
     update_run_clock(game);
     /* O bloqueio de transição também protege os botões das telas de resultado. */

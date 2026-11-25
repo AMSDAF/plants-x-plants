@@ -6,6 +6,7 @@
 
 #include "game.h"
 #include "game_canvas.h"
+#include "input_map.h"
 
 #include "raylib.h"
 
@@ -41,7 +42,7 @@ int main(void)
     int result = 0;
 
     while (!WindowShouldClose() && !game.exit_requested) {
-        if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
+        if (IsKeyPressed(KEY_F11) || input_fullscreen_toggle_pressed()) ToggleBorderlessWindowed();
         if (!game_canvas_resize(&canvas, GetScreenWidth(), GetScreenHeight(), GetRenderWidth(), GetRenderHeight())) {
             TraceLog(LOG_ERROR, "Nao foi possivel preparar a resolucao de exibicao.");
             result = 1;

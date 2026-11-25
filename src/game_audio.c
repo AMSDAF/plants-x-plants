@@ -1,6 +1,7 @@
 /* Traduz mudanças de tela, exploração e combate em efeitos sonoros e trilhas. */
 #include "game_audio.h"
 #include "plant_data.h"
+#include "input_map.h"
 
 #include <math.h>
 #include <stddef.h>
@@ -321,7 +322,7 @@ static MusicId screen_music(const Game *game)
 void game_audio_react(Game *game, const GameAudioSnapshot *before)
 {
     GameAudio *audio = &game->audio;
-    if (IsKeyPressed(KEY_F9)) audio_toggle_mute(audio);
+    if (IsKeyPressed(KEY_F9) || input_select_pressed()) audio_toggle_mute(audio);
 
     if (game->screen != before->screen) {
         react_screen_change(audio, before->screen, game->screen);

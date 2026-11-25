@@ -1,6 +1,7 @@
 /* Carrega os atlas preparados e controla o treinador ancorado pelos pés. */
 #include "player.h"
 #include "ui_theme.h"
+#include "input_map.h"
 #include <math.h>
 
 enum { BOTANICAL_CELL = 256, BOTANICAL_ANCHOR_Y = 240 };
@@ -39,12 +40,13 @@ void player_init(Player *player, Trainer trainer, Vector2 feet)
 void player_update(Player *player, const World *world, float dt)
 {
     Vector2 next = player->feet;
-    int horizontal = (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT));
-    int vertical = (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) - (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP));
+    Vector2 axis = input_move_axis();
+    int horizontal = fabsf(axis.x) > 0.2f ? (axis.x > 0 ? 1 : -1) : 0;
+    int vertical = fabsf(axis.y) > 0.2f ? (axis.y > 0 ? 1 : -1) : 0;
     Facing facing = player->facing;
     if (dt < 0) dt = 0;
     if (dt > 0.1f) dt = 0.1f;
-    bool running = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
+    bool running = input_running_down();
     if (horizontal || vertical) {
         float distance = (running ? 300.0f : 190.0f) * dt;
         /* Passos pequenos evitam saltar por cima da colisão em quadros longos. */

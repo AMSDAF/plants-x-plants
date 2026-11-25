@@ -32,6 +32,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 set(BATTLE_SOURCES
+    src/input_map.c
     src/plant.c
     src/plant_data.c
     src/battle.c
@@ -164,7 +165,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 add_executable(game_canvas_check EXCLUDE_FROM_ALL
-    tools/check_game_canvas.c src/game_canvas.c src/world.c)
+    tools/check_game_canvas.c src/input_map.c src/game_canvas.c src/world.c)
 target_include_directories(game_canvas_check PRIVATE include)
 target_link_libraries(game_canvas_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
@@ -287,7 +288,7 @@ endif()
 
 # Descoberta das interações sem carregar todos os recursos da campanha.
 add_executable(discovery_markers_check EXCLUDE_FROM_ALL tools/check_discovery_markers.c
-    src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c src/dialogue_ui.c)
+    src/input_map.c src/world.c src/game_canvas.c src/ui_theme.c src/exploration_hud.c src/dialogue_ui.c)
 target_include_directories(discovery_markers_check PRIVATE include)
 target_link_libraries(discovery_markers_check PRIVATE raylib)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")

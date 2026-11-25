@@ -4,6 +4,7 @@
 #include "menu_mascot_data.h"
 #include "menu_grass_data.h"
 #include "menu_tree_data.h"
+#include "input_map.h"
 #include <math.h>
 #include <stddef.h>
 
@@ -11,11 +12,7 @@ static const Color INK = {24, 52, 30, 255};
 
 static bool menu_input_down(void)
 {
-    const int keys[] = {KEY_ENTER, KEY_ESCAPE, KEY_SPACE, KEY_UP, KEY_DOWN,
-                        KEY_LEFT, KEY_RIGHT, KEY_W, KEY_A, KEY_S, KEY_D};
-    for (unsigned int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-        if (IsKeyDown(keys[i])) return true;
-    return IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    return input_any_down();
 }
 
 /* Inspeciona alfa uma única vez: a escala usa a arte visível, não a tela transparente. */
@@ -136,8 +133,8 @@ MenuAction menu_screen_update(MenuScreen *screen, bool accept_input)
         if (!menu_input_down()) screen->input_blocked = false;
         return MENU_ACTION_NONE;
     }
-    if (IsKeyPressed(KEY_ENTER)) return MENU_ACTION_CAMPAIGN;
-    if (IsKeyPressed(KEY_ESCAPE)) return MENU_ACTION_EXIT;
+    if (input_confirm_pressed()) return MENU_ACTION_CAMPAIGN;
+    if (input_start_pressed() || input_back_pressed()) return MENU_ACTION_EXIT;
     return MENU_ACTION_NONE;
 }
 
@@ -217,9 +214,9 @@ void menu_screen_draw(const UiTheme *ui, const MenuScreen *screen, const Selecti
         draw_mascot(screen);
     }
     if (fmodf(screen->ui_time, 1.2f) < 0.8f) {
-        selection_ui_pixel_box(ui, fonts, "Pressione ENTER", (Rectangle){402,646,480,40},
+        selection_ui_pixel_box(ui, fonts, input_gamepad_active() ? "Pressione A" : "Pressione ENTER", (Rectangle){402,646,480,40},
                                30, (Color){242,232,188,255});
-        selection_ui_pixel_box(ui, fonts, "Pressione ENTER", (Rectangle){400,644,480,40}, 30, INK);
+        selection_ui_pixel_box(ui, fonts, input_gamepad_active() ? "Pressione A" : "Pressione ENTER", (Rectangle){400,644,480,40}, 30, INK);
     }
 }
 

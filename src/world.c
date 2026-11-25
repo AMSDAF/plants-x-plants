@@ -4,6 +4,7 @@
 #include "ui_theme.h"
 #include "game_view.h"
 #include "courtyard_detail_data.h"
+#include "input_map.h"
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -454,7 +455,7 @@ static bool clicked(Rectangle bounds)
 void world_update_relay_panel(World *world, const char *player_name)
 {
     if (!world->relay_panel_open || world->completed) return;
-    if (IsKeyPressed(KEY_ESCAPE) || clicked(close_relays)) {
+    if (input_back_pressed() || clicked(close_relays)) {
         world->relay_panel_open = false;
         return;
     }
@@ -465,18 +466,18 @@ void world_update_relay_panel(World *world, const char *player_name)
     if (motion.x || motion.y)
         for (int i = 0; i < count; i++)
             if (CheckCollisionPointRec(GetMousePosition(),world_relay_bounds(i))) world->relay_cursor = i;
-    if (IsKeyPressed(KEY_RIGHT)) world->relay_cursor = (world->relay_cursor+1)%count;
-    if (IsKeyPressed(KEY_LEFT)) world->relay_cursor = (world->relay_cursor+count-1)%count;
+    if (input_direction_pressed(INPUT_DIR_RIGHT)) world->relay_cursor = (world->relay_cursor+1)%count;
+    if (input_direction_pressed(INPUT_DIR_LEFT)) world->relay_cursor = (world->relay_cursor+count-1)%count;
     for (int i = 0; i < WORLD_RELAY_COUNT; i++) {
         if (IsKeyPressed(KEY_ONE + i) || clicked(world_relay_bounds(i)) ||
-            (IsKeyPressed(KEY_SPACE) && world->relay_cursor == i)) {
+            (input_secondary_pressed() && world->relay_cursor == i)) {
             world->relay_cursor = i;
             world->relay_mask ^= 1u << i;
             world->relay_rejected = false;
         }
     }
 
-    if (IsKeyPressed(KEY_ENTER) || clicked(validate_relays)) {
+    if (input_confirm_pressed() || clicked(validate_relays)) {
         world->relay_attempts++;
         world->relay_rejected = !relay_stage_matches(world->relay_mask,world->relay_step);
         if (world->relay_rejected) return;
@@ -684,11 +685,11 @@ void world_update_dialogue(World *world, float dt)
     if (!world->dialogue_title) return;
     const char *message = world->dialogue_pages[world->dialogue_page];
     int total = message ? GetCodepointCount(message) : 0;
-    if (IsKeyPressed(KEY_ESCAPE)) {
+    if (input_back_pressed()) {
         world->dialogue_title = NULL;
         return;
     }
-    if (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER)) {
+    if (input_interact_pressed()) {
         if (world->dialogue_visible_characters < total) {
             /* O toque que revela a fala nunca avança a página no mesmo quadro. */
             world->dialogue_visible_characters = total;
