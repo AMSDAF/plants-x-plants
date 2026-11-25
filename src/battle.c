@@ -424,7 +424,7 @@ int Battle_GetPlantMovePower(const BattleState *battle, int side, int plant_inde
     return move->power + Battle_GetFormulaPowerBonus(formula.operator);
 }
 
-int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int move_index)
+static int can_use_move_strict(const BattleState *battle, int side, int plant_index, int move_index)
 {
     if (!battle || battle->state != BATTLE_STATE_ONGOING || side < 0 || side > 1 ||
         move_index < 0 || move_index >= MAX_MOVES)
@@ -465,6 +465,24 @@ int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int 
 
     LogicFormula formula = battle->formulas[side][plant_index];
     return Battle_EvaluatePlantFormula(battle, side, plant_index, formula).result;
+}
+
+int Battle_CanUseMove(const BattleState *battle, int side, int plant_index, int move_index)
+{
+    if (can_use_move_strict(battle, side, plant_index, move_index)) return 1;
+    if (!battle || battle->state != BATTLE_STATE_ONGOING || side != 0 ||
+        plant_index < 0 || plant_index >= battle->player_team.count ||
+        plant_index != battle->player_team.active_index ||
+        move_index < 0 || move_index >= MAX_MOVES ||
+        move_index != battle->boosted_move_indices[side][plant_index]) return 0;
+    const Plant *plant = &battle->player_team.plants[plant_index];
+    if (!Plant_IsAlive(plant) || plant->moves[move_index].effect != MOVE_EFFECT_DAMAGE ||
+        (plant->id == SPECIES_PEPPER && move_index == 2 && plant->fruit_count <= 0) ||
+        has_reserve(&battle->player_team)) return 0;
+    /* Sem golpe nem reserva disponível, libera o golpe lógico pelo poder base. */
+    for (int i = 0; i < MAX_MOVES; i++)
+        if (can_use_move_strict(battle, side, plant_index, i)) return 0;
+    return 1;
 }
 
 int Battle_GetMovePower(const BattleState *battle, int side, int move_index)

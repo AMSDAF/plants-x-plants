@@ -41,6 +41,7 @@ set(BATTLE_SOURCES
     src/battle_fx.c
     src/relay_ui.c
     src/result_screen.c
+    src/logic_quiz.c
     src/logic_setup_screen.c
     src/battle_screen_assets.c
 )
@@ -243,6 +244,14 @@ add_executable(boss_balance_check EXCLUDE_FROM_ALL tools/check_boss_balance.c
 target_include_directories(boss_balance_check PRIVATE include)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(boss_balance_check PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Auditoria opcional de balanceamento, sem janela nem mudanças nos atributos.
+add_executable(balance_audit_check EXCLUDE_FROM_ALL tools/check_balance_audit.c
+    src/plant.c src/plant_data.c src/battle.c src/ai.c)
+target_include_directories(balance_audit_check PRIVATE include)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(balance_audit_check PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Duelos 1x1 das plantas iniciais contra cada boss, sem janela nem dependência da raylib.

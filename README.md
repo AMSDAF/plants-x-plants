@@ -120,6 +120,8 @@ O combate é organizado em turnos e privilegia a combinação entre os atributos
 - Cada golpe tem uma chance específica de **acerto crítico**, que aumenta seu dano em **50%**.
 - O jogador pode trocar a planta ativa, consumindo um turno.
 - A batalha termina quando todas as plantas de uma equipe são derrotadas.
+- Após uma derrota, acerte uma pergunta de lógica para repetir o encontro com
+  a equipe recuperada. Errar ou desistir encerra a campanha e apaga seu progresso.
 
 ### 🧠 Lógica proposicional nas mecânicas
 

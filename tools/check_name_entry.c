@@ -3,6 +3,7 @@
 #include "check_intro_flow.h"
 #include "selection_ui.h"
 #include "game_canvas.h"
+#include "logic_quiz.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -207,6 +208,7 @@ static void win_guardian(Game *game)
     assert(battle->state == BATTLE_STATE_PLAYER_WIN);
     key(game, KEY_ENTER);
     assert(game->screen == GAME_EXPLORATION);
+    while (game->world.dialogue_title) advance_dialogue(game,KEY_E);
 }
 
 static void lose_guardian(Game *game)
@@ -226,7 +228,13 @@ static void lose_guardian(Game *game)
     }
     assert(battle->state == BATTLE_STATE_ENEMY_WIN);
     key(game, KEY_ENTER);
-    assert(game->screen == GAME_EXPLORATION);
+    assert(game->screen == GAME_DEFEAT);
+    key(game,KEY_ENTER);
+    assert(game->result.quiz_open);
+    const LogicQuizQuestion *question = logic_quiz_question(game->result.question_index);
+    assert(question);
+    key(game,question->answer ? KEY_ONE : KEY_TWO);
+    assert(game->screen == GAME_BATTLE && game->battle_screen.battle.state == BATTLE_STATE_ONGOING);
 }
 
 static void interact_at(Game *game, float x, float y)
@@ -470,10 +478,8 @@ static void check_greenhouse(Game *game)
     assert(game->screen == GAME_BATTLE && game->encounter == WORLD_ENCOUNTER_ALOE);
     assert(game->battle_screen.setup_side < 0);
     lose_guardian(game);
-    assert(world->location == WORLD_EXTERIOR && game->player.feet.x == world_spawn().x);
+    assert(world->location == WORLD_DEPOT && game->screen == GAME_BATTLE);
     assert(game->campaign.has_team && !world->maintenance_key && world->alarm_note && !world->alarm);
-    enter_depot(game);
-    interact_at(game, 640, 420);
     assert(game->screen == GAME_BATTLE && game->battle_screen.setup_side < 0);
     capture(game, target, "build/name_entry_preview/greenhouse_guard.png");
     win_guardian(game);
@@ -638,7 +644,7 @@ static void check_greenhouse(Game *game)
     advance_dialogue(game, KEY_ENTER);
     assert(world->completed && !world->dialogue_title);
     capture(game, target, "build/name_entry_preview/greenhouse_complete.png");
-    key(game, KEY_ENTER);
+    key(game, KEY_ESCAPE); /* Na tela final, ENTER inicia outra campanha; ESC abre o menu. */
     assert(game->screen == GAME_MENU);
     UnloadRenderTexture(target);
     puts("PASS: diálogos, placas, prédios, guardiões, chave, subsolo, ponte, pistas e saída.");
@@ -684,6 +690,7 @@ int main(int argc, char **argv)
         assert(game.campaign.trainer==(Trainer)gender && game.player.trainer==(Trainer)gender);
         assert(strcmp(game.campaign.player_name,gender ? "João" : "Antônio")==0);
         key(&game,KEY_ESCAPE);
+        if (game.exit_confirm_open) key(&game,KEY_ESCAPE);
         game.screen=GAME_TRAINER_SELECT; game.input_blocked=false;
         game.name_entry.progress=0;
         key(&game,KEY_ENTER); settle(&game);

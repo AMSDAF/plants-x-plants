@@ -18,9 +18,6 @@ static int play(int a, int b, int c, SpeciesId boss, unsigned int seed, int firs
     Team_SelectSpecies(&enemy,0,boss);
     BattleState battle;
     Battle_Init(&battle,player,enemy);
-    battle.formulas[1][0] = (LogicFormula){boss == SPECIES_ALOE ? LOGIC_OWN_LOW_HP : LOGIC_ENEMY_LOW_HP,
-        LOGIC_ENEMY_RESERVE,LOGIC_AND};
-    battle.boosted_move_indices[1][0] = 0;
     for (int turn = 0; turn < 300; turn++) {
         if (battle.state == BATTLE_STATE_PLAYER_WIN) {
             int living = 0;
@@ -28,9 +25,7 @@ static int play(int a, int b, int c, SpeciesId boss, unsigned int seed, int firs
             return living;
         }
         if (battle.state == BATTLE_STATE_ENEMY_WIN) return 0;
-        if (battle.current_turn == 1) {
-            if (!AI_PlayTurn(&battle)) return -1;
-        } else if (battle.state == BATTLE_STATE_REPLACEMENT) {
+        if (battle.state == BATTLE_STATE_REPLACEMENT) {
             int reserve = -1;
             for (int i = 0; i < battle.player_team.count; i++)
                 if (Battle_CanSwitch(&battle,i)) { reserve = i; break; }
@@ -47,7 +42,11 @@ static int play(int a, int b, int c, SpeciesId boss, unsigned int seed, int firs
                 if (score > best_score) { best = i; best_score = score; }
                 if (first_move_only) break;
             }
-            if (best < 0 || !Battle_ExecuteMove(&battle,best)) return -1;
+            int enemy_move = -1;
+            if (AI_GetPlannedAction(&battle, &enemy_move) != AI_ACTION_MOVE) return -1;
+            if (best < 0 || !Battle_ExecuteRound(&battle,
+                    (BattleAction){BATTLE_ACTION_MOVE, best},
+                    (BattleAction){BATTLE_ACTION_MOVE, enemy_move})) return -1;
         }
     }
     return -1;
@@ -64,20 +63,39 @@ static void check_limits(void)
         enemy.plants[0].current_hp -= 50;
         BattleState battle;
         Battle_Init(&battle,player,enemy);
-        assert(Battle_SwitchPlant(&battle,1));
-        assert(Battle_ExecuteMove(&battle,2));
-        assert(Battle_SwitchPlant(&battle,0));
-        assert(Battle_ExecuteMove(&battle,2));
+        int own_turns = 0;
+        while (Battle_CanUseMove(&battle,1,0,2)) {
+            assert(own_turns < 16);
+            assert(Battle_SwitchPlant(&battle,1-battle.player_team.active_index));
+            assert(Battle_ExecuteMove(&battle,2));
+            own_turns++;
+        }
         const Plant *active = &battle.enemy_team.plants[0];
         int base = boss == SPECIES_ALOE ? active->base_defense : active->base_attack;
         int actual = boss == SPECIES_ALOE ? active->defense : active->attack;
-        assert(actual == (int)(base*1.5f+0.5f));
-        int healed = boss == SPECIES_SUNFLOWER ? (active->max_hp*8+99)/100 : 0;
-        assert(active->current_hp == active->max_hp-50+healed);
-        assert(Battle_SwitchPlant(&battle,1));
+        assert(actual == (int)(base*active->moves[2].effect_cap+0.5f));
+        int healing = (active->max_hp*15+99)/100;
+        int expected_hp = active->max_hp-50;
+        if (boss == SPECIES_SUNFLOWER) expected_hp += (own_turns/3)*healing;
+        if (expected_hp > active->max_hp) expected_hp = active->max_hp;
+        assert(active->current_hp == expected_hp);
+        assert(Battle_SwitchPlant(&battle,1-battle.player_team.active_index));
         BattleState before = battle;
         assert(!Battle_ExecuteMove(&battle,2));
         assert(memcmp(&before,&battle,sizeof(battle)) == 0);
+        /* Erros também contam turnos para a cura periódica do Girassol. */
+        if (boss == SPECIES_SUNFLOWER) {
+            battle.enemy_team.plants[0].moves[0].accuracy = 0;
+            do {
+                assert(Battle_ExecuteMove(&battle,0));
+                own_turns++;
+                if (own_turns % 3 != 0)
+                    assert(Battle_SwitchPlant(&battle,1-battle.player_team.active_index));
+            } while (own_turns % 3 != 0);
+            expected_hp += healing;
+            if (expected_hp > active->max_hp) expected_hp = active->max_hp;
+            assert(active->current_hp == expected_hp);
+        }
     }
     Team player = {0}, enemy = {0};
     Team_SelectSpecies(&player,0,SPECIES_CLOVER);

@@ -63,8 +63,10 @@ Cada planta escolhe as próprias condições, operador e golpe que recebe o bôn
 O OU oferece o menor bônus por ativar em mais combinações da tabela-verdade.
 O E oferece o maior bônus por exigir ambas as condições. O XOR fica entre os
 dois. O golpe mantém o próprio nome e precisão; a fórmula aumenta seu poder.
-Na batalha, o golpe escolhido para receber o bônus só fica disponível quando
-a fórmula daquela planta for verdadeira. Os outros golpes continuam disponíveis
+Na batalha, o golpe escolhido para receber o bônus fica disponível quando
+a fórmula daquela planta for verdadeira. Se não houver outro golpe válido nem
+reserva viva, ele é liberado pelo poder base, sem bônus, para evitar bloqueio
+da batalha. A exigência de frutos continua valendo. Os outros golpes continuam disponíveis
 com poder normal. Uma tentativa de usar o golpe bloqueado é rejeitada sem
 gastar o turno.
 
@@ -81,8 +83,9 @@ O jogador escolhe três plantas no prólogo entre Trevo, Hera Venenosa, Pimenta,
 Cacto, Orquídea e Planta Carnívora. Babosa e Girassol são os bosses do depósito e
 do viveiro e não aparecem entre as opções iniciais. O catálogo contém somente
 essas oito espécies. Os guardiões lutam sozinhos, sem reservas, contra as três plantas do jogador.
-Babosa tem 275 HP e 45 ATQ; Girassol tem 240 HP e 65 ATQ. Defesa, velocidade,
-golpes e habilidades foram preservados. O buff lógico é exclusivo do jogador:
+Babosa tem 230 HP, 57 ATQ e 60 DEF; Casca Grossa aumenta a defesa em 1,0x
+por uso até 3,0x (180 DEF). Girassol tem 250 HP, 65 ATQ e 80 DEF; Raio Solar
+tem poder 80 e precisão de 30%. O buff lógico é exclusivo do jogador:
 os guardiões não recebem fórmula nem golpe fortalecido. Cada espécie usa
 diretamente os atributos base do catálogo.
 Cada espécie tem três golpes, incluindo buffs/debuffs de atributo quando disponíveis.
